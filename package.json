@@ -1,0 +1,13 @@
+{
+  "name": "jflt-coach",
+  "version": "0.1.2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "schema": "node tools/build-schema.mjs"
+  },
+  "devDependencies": {
+    "ajv": "^8.20.0"
+  }
+}
