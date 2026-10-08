@@ -2,7 +2,7 @@
 // Ogni cache dell'app ha questo prefisso: si eliminano solo le versioni vecchie
 // dell'app, mai le cache di altre applicazioni sullo stesso dominio.
 const PREFIX = "jflt-coach-";
-const VERSION = `${PREFIX}0.2.4`;
+const VERSION = `${PREFIX}0.2.5`;
 const SHELL = [
   "./", "index.html", "app.js", "core.js", "data.js", "schema.js", "manifest.webmanifest",
   "catalog.js", "learning.js", "placement.js", "placement-ui.js", "bookshelf.js", "studio.js", "ai-client.js", "ui.js", "theme.css",

@@ -1,16 +1,24 @@
-# JFLT Coach 0.2.4
+# JFLT Coach 0.2.5
 
-L'app sceglie il punto di partenza con un pre-test di 45 domande anziché imporre le lezioni elementari. L'aggiornamento risolve anche il blocco «Manca il recupero del lessico selezionato»: un blocco grammaticalmente valido viene accettato con un avviso; il vocabolo omesso resta nel ripasso.
+L'aggiornamento rende diagnosticabili i rifiuti Groq e distingue la verifica del Worker dalla prova reale del provider. Il messaggio «Groq non ha accettato la richiesta. Controlla modello, schema e quota nella console; nessun fallback a pagamento» appartiene al primo Worker compilato. Se compare ancora, verificare che anche Cloudflare abbia ricevuto il nuovo codice.
+
+Restano il pre-test di 45 domande, il percorso adattivo e la correzione del blocco «Manca il recupero del lessico selezionato»: gli esercizi strutturalmente validi vengono accettati con un avviso; il vocabolo omesso resta candidato per il ripasso.
 
 ## Aggiornare l'app esistente
 
 1. Esportare i dati da Altro e conservare il backup sul dispositivo.
-2. Estrarre `jflt-coach-aggiornamento-0.2.4.zip`.
+2. Estrarre `jflt-coach-correzione-groq-0.2.5.zip`.
 3. Nel repository GitHub caricare tutto il contenuto estratto nella radice, mantenendo le sottocartelle `worker` e `tests`. `index.html`, `app.js`, `learning.js`, `placement.js`, `placement-ui.js` e `bookshelf.js` sono nella radice; `policy.js` è dentro `worker`.
-4. Confermare il commit sul ramo pubblicato. Attendere GitHub Pages e il deploy del Worker Cloudflare già collegato.
-5. Chiudere e riaprire l'app senza cancellare i dati del sito. In Altro verificare la versione 0.2.4; in Oggi aprire il pre-test. Riprovare una generazione.
+4. Confermare il commit sul ramo pubblicato. Attendere GitHub Pages. Se Cloudflare è collegato al repository, verificare che abbia pubblicato anch'esso il nuovo codice. Se il Worker è stato incollato a mano, sostituire tutto il suo codice con `worker-pronto/index.js` e pubblicare sullo stesso Worker. Non incollare il solo sorgente `worker/index.js`, che ha importazioni locali.
+5. Chiudere e riaprire l'app senza cancellare i dati del sito. In Altro verificare la versione 0.2.5; in Tutor automatico salvare/verificare il collegamento, controllare la versione del Worker, poi premere **Verifica Groq**. Deve risultare Worker 0.2.5 e Groq verificato. Infine provare una lezione.
 
 Non occorre creare un altro Worker né cambiare i segreti. Chiavi, token e backup non sono nel pacchetto. I dati e le impostazioni esistenti vengono mantenuti; i backup precedenti sono ancora importabili. Per una prima configurazione vedere SETUP.md.
+
+## Controllo Groq
+
+`GET /health` restituisce versione, modello e formato, senza chiamare Groq o consumare il contatore. `POST /check`, disponibile solo con codice personale e origine consentita, esegue una sola richiesta con output massimo di 200 token. Usa lo stesso modello e JSON Object Mode delle lezioni; non invia scritti, articoli o risposte dello studente. Il test passa solo se Groq restituisce il JSON di verifica atteso. Consuma una richiesta del contatore personale e una piccola parte della quota Groq.
+
+Le risposte delle lezioni restano validate integralmente nel Worker e nell'app. La prova minima non dimostra la qualità didattica degli esercizi né la disponibilità di quota per un blocco lungo. Gli errori mostrano il codice HTTP e i dettagli sanitizzati del provider. Chiavi e `failed_generation` non vengono esposti. Le quote Groq e il limite personale sono distinti; il frontend conserva il motivo e il tempo di attesa. Nessun retry, cambio di modello o provider a pagamento avviene automaticamente. Il piano Free dell'account va mantenuto nella console del proprietario.
 
 ## Pre-test e percorso
 
@@ -38,9 +46,9 @@ I controlli strutturali sugli esercizi restano attivi: schema, numero e tipi ric
 
 ## Verifiche
 
-84 test automatici superati, con risposte AI simulate. Comprendono una sessione completa di 45 domande, salvataggio/ripresa, soluzioni nascoste, adattamento delle priorità, phrasal verbs nel ripasso, backup e regressione del blocco lessicale. L'interfaccia è verificata con JSDOM. Bundle del Worker compilato interamente in locale con esbuild.
+90 test automatici superati, con risposte AI simulate. Comprendono la verifica distinta Worker/Groq, il riconoscimento del vecchio backend, i rifiuti di parametri/chiave/modello/quota, autenticazione e contatori, assenza di invii aggiuntivi, una sessione completa di 45 domande, salvataggio/ripresa, adattamento delle priorità, backup e regressione del blocco lessicale. L'interfaccia è verificata con JSDOM. Bundle del Worker compilato interamente in locale con esbuild.
 
-Da provare dopo la pubblicazione: generazione reale con Groq e uso su Safari/iPhone. Nessun nuovo deploy è stato eseguito da questa sessione. Il controllo Wrangler è stato bloccato dalla revisione automatica per il possibile invio di codice/metadati a Cloudflare; è stato sostituito dalla compilazione locale. Un browser reale non è disponibile nell'ambiente di verifica.
+Da provare dopo la pubblicazione: verifica e generazione reale con Groq e uso su Safari/iPhone. Nessun nuovo deploy è stato eseguito da questa sessione, che non ha accesso agli account del proprietario. I test non usano una chiave Groq reale.
 
 ```sh
 npm ci

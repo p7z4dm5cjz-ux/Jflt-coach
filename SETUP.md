@@ -1,4 +1,4 @@
-# Attivare JFLT Coach 0.2.4
+# Attivare JFLT Coach 0.2.5
 
 Se il tutor è già configurato, seguire prima **Aggiornare l’app esistente** nel README: non servono nuovi segreti né un nuovo Worker.
 
@@ -19,7 +19,13 @@ Dal computer, estrai l'archivio completo e apri [il repository](https://github.c
 3. **Commit changes** sul ramo usato da Pages (attualmente verificare **Settings → Pages**). Non modificare la cartella o la fonte di pubblicazione già funzionante.
 4. Attendi la conclusione del deployment Pages. Apri il sito in Safari, attendi l'aggiornamento, poi chiudi e riapri l'app. Deve comparire la scheda **Studio**.
 
-Nel pacchetto frontend, `jflt-coach-frontend-0.2.4.zip`, ci sono solo i file per Pages. Il pacchetto completo include anche il Worker e i test, necessari per configurare il backend e riprodurre le verifiche.
+Il pacchetto `jflt-coach-correzione-groq-0.2.5.zip` include l'app, i sorgenti del Worker, i test e il file compilato `worker-pronto/index.js`. Quest'ultimo serve per aggiornare un Worker già configurato attraverso l'editor Cloudflare.
+
+### Se hai già un Worker inserito a mano
+
+In Cloudflare apri **Workers & Pages → il Worker esistente → Edit code**. Sostituisci l'intero codice con il contenuto di **worker-pronto/index.js**, poi applica **Deploy**. Il bundle comprende i moduli del tutor e la classe `Budget`; non richiede importazioni da altri file. Mantieni lo stesso indirizzo, i due segreti esistenti, `ALLOWED_ORIGIN`, `MODEL` e il binding SQLite `BUDGET`. Per una prima creazione usa invece la configurazione Wrangler sotto.
+
+Aggiornare soltanto i file GitHub Pages non aggiorna un Worker inserito a mano. La versione visibile in **Tutor automatico** deve risultare 0.2.5 anche per il Worker.
 
 ## 3. Creare il servizio AI gratuito
 
@@ -60,7 +66,8 @@ Nell'app aggiornata apri **Studio → Tutor automatico** (anche da Altro).
 2. Inserisci il codice `APP_TOKEN`, **non** la chiave Groq.
 3. Se è il tuo telefono personale, puoi scegliere **Ricorda il codice su questo mio dispositivo**. Di default dura solo la sessione. Il codice non viene esportato nei backup; “Disconnetti” lo rimuove.
 4. Leggi e conferma l'informativa, poi **Salva e verifica il collegamento**.
-5. Apri **Some, any, no e composti → Genera 6 esercizi nuovi**. Questa prima generazione verifica anche la chiave Groq e l'accesso al modello; il semplice controllo del collegamento non chiama Groq.
+5. Premi **Verifica Groq**: una sola richiesta minima controlla chiave, modello e formato JSON. Non invia i tuoi scritti; usa una piccola parte della quota. Il controllo precedente del collegamento non chiama Groq.
+6. Apri **Some, any, no e composti → Genera 6 esercizi nuovi** per provare anche un blocco didattico completo.
 
 Non serve aprire ChatGPT per le sessioni quotidiane. L'app usa il modello Groq del Worker, non questa conversazione o il tuo abbonamento ChatGPT.
 
@@ -81,6 +88,9 @@ Il pacchetto è testato con risposte AI simulate, non ancora con Safari reale o 
 | Messaggio | Controllo |
 |---|---|
 | Worker non configurato / 503 | Entrambi i segreti presenti e binding `BUDGET` applicato tramite Wrangler |
+| Worker precedente / messaggio generico Groq | Aggiorna anche Cloudflare: usa `worker-pronto/index.js` nell'editor del Worker esistente, oppure il deploy del repository collegato |
+| Groq HTTP 400 | Leggi il dettaglio: parametro, formato o generazione JSON rifiutata. Il Worker corrente usa JSON Object e valida localmente lo schema completo |
+| Groq HTTP 401 / 403 / 404 | Chiave del Worker non valida, modello non autorizzato o modello non disponibile; controlla la console Groq senza cambiare piano |
 | Non autorizzato / 401 | Il codice nell'app deve coincidere con `APP_TOKEN`, non con la chiave Groq |
 | Origin non consentita / 403 | Apri dal dominio GitHub corretto; `ALLOWED_ORIGIN` non contiene il percorso dell'app |
 | Quota / 429 | Aspetta il tempo indicato; controlla la quota Free del tuo account, senza abilitare piani a pagamento |

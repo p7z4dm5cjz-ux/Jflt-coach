@@ -1,8 +1,24 @@
-JFLT Coach 0.2.4
+JFLT Coach 0.2.5 — correzione e diagnosi Groq
 
-1. Esporta i dati dall’app.
-2. Carica tutto il contenuto estratto nella radice del repository GitHub. Mantieni worker e tests come cartelle. Non caricare lo ZIP o una cartella contenitore aggiuntiva.
-3. Conferma Commit changes e attendi i deploy GitHub Pages e Cloudflare.
-4. Chiudi e riapri l’app; verifica 0.2.4 in Altro. Apri il pre-test da Oggi e riprova la generazione.
+Il messaggio generico segnalato appartiene al primo Worker compilato.
+Il vecchio Worker può restare online anche dopo un aggiornamento GitHub Pages.
 
-I file del Worker si trovano esclusivamente dentro worker; i moduli condivisi, inclusi learning.js e bookshelf.js, restano nella radice. Non creare un nuovo Worker e non cambiare i segreti esistenti.
+1. Esporta un backup dei dati dall’app, senza cancellare i dati del sito.
+2. Aggiorna i file del repository GitHub già usato dalla tua app con questo pacchetto.
+3. Aggiorna anche il Worker Cloudflare già esistente.
+   Se hai incollato il codice a mano: Workers & Pages → il tuo Worker → Edit code.
+   Sostituisci tutto il codice con il contenuto di worker-pronto/index.js, poi Deploy.
+   NON usare il solo file sorgente worker/index.js: richiede altri moduli.
+   Mantieni indirizzo, segreti GROQ_API_KEY e APP_TOKEN, variabili e binding BUDGET.
+   Se Cloudflare è collegato al repository, verifica invece il nuovo deploy del ramo aggiornato.
+4. Riapri l’app. Altro deve mostrare 0.2.5.
+5. Tutor automatico → Salva e verifica il collegamento.
+   Anche il Worker deve risultare 0.2.5; la schermata mostra inoltre il modello.
+6. Premi Verifica Groq. Esegue una sola richiesta minima, senza scritti personali.
+   Se fallisce, conserva il nuovo messaggio con codice HTTP e motivo sanitizzato.
+7. Se la verifica riesce, genera un blocco di esercizi per controllare la richiesta completa.
+
+Nessun retry, cambio di modello o fallback a pagamento automatico.
+Mantieni il piano Free del tuo account Groq; il codice non può verificarne la fatturazione.
+90 test automatici superati con risposte simulate; Worker compilato in locale.
+Non ancora pubblicato da questa sessione, priva di accesso agli account del proprietario.
