@@ -1,0 +1,21 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {IDBFactory} from "fake-indexeddb";
+import {openRepository,parseBackup} from "../storage.js";
+import {freshState,LEGACY_STORES} from "../engine.js";
+import {freshLearning} from "../legacy/learning.js";
+const opened=req=>new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+test("Upgrade IndexedDB conserva le tabelle precedenti e migra il testo",async()=>{
+  const factory=new IDBFactory(),req=factory.open("jflt-coach",1);req.onupgradeneeded=()=>{req.result.createObjectStore("settings",{keyPath:"id"});req.result.createObjectStore("texts",{keyPath:"id"});req.result.createObjectStore("tasks",{keyPath:"id"});};
+  const db=await opened(req),tx=db.transaction(["settings","texts","tasks"],"readwrite");
+  tx.objectStore("settings").put({id:"main",learning:{writers:[{id:"w",type:"email",topic:"test",paragraphs:["Saved draft"],rewrite:"Saved rewrite"}]}});
+  await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=reject;});db.close();
+  const repo=await openRepository(factory);assert.equal(repo.get().writings[0].draft,"Saved draft");
+  await repo.change(s=>s.writings[0].draft="Updated");repo.close();
+  const check=await opened(factory.open("jflt-coach",2));assert.ok(check.objectStoreNames.contains("settings"));const original=await opened(check.transaction("settings").objectStore("settings").get("main"));assert.equal(original.learning.writers[0].paragraphs[0],"Saved draft");check.close();
+  const reopened=await openRepository(factory);assert.equal(reopened.get().writings[0].draft,"Updated");reopened.close();
+});
+test("Le modifiche concorrenti vengono serializzate, anche dopo un errore",async()=>{const repo=await openRepository(new IDBFactory());const p1=repo.change(s=>s.settings.daily_minutes=15),p2=repo.change(s=>s.settings.endpoint="https://new.workers.dev");await Promise.all([p1,p2]);assert.equal(repo.get().settings.daily_minutes,15);assert.equal(repo.get().settings.endpoint,"https://new.workers.dev");await assert.rejects(repo.change(()=>{throw new Error("abort");}));await repo.change(s=>s.settings.daily_minutes=25);assert.equal(repo.get().settings.daily_minutes,25);repo.close();});
+test("Backup v2 ripristinabile e importazione invalida senza perdita",async()=>{const repo=await openRepository(new IDBFactory());await repo.change(s=>s.settings.daily_minutes=40);const b=parseBackup(await repo.backup());assert.equal(b.settings.daily_minutes,40);await assert.rejects(async()=>repo.replace({...freshState(),writings:[{id:"bad"}]}));assert.equal(repo.get().settings.daily_minutes,40);repo.close();});
+test("Backup con credenziali o pretest alterato viene rifiutato",()=>{const s=freshState();s.settings.app_token="secret";assert.throws(()=>parseBackup(JSON.stringify({format:"jflt-coach-backup/v2",state:s})),/credenziali/);delete s.settings.app_token;s.placement={seed:"bad"};assert.throws(()=>parseBackup(JSON.stringify({format:"jflt-coach-backup/v2",state:s})),/Pretest/);});
+test("Il formato di backup 0.2.x viene controllato e importato",()=>{const stores=Object.fromEntries(LEGACY_STORES.map(k=>[k,[]]));stores.settings=[{id:"main",first_run:new Date().toISOString(),include_instructions:true,diag:{},plan:null,last_export:null,persist:false,learning:freshLearning()}];const state=parseBackup(JSON.stringify({format:"jflt-coach-backup/v1",app_version:"0.2.5",exported_at:new Date().toISOString(),stores}));assert.equal(state.version,2);assert.ok(state.legacy.settings.length);});

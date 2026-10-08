@@ -1,1283 +1,266 @@
-// JFLT Coach — interfaccia e archiviazione (IndexedDB). Logica pura in core.js.
-import * as core from "./core.js";
-import { createStudio } from "./studio.js";
-import { askAI, appToken } from "./ai-client.js";
-import { freshLearning, suggestedLesson } from "./learning.js";
-import { icon } from "./ui.js";
-import {placementProfile} from "./placement.js";
-import {
-  DIAG_ITEMS, DIAG_SESSIONS, DIAG_TASKS, BOOK_REFS, ERRATA, OBSERVATIONS, TUTOR_PROMPT,
-  AREA_LABELS, CAPABILITY_LABELS, CRITERION_LABELS, TYPE_LABELS
-} from "./data.js";
+import {LESSONS,PHRASALS,VOCABULARY,PATTERNS} from "./catalog.js";
+import {bookContext} from "./bookshelf.js";
+import {QUESTIONS,orderedQuestions,orderedOptions,AREAS,PHRASAL_TARGETS} from "./placement.js";
+import {VERSION,now,uid,countWords,normal,correct,endpoint,newPlacement,placementProfile,recommendation,addTerm,recordReview,recoveryItems,phrasalItems,writingReady,sanitizeFeedback,GENRES} from "./engine.js";
+import {grammarItems} from "./practice-bank.js";
+import {openRepository,parseBackup} from "./storage.js";
+import {callTutor,getToken,saveToken} from "./tutor.js";
 
-/* ================================================================== */
-/* Archiviazione                                                       */
-/* ================================================================== */
-
-const DB_NAME = "jflt-coach";
-const DB_VERSION = 1;
-let db = null;
-let memory = null; // ripiego se IndexedDB non è disponibile
-
-function openDb() {
-  return new Promise((resolve) => {
-    if (!("indexedDB" in self)) { memory = {}; return resolve(); }
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = () => {
-      const d = req.result;
-      for (const s of core.STORES) if (!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath: "id" });
-    };
-    req.onsuccess = () => { db = req.result; resolve(); };
-    req.onerror = () => { memory = {}; resolve(); };
-  });
-}
-
-function store(name, mode = "readonly") { return db.transaction(name, mode).objectStore(name); }
-const wrap = (r) => new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
-
-async function get(name, id) {
-  if (memory) return structuredClone((memory[name] || {})[id]);
-  return wrap(store(name).get(id));
-}
-async function put(name, obj) {
-  if (memory) { (memory[name] ||= {})[obj.id] = structuredClone(obj); return; }
-  return wrap(store(name, "readwrite").put(obj));
-}
-async function all(name) {
-  if (memory) return Object.values(memory[name] || {}).map((x) => structuredClone(x));
-  return wrap(store(name).getAll());
-}
-async function clearStore(name) {
-  if (memory) { memory[name] = {}; return; }
-  return wrap(store(name, "readwrite").clear());
-}
-
-/* ================================================================== */
-/* Impostazioni e stato                                                */
-/* ================================================================== */
-
-async function getSettings() {
-  const s = await get("settings", "main");
-  if (s) return s;
-  const fresh = {
-    id: "main", first_run: new Date().toISOString(), include_instructions: true,
-    diag: {}, plan: null, last_export: null, persist: null
-  };
-  await put("settings", fresh);
-  return fresh;
-}
-async function saveSettings(s) {
-  // I vecchi pannelli possono avere una copia precedente delle impostazioni:
-  // non devono sovrascrivere lo Studio aggiornato durante un autosalvataggio.
-  const latest=await get("settings","main");
-  if(latest?.learning)s.learning=latest.learning;
-  if(latest?.ai_endpoint)s.ai_endpoint=latest.ai_endpoint;
-  else delete s.ai_endpoint;
-  await put("settings", s);
-}
-
-const MODE_LABELS = {
-  DIAG_ITEMS: "Frasi per la verifica finale", DIAG_EVAL: "Profilo diagnostico", GRAMMAR: "Esercizi di grammatica",
-  WRITE_PLAN: "Consegna di scrittura", WRITE_FEEDBACK: "Correzione dello scritto", WRITE_MODEL: "Testo modello",
-  CHECK_TRANSFER: "Verifica del trasferimento", WEEK_PLAN: "Piano settimanale"
-};
-const STAGE_LABELS = { plan: "Da pianificare", draft: "Stesura in corso", submitted: "In attesa di correzione", feedback: "Da riscrivere", rewritten: "Riscritto", done: "Completato" };
-const RELIABILITY_LABELS = { ok: "affidabile", with_errata: "con errata", structure_only: "solo struttura", excluded: "escluso" };
-const STATUS_LABELS = { verified: "pagina verificata", unchecked: "pagina non controllata" };
-const TOOL_STATUS = { open: "Verifica aperta", transferred: "Trasferimento confermato", back_to_practice: "Torna in esercitazione" };
-
-/* ================================================================== */
-/* Utilità di interfaccia                                              */
-/* ================================================================== */
-
-const view = document.getElementById("view");
-const studio=createStudio({view,getSettings,put,all,toast,legacyRequest:createRequest});
-const $ = (sel, root = view) => root.querySelector(sel);
-const $$ = (sel, root = view) => [...root.querySelectorAll(sel)];
-const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-let timers = [];
-function clearTimers() { timers.forEach(clearInterval); timers = []; }
-
-function toast(msg) {
-  document.querySelector(".toast")?.remove();
-  const t = document.createElement("div");
-  t.className = "toast"; t.setAttribute("role", "status"); t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 3200);
-}
-
-function fmtTime(ms) {
-  const s = Math.max(0, Math.round(ms / 1000));
-  return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
-}
-function fmtDate(iso) {
-  if (!iso) return "";
-  return new Date(iso).toLocaleDateString("it-IT", { day: "numeric", month: "long" });
-}
-
-function debounce(fn, ms = 400) {
-  let t;
-  return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
-}
-
-async function copyText(text) {
-  try { await navigator.clipboard.writeText(text); return true; } catch {
-    const ta = document.createElement("textarea");
-    ta.value = text; document.body.appendChild(ta); ta.select();
-    const ok = document.execCommand("copy"); ta.remove(); return ok;
+export function h(tag,attrs={},...children) {
+  const el=document.createElement(tag);
+  for(const [key,value] of Object.entries(attrs)) {
+    if(value===undefined||value===null||value===false)continue;
+    if(key.startsWith("on"))el.addEventListener(key.slice(2).toLowerCase(),value);
+    else if(key==="class")el.className=value;
+    else if(["value","checked","disabled","selected"].includes(key))el[key]=value;
+    else el.setAttribute(key,value===true?"":value);
   }
+  for(const child of children.flat(Infinity))if(child!==null&&child!==undefined&&child!==false)el.append(child instanceof Node?child:document.createTextNode(String(child)));
+  return el;
 }
-
-const online = () => navigator.onLine !== false;
-function updateNet() {
-  const n = document.getElementById("net");
-  n.textContent = online() ? "online" : "offline";
-  n.classList.toggle("off", !online());
+const p=(text,cls="")=>h("p",{class:cls},text);
+const link=(text,path,cls="button")=>h("a",{href:"#/"+path,class:cls},text);
+const card=(...children)=>h("section",{class:"card"},children);
+const list=items=>h("ul",{},items.map(i=>h("li",{},i)));
+const title=(eyebrow,text,description)=>h("header",{class:"page-heading"},p(eyebrow,"eyebrow"),h("h1",{tabindex:"-1"},text),description&&p(description,"intro"));
+const date=s=>new Date(s).toLocaleDateString("it-IT",{day:"numeric",month:"short"});
+const statusLabels={new:"Da esplorare",review:"Priorità",confirm:"Da confermare",skip:"Basi già controllate",maintain:"Mantenimento"};
+function shuffled(items) {
+  return items.map(value=>({value,order:crypto.getRandomValues(new Uint32Array(1))[0]})).sort((a,b)=>a.order-b.order).map(x=>x.value);
 }
-async function updateBadge() {
-  const pending = (await all("requests")).filter((r) => r.status === "pending").length;
-  const b = document.getElementById("badge");
-  b.hidden = !pending; b.textContent = pending;
-}
-
-const sheetAttrs = `autocorrect="off" autocapitalize="sentences" spellcheck="false" autocomplete="off"`;
-const tutorNote = () => `<p class="small muted">Con il <a href="#/connect">Tutor automatico</a> configurato, invio e correzione avvengono nell'app. Offline la richiesta resta salvata. Il copia-incolla è solo un percorso alternativo.</p>`;
-
-/* ================================================================== */
-/* Stato del percorso                                                  */
-/* ================================================================== */
-
-async function loadState() {
-  const [settings, profile, requests, sets, tasks, texts, feedback, checks] = await Promise.all([
-    getSettings(), get("profile", "main"), all("requests"), all("grammar_sets"), all("tasks"),
-    all("texts"), all("feedback"), all("transfer_checks")
-  ]);
-  return { settings, profile, requests, sets, tasks, texts, feedback, checks };
-}
-
-const diagDone = (s, id) => !!s.settings.diag?.[id]?.submitted_at;
-const pendingFor = (s, key) => s.requests.find((r) => r.status === "pending" && r.context?.key === key);
-
-function taskStage(task, texts, feedback) {
-  const draft = texts.find((t) => t.id === `${task.id}:draft`);
-  const rewrite = texts.find((t) => t.id === `${task.id}:rewrite`);
-  const fb = feedback.find((f) => f.task_id === task.id && f.kind === "feedback");
-  const model = feedback.find((f) => f.task_id === task.id && f.kind === "model");
-  if (model) return "done";
-  if (rewrite?.saved_at) return "rewritten";
-  if (fb) return "feedback";
-  if (draft?.submitted_at) return "submitted";
-  if (draft?.text) return "draft";
-  return "plan";
-}
-
-function nextStep(s) {
-  for (const id of ["D1", "D2", "D3", "D4"]) {
-    if (!diagDone(s, id)) {
-      const ses = DIAG_SESSIONS.find((x) => x.id === id);
-      return { title: `Diagnostico ${id}: ${ses.label}`, text: `Consigliato ${ses.day.toLowerCase()}. Senza dizionario, traduttore né correttore.`, href: `#/diag/${id}`, cta: "Apri" };
+export async function mountApp(repo,root=document.getElementById("view"),tutor=callTutor) {
+  let state=repo.get(),busy=false,health=null,healthError="",groq=null,renderId=0;
+  const notices=document.getElementById("notice"),saveStatus=document.getElementById("saved");
+  const notify=(message,error=false)=>{notices.replaceChildren(p(message));notices.className="notice "+(error?"error":"success");notices.hidden=false;};
+  async function change(fn) {state=await repo.change(fn);return state;}
+  async function run(fn,button) {
+    if(busy)return;busy=true;root.setAttribute("aria-busy","true");
+    if(button)button.disabled=true;
+    saveStatus.textContent="Operazione in corso…";
+    try{await repo.flush();state=repo.get();await fn();}
+    catch(e){notify(e.message+(e.requestId?" Riferimento: "+e.requestId:""),true);}
+    finally{busy=false;root.removeAttribute("aria-busy");if(button?.isConnected)button.disabled=false;saveStatus.textContent="Salvato sul dispositivo";}
+  }
+  const button=(text,fn,cls="")=>h("button",{type:"button",class:cls,onclick:e=>run(fn,e.currentTarget)},text);
+  function autosave(fn) {
+    saveStatus.textContent="Salvataggio…";
+    return change(fn).then(()=>{saveStatus.textContent="Salvato sul dispositivo";}).catch(e=>{saveStatus.textContent="Salvataggio non riuscito";notify("Non ho potuto salvare: "+e.message+". Esporta il lavoro appena possibile.",true);});
+  }
+  function field(label,id,value,oninput,{area=false,placeholder="",max=12000,type="text"}={}) {
+    const input=h(area?"textarea":"input",{id,value,type:area?undefined:type,maxlength:max,placeholder,oninput:e=>oninput(e.target.value)});
+    return h("div",{class:"field"},h("label",{for:id},label),input);
+  }
+  async function goto(path) {
+    if(location.hash==="#/"+path)await render();
+    else location.hash="#/"+path;
+  }
+  async function refresh(){await render();}
+  async function makeSession(lessonId,items,source="local",extra={}) {
+    const id=uid("session");
+    await change(s=>s.sessions.push({id,lesson_id:lessonId,items:items.map((it,i)=>({...it,id:it.id||id+"-"+i,accept:[it.answer,...(it.accept||[])],options:shuffled(it.options||[])})),answers:{},assisted:false,completed_at:null,source,created_at:now(),...extra}));
+    await goto("practice/"+id);return id;
+  }
+  function dueTerms() {return state.vocabulary.filter(v=>Date.parse(v.due)<=Date.now()).sort((a,b)=>a.due.localeCompare(b.due));}
+  function sourceNotes(id,mode,type) {
+    const ctx=bookContext(id,mode,type);
+    return h("details",{class:"sources"},h("summary",{},"Riferimenti nei tuoi libri"),ctx.notes.map(n=>h("div",{},h("strong",{},n.book+" · "+(n.units?"unità "+n.units+" · ":"")+"p. "+n.pages),p(n.note_it))),ctx.further.map(n=>p(n.book+" · "+n.pages+" · "+n.purpose_it)),ctx.errata.map(e=>p("Correzione del manuale "+e.book+", p. "+e.pages+": "+e.correction_it,"warning")),p("Sintesi ed esercizi originali. I PDF restano nei tuoi materiali.","muted"));
+  }
+  function home() {
+    const next=recommendation(state)[0],profile=placementProfile(state.placement),due=dueTerms(),active=state.writings.findLast(w=>!w.comparison);
+    const attempts=state.attempts.filter(a=>!a.assisted&&a.source!=="legacy"),score=attempts.length?Math.round(attempts.filter(a=>a.correct).length/attempts.length*100):null;
+    return [
+      title("IL TUO PERCORSO","Un passo avanti, ogni giorno.","Grammatica mirata, parole da usare e scrittura da migliorare."),
+      h("section",{class:"hero"},h("div",{},p("PROSSIMA SESSIONE · CIRCA 20 MINUTI","eyebrow"),h("h2",{},next.title),p(profile?"La proposta tiene conto del pretest e dei tuoi tentativi senza aiuti.":"Partiamo dai punti più utili: tempi, negazioni e costruzioni. Il pretest renderà la scelta personale."),link("Inizia la sessione","lesson/"+next.id)),h("span",{class:"hero-mark","aria-hidden":"true"},"Aa")),
+      h("div",{class:"stats"},card(p("Verifiche senza aiuti","muted"),h("strong",{class:"big"},score===null?"—":score+"%"),p(attempts.length+" risposte valutate","small")),card(p("Parole da recuperare","muted"),h("strong",{class:"big"},due.length),link("Apri Ripasso","review","text-link")),card(p("I tuoi scritti","muted"),h("strong",{class:"big"},state.writings.length),link(active?"Riprendi la bozza":"Prepara un testo",active?"writing/"+active.id:"writing","text-link"))),
+      !profile?card(h("h2",{},state.placement?"Riprendi il pretest":"Salta ciò che sai già"),p("45 domande: 14 sui tempi, 8 su negazioni e domande, 8 sui phrasal verbs e 15 sulle altre strutture. Puoi interromperti e riprendere. Le soluzioni arrivano alla consegna."),link(state.placement?"Continua il pretest":"Fai il pretest","placement")):card(h("h2",{},"Il tuo punto di partenza"),p(profile.correct+"/45 risposte corrette. Una risposta data con dubbio resta da confermare."),link("Vedi risultati e priorità","placement","text-link")),
+      h("div",{class:"two-columns"},card(h("h2",{},"Phrasal verbs nel contesto"),p("Significato, particelle, ordine dei pronomi e registro. Una parola segnata come nota resta distinta da una risposta verificata."),link("Apri il laboratorio","phrasals")),card(h("h2",{},"Leggi e ricostruisci il senso"),p("Traduci un passaggio, confronta le scelte e recupera le parole utili."),link("Apri Lettura","reading"))),
+      link("Consulta i progressi","progress","text-link")
+    ];
+  }
+  function studio() {
+    const search=h("input",{id:"lesson-search",type:"search",placeholder:"Cerca un tempo o una costruzione…","aria-label":"Cerca una lezione"});
+    const rows=h("div",{class:"lesson-grid"});
+    function fill(value="") {rows.replaceChildren(...recommendation(state).filter(l=>normal(l.title+" "+l.tool).includes(normal(value))).map(l=>h("a",{class:"lesson-card",href:"#/lesson/"+l.id},h("span",{class:"pill "+l.status},statusLabels[l.status]),h("h2",{},l.title),p(l.goal,"small"),h("span",{class:"arrow","aria-hidden":"true"},"→"))));}
+    search.oninput=()=>fill(search.value);fill();
+    return [title("STUDIO","Scegli la struttura giusta.","Le priorità compaiono per prime. Le basi già controllate restano consultabili."),h("div",{class:"actions"},link("Tempi verbali","studio","button secondary"),link("Phrasal verbs","phrasals","button secondary"),link("Lettura","reading","button secondary")),search,rows];
+  }
+  function lesson(id) {
+    const l=LESSONS.find(l=>l.id===id);if(!l)return [title("STUDIO","Lezione non trovata."),link("Torna alle lezioni","studio")];
+    const selected=dueTerms().slice(0,3);
+    return [link("← Tutte le lezioni","studio","back"),title("GRAMMATICA",l.title,l.goal),
+      card(h("h2",{},"Quando usarla"),p(l.when),l.forms&&p(l.forms,"formula"),list(l.examples.map(t=>h("span",{lang:"en"},t))),h("h3",{},"La differenza che conta"),p(l.contrast),p(l.pitfall,"warning")),
+      h("div",{class:"two-columns"},card(h("h2",{},"Metti alla prova la forma"),p("Esercizi originali disponibili anche offline. Le risposte con suggerimenti non entrano nei risultati autonomi."),button("Esercizi offline",()=>makeSession(id,[...grammarItems(id,state.sessions.length),...recoveryItems(selected)]))),card(h("h2",{},"Cambia contesto con il tutor"),p("Sei esercizi nuovi: scelte, completamenti e trasformazioni. Recupero lessicale separato per le parole in scadenza."),button("Genera 6 esercizi con Groq",async()=>{const result=await tutor(state.settings,"/tutor","exercises",{lesson_id:id,terms:selected.map(v=>({expression:v.expression,meaning_it:v.meaning_it})),recent_errors:state.attempts.filter(a=>a.lesson_id===id&&!a.correct).slice(-3).map(a=>({stem:a.stem,answer:a.answer}))});await makeSession(id,[...result.items.map((it,i)=>({...it,id:uid("ai"),skill:it.kind==="choice"?"choose":"form",origin:"groq"})),...recoveryItems(selected)],"groq");},"secondary"))),
+      selected.length&&p("Recupero di oggi: "+selected.map(v=>v.expression).join(" · "),"muted"),sourceNotes(id)];
+  }
+  function practice(id) {
+    const set=state.sessions.find(s=>s.id===id);if(!set)return [title("ESERCIZI","Sessione non trovata."),link("Apri Studio","studio")];
+    const l=LESSONS.find(l=>l.id===set.lesson_id),done=!!set.completed_at;
+    const form=h("form",{id:"practice-form"});
+    for(const [i,item] of set.items.entries()) {
+      const value=set.answers[item.id]||"",result=state.attempts.find(a=>a.session_id===id&&a.item_id===item.id);
+      const block=h("fieldset",{class:"exercise"},h("legend",{},(i+1)+". "+(item.kind==="retrieval"?"Recupero lessicale":item.skill==="recognise"?"Significato":"Uso della forma")),p(item.stem,"stem"));
+      if(item.options?.length)for(const [j,opt] of item.options.entries())block.append(h("label",{class:"option",for:item.id+"-"+j},h("input",{id:item.id+"-"+j,type:"radio",name:item.id,value:opt,checked:value===opt,disabled:done,onchange:e=>autosave(s=>{s.sessions.find(x=>x.id===id).answers[item.id]=e.target.value;})}),h("span",{lang:"en"},opt)));
+      else block.append(h("label",{class:"sr-only",for:item.id},"Risposta "+(i+1)),h("input",{id:item.id,value,disabled:done,autocomplete:"off",maxlength:600,oninput:e=>{const v=e.target.value;autosave(s=>{s.sessions.find(x=>x.id===id).answers[item.id]=v;});}}));
+      if(result)block.append(p(result.correct?"Risposta corretta":"Da rivedere",result.correct?"good":"warning"),p(item.why),!result.correct&&p("Risposta di riferimento: "+item.answer,"formula"));
+      form.append(block);
     }
+    form.addEventListener("submit",e=>{e.preventDefault();run(async()=>{
+      const latest=repo.get().sessions.find(s=>s.id===id);
+      if(latest.completed_at)return;
+      if(latest.items.some(it=>!latest.answers[it.id]?.trim()))throw new Error("Completa ogni risposta prima di verificare.");
+      await change(s=>{
+        const current=s.sessions.find(x=>x.id===id);
+        for(const item of current.items) {
+          const answer=current.answers[item.id],ok=correct(item,answer);
+          s.attempts.push({id:uid("attempt"),session_id:id,item_id:item.id,lesson_id:item.kind==="retrieval"?"vocabulary":current.lesson_id,stem:item.stem,answer,correct:ok,assisted:current.assisted,source:current.source,date:now(),skill:item.skill||"form",term_id:item.term_id||null});
+        }
+        for(const termId of new Set(current.items.map(it=>it.term_id).filter(Boolean))) {
+          const word=s.vocabulary.find(v=>v.id===termId),termItems=current.items.filter(it=>it.term_id===termId);
+          if(word)recordReview(word,termItems.every(it=>correct(it,current.answers[it.id])),current.assisted);
+        }
+        current.completed_at=now();
+      });await refresh();
+    });});
+    if(!done)form.append(h("button",{type:"submit"},"Verifica le risposte"));
+    const results=state.attempts.filter(a=>a.session_id===id);
+    return [link("← "+(l?.title||"Ripasso"),set.writing_id?"writing/"+set.writing_id:l?"lesson/"+set.lesson_id:"review","back"),title(set.source==="groq"?"ESERCIZI · GROQ":"ESERCIZI · OFFLINE",set.writing_id?"Verifica in un nuovo contesto":l?.title||"Recupero del lessico"),
+      done?card(h("h2",{},results.filter(r=>r.correct).length+"/"+results.length+" corrette"),p(set.assisted?"Sessione con suggerimenti: esclusa dai risultati autonomi.":"Sessione senza suggerimenti, salvata nei tuoi progressi."),link("Continua",set.writing_id?"writing/"+set.writing_id:"home")):h("div",{class:"actions"},p("Risposte salvate mentre scrivi. Le soluzioni compaiono solo dopo la verifica.","muted"),button("Mostra un suggerimento",async()=>{await change(s=>{s.sessions.find(x=>x.id===id).assisted=true;});notify(l?.forms||l?.pitfall||"Pensa al significato e alla costruzione. La sessione ora risulta svolta con un aiuto.");},"quiet")),
+      form];
   }
-  if (!s.profile) {
-    const p = pendingFor(s, "DIAG_EVAL");
-    return p
-      ? { title: "Profilo: incolla la risposta del Tutor", text: "La richiesta è pronta. Copiala in ChatGPT e incolla qui la risposta.", href: `#/req/${p.id}`, cta: "Apri la richiesta" }
-      : { title: "Profilo e priorità (D5)", text: "Prepara la richiesta per il Tutor: valuterà i due scritti e le risposte da giudicare.", href: "#/diag/D5", cta: "Apri" };
-  }
-  if (!s.settings.plan) return { title: "Conferma le priorità", text: "Leggi il profilo e conferma lo strumento e la capacità da cui partire.", href: "#/diag/D5", cta: "Apri il profilo" };
-  if (!diagDone(s, "D6")) return { title: "D6: riscrivi il rapporto D4", text: "Primo esercizio di revisione, guidato dalle priorità del profilo.", href: "#/task/D4", cta: "Apri" };
-
-  const tool = s.settings.plan.focus_tool;
-  const open = s.sets.filter((g) => g.tool === tool && g.status !== "done");
-  const done = s.sets.filter((g) => g.tool === tool && g.status === "done");
-  if (open.length) return { title: `Esercizi: ${AREA_LABELS[tool]}`, text: "Hai una serie da completare. Funziona anche offline.", href: `#/grammar/${open[0].id}`, cta: "Continua" };
-  if (!done.length) {
-    const p = pendingFor(s, `GRAMMAR:${tool}`);
-    return p
-      ? { title: "Esercizi: incolla la risposta del Tutor", text: `Richiesta pronta per ${AREA_LABELS[tool]}.`, href: `#/req/${p.id}`, cta: "Apri la richiesta" }
-      : { title: `Esercizi: ${AREA_LABELS[tool]}`, text: "Prima serie sullo strumento prioritario.", href: "#/grammar/new", cta: "Prepara" };
-  }
-
-  const active = s.tasks.filter((t) => !t.diag).map((t) => ({ t, stage: taskStage(t, s.texts, s.feedback) })).filter((x) => x.stage !== "done");
-  if (active.length) {
-    const { t, stage } = active[0];
-    const texts = {
-      plan: "Leggi consegna e modello, poi prepara la scaletta.",
-      draft: "Riprendi la stesura.",
-      submitted: "Chiedi la correzione al Tutor (richiede connessione).",
-      feedback: "Leggi le priorità e riscrivi il testo.",
-      rewritten: "Chiedi il testo modello per il confronto."
-    };
-    return { title: `Scritto: ${STAGE_LABELS[stage]}`, text: texts[stage], href: `#/task/${t.id}`, cta: "Apri" };
-  }
-  if (core.recoveryNeeded(s.checks, s.sets, tool)) {
-    const pg = pendingFor(s, `GRAMMAR:${tool}`);
-    return pg
-      ? { title: "Esercitazione mirata: incolla la risposta del Tutor", text: `Lo strumento ${AREA_LABELS[tool]} è tornato in esercitazione. La richiesta è pronta.`, href: `#/req/${pg.id}`, cta: "Apri la richiesta" }
-      : { title: `Esercitazione mirata: ${AREA_LABELS[tool]}`, text: "Dopo due esiti deboli (o un esito non acquisito) nel trasferimento, lo strumento torna in esercitazione prima del prossimo scritto.", href: "#/grammar/new/recovery", cta: "Prepara" };
-  }
-  const p = pendingFor(s, "WRITE_PLAN");
-  return p
-    ? { title: "Scritto: incolla la consegna del Tutor", text: "La richiesta di consegna è pronta.", href: `#/req/${p.id}`, cta: "Apri la richiesta" }
-    : { title: "Nuovo scritto", text: `Chiedi una consegna per la capacità ${s.settings.plan.capability} (${CAPABILITY_LABELS[s.settings.plan.capability]}).`, href: "#/write/new", cta: "Prepara" };
-}
-
-/* ================================================================== */
-/* Richieste al Tutor                                                  */
-/* ================================================================== */
-
-function refsFor({ tool, capability }) {
-  return BOOK_REFS.filter((b) => (tool && b.tools.includes(tool)) || (capability && b.capabilities.includes(capability)))
-    .map(({ ref_id, book, unit, pages, page_status, reliability, use_it }) => ({ ref_id, book, unit, pages, page_status, reliability, use_it }));
-}
-
-function knowledgeFor({ tool, capability, extraTags = [] }) {
-  const book_refs = refsFor({ tool, capability });
-  const tags = [...core.contextTags({ tool, capability, bookRefs: book_refs }), ...extraTags];
-  return {
-    book_refs,
-    errata: core.pertinent(ERRATA, tags).map(({ id, book, pages, quote, fix, severity }) => ({ id, book, pages, quote, fix, severity })),
-    observations: core.pertinent(OBSERVATIONS, tags).map(({ id, book, pages, passage, assessment }) => ({ id, book, pages, passage, assessment }))
-  };
-}
-
-async function recentErrors(limit = 12) {
-  const list = (await all("error_log")).sort((a, b) => b.date.localeCompare(a.date));
-  return list.slice(0, limit).map(({ quote, minimal_fix, tool, category, systematic }) => ({ quote, minimal_fix, tool, category, systematic }));
-}
-
-async function createRequest(mode, data, context) {
-  const existing = (await all("requests")).find((r) => r.status === "pending" && r.context?.key === context.key);
-  if (existing) { location.hash = `#/req/${existing.id}`; return; }
-  const id = core.makeRequestId();
-  const req={ id, request_id: id, mode, date: core.todayISO(), created_at: new Date().toISOString(), status: "pending", data, context };
-  await put("requests", req);
-  await updateBadge();
-  location.hash = `#/req/${id}`;
-  const settings=await getSettings();
-  if(settings.ai_endpoint&&appToken()&&online())sendLegacy(req).catch(e=>toast(e.message));
-}
-
-const sendingLegacy=new Set();
-async function sendLegacy(req){
-  if(sendingLegacy.has(req.id))return;sendingLegacy.add(req.id);
-  const route=location.hash;
-  try{
-    toast("Richiesta salvata. Il tutor sta lavorando…");
-    const settings=await getSettings();
-    const payload=await askAI(settings.ai_endpoint,"TUTOR",{request:req},{request_id:req.id});
-    const envelope={schema:"jflt-coach/v2",mode:req.mode,request_id:req.id,date:req.date,payload,card_candidates:[],questions:[]};
-    const checked=core.validateResponse(envelope,req);if(!checked.ok)throw new Error(`Risposta scartata: ${checked.errors.slice(0,3).join(" ")}`);
-    const target=await applyResponse(envelope,req);toast("Risposta del tutor salvata.");
-    if(location.hash===route||location.hash===`#/req/${req.id}`)location.hash=target;
-  }finally{sendingLegacy.delete(req.id);}
-}
-
-async function buildDiagEval() {
-  const responses = Object.fromEntries((await all("diag_responses")).map((r) => [r.id, r]));
-  const items = DIAG_ITEMS.map((it) => {
-    const r = responses[it.id] || {};
-    return {
-      id: it.id, area: it.area, type: it.type, instruction_it: TYPE_LABELS[it.type], stem: it.stem,
-      user_answer: r.text || "", user_marked_correct: !!r.marked_correct, confidence: r.confidence || "unset",
-      app_score: r.score || core.scoreItem(it, r), reference_answer: it.answer
-    };
-  });
-  const unclear = items.filter((i) => i.app_score === "unclear").map((i) => i.id);
-  const texts = [];
-  for (const id of ["D3", "D4"]) {
-    const t = await get("diag_texts", id);
-    const task = DIAG_TASKS[id];
-    texts.push({ text_id: id, text_type: task.text_type, task_en: task.prompt_en, words_range: task.words, content_points: task.content_points, text: t?.text || "", word_count: core.wordCount(t?.text), minutes_used: t?.minutes_used ?? null });
-  }
-  const k = knowledgeFor({ capability: "A4", extraTags: ["A1", "A2"] });
-  return {
-    student: { slp: (await getSettings()).student_slp || "non indicato", goal_cycle: "W2: email, narrazioni e rapporti chiari con paragrafi collegati" },
-    diagnostic: { items, area_stats: core.areaStats(DIAG_ITEMS, responses), unclear_item_ids: unclear },
-    texts, ...k
-  };
-}
-
-/* Applicazione delle risposte importate */
-async function applyResponse(obj, req) {
-  const p = obj.payload;
-  const now = new Date().toISOString();
-  let target = "#/home";
-  switch (obj.mode) {
-    case "DIAG_EVAL": {
-      const rulings = Object.fromEntries(p.item_rulings.map((r) => [r.item_id, r.correct]));
-      await put("profile", { id: "main", ...p, rulings, request_id: obj.request_id, imported_at: now });
-      for (const t of p.texts) for (const e of t.errors) await put("error_log", { id: core.makeId("err"), date: now, source: t.text_id, ...e });
-      await put("feedback", { id: `CARDS-${obj.request_id}`, kind: "cards_offer", task_id: "D5", card_candidates: obj.card_candidates, date: now });
-      target = "#/diag/D5";
-      break;
+  function placement() {
+    const test=state.placement,profile=placementProfile(test);
+    if(!test)return [title("PRETEST","Dove conviene iniziare?","45 domande senza aiuti, con una sola consegna finale. Non è una certificazione di livello."),card(h("h2",{},"Tempi, negazioni e phrasal verbs in primo piano"),p("Segna «Ho un dubbio» quando non sei sicuro. Puoi lasciare vuota una risposta scegliendo «Non so»: il percorso la considererà da ripassare."),button("Inizia il pretest",async()=>{await change(s=>{s.placement=newPlacement();});await refresh();}))];
+    if(profile)return [title("PRETEST","Il tuo punto di partenza",profile.correct+"/45 corrette · "+profile.uncertain.length+" corrette da confermare"),
+      card(h("h2",{},"Aree da cui partire"),h("table",{},h("thead",{},h("tr",{},["Area","Corrette","Proposta"].map(v=>h("th",{},v)))),h("tbody",{},profile.areas.map(a=>h("tr",{},h("td",{},a.title),h("td",{},a.correct+"/"+a.total),h("td",{},statusLabels[a.status]))))),link("Apri il percorso personale","studio")),
+      card(h("h2",{},"Rivedi errori e dubbi"),profile.rows.filter(r=>!r.secure).map(r=>h("details",{},h("summary",{},r.item.stem),p("La tua risposta: "+(r.answer.value||"Non so")),p("Risposta di riferimento: "+r.item.answer,"formula"),p(r.item.why),p(r.item.ref,"muted")))),
+      h("details",{},h("summary",{},"Ripetere il pretest"),p("Il risultato precedente sarà conservato nell'archivio; il percorso userà la nuova prova."),button("Inizia una nuova prova",async()=>{await change(s=>{s.legacy??={};s.legacy.placement_history??=[];s.legacy.placement_history.push(s.placement);s.placement=newPlacement();});await refresh();},"secondary"))];
+    const questions=orderedQuestions(test.seed),item=questions[test.position],answer=test.answers.find(a=>a.id===item.id),form=h("form",{id:"placement-form"});
+    form.append(h("fieldset",{},h("legend",{},"Domanda "+(test.position+1)+" di 45 · "+AREAS[item.area]),p(item.stem,"stem")));
+    const box=form.querySelector("fieldset");
+    if(item.options)for(const [i,opt] of orderedOptions(item,test.seed).entries())box.append(h("label",{class:"option"},h("input",{type:"radio",name:"placement-answer",value:opt,checked:answer?.value===opt}),h("span",{},opt)));
+    else box.append(h("label",{for:"placement-answer",class:"sr-only"},"La tua risposta"),h("input",{id:"placement-answer",name:"placement-answer",maxlength:350,value:answer?.value||"",autocomplete:"off"}));
+    const unsure=h("input",{type:"checkbox",id:"unsure",checked:answer?.confidence==="unsure"});form.append(h("label",{class:"inline-check"},unsure,"Ho un dubbio"));
+    async function saveAnswer(value,advance=true) {
+      await change(s=>{const a={id:item.id,value,confidence:unsure.checked?"unsure":"sure"},p=s.placement;p.answers=p.answers.filter(x=>x.id!==item.id);p.answers.push(a);if(advance)p.position=Math.min(44,p.position+1);});await refresh();
     }
-    case "GRAMMAR": {
-      const id = `G-${obj.request_id.slice(-6)}`;
-      await put("grammar_sets", { id, ...p, request_id: obj.request_id, status: "todo", created_at: now });
-      target = `#/grammar/${id}`;
-      break;
+    form.onsubmit=e=>{e.preventDefault();run(async()=>{const v=item.options?form.querySelector('input[name="placement-answer"]:checked')?.value:form.querySelector("#placement-answer").value.trim();if(!v)throw new Error("Inserisci una risposta oppure scegli «Non so».");await saveAnswer(v);});};
+    form.append(h("div",{class:"actions"},h("button",{type:"submit"},test.position===44?"Salva la risposta":"Salva e continua"),button("Non so",()=>saveAnswer(""),"secondary"),test.position>0&&button("Indietro",async()=>{await change(s=>s.placement.position--);await refresh();},"quiet")));
+    return [title("PRETEST","Una prova, un percorso.","Nessuna chiamata AI. Il risultato compare dopo tutte le 45 domande."),h("progress",{max:45,value:test.answers.length,"aria-label":"Domande salvate"}),p(test.answers.length+"/45 risposte salvate","muted"),form,
+      test.answers.length===45&&card(h("h2",{},"Pronto per la consegna"),p("Puoi tornare alle domande per modificarle; dopo la consegna vedrai le soluzioni."),button("Consegna il pretest",async()=>{await change(s=>{s.placement.submitted_at=now();const prof=placementProfile(s.placement);for(const row of prof.errors){const expression=PHRASAL_TARGETS[row.item.id],term=PHRASALS.find(t=>t.expression===expression);if(term)addTerm(s,term);}});await refresh();}))];
+  }
+  function phrasals() {
+    const search=h("input",{type:"search",id:"phrasal-search",placeholder:"Cerca espressione, significato o contesto…","aria-label":"Cerca nei phrasal verbs"}),rows=h("div",{class:"lesson-grid"});
+    const core=["carry out","look into","call off","rule out","hand over","fill in","run out of","put up with","find out","point out","set up","bring up","turn down","follow up"];
+    function fill(v=""){const terms=PHRASALS.filter(t=>normal(t.expression+" "+t.meaning_it+" "+t.topic).includes(normal(v))).sort((a,b)=>(core.includes(a.expression)?0:1)-(core.includes(b.expression)?0:1));rows.replaceChildren(...terms.map(t=>h("a",{href:"#/word/"+t.id,class:"lesson-card"},p(t.topic,"eyebrow"),h("h2",{lang:"en"},t.expression),p(t.meaning_it),p(PATTERNS[t.pattern],"small muted"))));}
+    search.oninput=()=>fill(search.value);fill();
+    return [title("LESSICO","Phrasal verbs da usare.","161 verbi ed espressioni multiword: studia un significato e la sua costruzione alla volta."),card(h("h2",{},"Non basta riconoscere la traduzione"),p("Prima il contesto, poi le particelle e la posizione dell'oggetto. Scrivi anche una frase tua; il tutor può spiegare la costruzione senza considerarla automaticamente acquisita.")),search,rows];
+  }
+  function word(id) {
+    const t=VOCABULARY.find(v=>v.id===id)||state.vocabulary.find(v=>v.id===id);
+    if(!t)return [title("LESSICO","Termine non trovato."),link("Apri Ripasso","review")];
+    const learned=state.vocabulary.find(v=>v.id===t.id);
+    return [link("← Lessico","phrasals","back"),title(t.topic||"LESSICO",t.expression,t.meaning_it),card(p(t.example,"stem"),t.pattern&&p(PATTERNS[t.pattern],"formula"),p("Registro: "+(t.register||"dipende dal contesto")),t.alternative&&p("Alternativa possibile: "+t.alternative+". Controlla che mantenga lo stesso significato nel tuo testo."),button(learned?"Già nel tuo ripasso":"Aggiungi al ripasso",async()=>{await change(s=>addTerm(s,t));await refresh();},"secondary")),
+      card(h("h2",{},"Significato → costruzione → uso"),button("Esercita questo termine",async()=>{await change(s=>addTerm(s,t));await makeSession("phrasal-basics",t.pattern?phrasalItems(t,state.sessions.length):recoveryItems([t]));}),p("Dopo gli esercizi, scrivi una frase originale usando lo stesso significato.","muted"),field("La tua frase","word-context",learned?.context||"",value=>autosave(s=>{addTerm(s,t).context=value;}),{area:true,max:1200}),button("Spiega l'uso nel mio contesto",async()=>{const context=repo.get().vocabulary.find(v=>v.id===t.id)?.context;if(!context?.trim())throw new Error("Scrivi prima una frase.");const result=await tutor(state.settings,"/tutor","clarify",{term:t.expression,context});notify(result.explanation+" Esempio: "+result.example);},"secondary")),
+      t.dictionary_url&&h("a",{href:t.dictionary_url,target:"_blank",rel:"noopener noreferrer",class:"text-link"},"Consulta il dizionario"),sourceNotes("phrasal-basics")];
+  }
+  function review() {
+    const due=dueTerms(),search=h("input",{type:"search",placeholder:"Cerca nel tuo lessico…","aria-label":"Cerca nel tuo lessico"}),rows=h("div",{class:"word-list"});
+    function fill(v=""){rows.replaceChildren(...state.vocabulary.filter(t=>normal(t.expression+" "+t.meaning_it).includes(normal(v))).map(t=>h("a",{class:"word-row",href:"#/word/"+t.id},h("strong",{},t.expression),h("span",{},t.meaning_it),h("small",{},t.streak?("Prossimo: "+date(t.due)):t.legacy_known?"Conosciuto in precedenza · da verificare":"Da recuperare"))));}search.oninput=()=>fill(search.value);fill();
+    return [title("RIPASSO","Richiama prima di rileggere.",due.length+" termini in scadenza. Una risposta sbagliata torna presto; una corretta senza aiuti si distanzia."),card(h("h2",{},"Recupero attivo"),due.length?button("Ripassa "+Math.min(due.length,6)+" termini",()=>makeSession("vocabulary",recoveryItems(due.slice(0,6)))):p("Nessun termine in scadenza. Aggiungi parole dal laboratorio o dalla lettura."),link("Scopri i phrasal verbs","phrasals","text-link")),search,rows];
+  }
+  function feedbackPanel(w) {
+    if(!w.feedback)return w.legacy_feedback?card(h("h2",{},"Feedback precedente"),p("Conservato nel backup originale. Puoi richiedere una nuova revisione della bozza.")):null;
+    const f=w.feedback;
+    return card(h("h2",{},"Le priorità della revisione"),w.feedback_source!==w.draft&&p("La bozza è cambiata: questa revisione si riferisce alla versione precedente.","warning"),p(f.summary),list(f.priorities),h("div",{class:"rubric"},Object.entries(f.rubric).map(([k,v])=>h("div",{},h("strong",{},({grammar:"Grammatica",content:"Consegna",cohesion:"Coesione",register:"Registro"})[k]),p(v)))),f.issues.map(i=>h("div",{class:"issue"},p(i.kind==="style"?"Suggerimento di stile":"Errore · "+i.category,"eyebrow"),h("blockquote",{},i.quote),p(i.correction,"formula"),p(i.explanation))),f.omitted>0&&p("Sono state omesse "+f.omitted+" osservazioni senza una citazione verificabile nella bozza.","muted"));
+  }
+  function writing(id) {
+    if(!id) {
+      const genre=h("select",{id:"genre"},Object.entries(GENRES).map(([k,g])=>h("option",{value:k},g.label))),topic=h("textarea",{id:"new-topic",value:GENRES.report.topic,maxlength:2000});
+      genre.onchange=()=>{topic.value=GENRES[genre.value].topic;};
+      const exam=h("input",{type:"checkbox",id:"exam"});
+      return [title("SCRITTURA","Scrivi. Correggi. Verifica.","Un editor unico, la tua riscrittura e una prova nuova sugli errori emersi."),
+        card(h("h2",{},"Prepara un testo"),h("label",{for:"genre"},"Tipo di testo"),genre,h("label",{for:"new-topic"},"Consegna"),topic,h("label",{class:"inline-check"},exam,"Simulazione senza suggerimenti durante la stesura"),button("Apri l'editor",async()=>{if(topic.value.trim().length<15)throw new Error("Scrivi una consegna più precisa.");const w={id:uid("writing"),type:genre.value,topic:topic.value.trim(),mode:exam.checked?"exam":"guided",ideas:"",outline:"",draft:"",rewrite:"",feedback:null,comparison:null,transfer:[],created_at:now()};await change(s=>s.writings.push(w));await goto("writing/"+w.id);})),
+        state.writings.length>0&&card(h("h2",{},"I tuoi testi"),h("div",{class:"word-list"},state.writings.slice().reverse().map(w=>h("a",{class:"word-row",href:"#/writing/"+w.id},h("strong",{},w.topic.slice(0,90)+(w.topic.length>90?"…":"")),h("span",{},GENRES[w.type]?.label||"Testo"),h("small",{},date(w.created_at)+" · "+(w.comparison?"Confrontato":w.feedback?"Da riscrivere":"Bozza"))))))];
     }
-    case "WRITE_PLAN": {
-      const id = `T-${obj.request_id.slice(-6)}`;
-      await put("tasks", { ...p.task, id, tutor_task_id: p.task.id, model_excerpt_en: p.model_excerpt_en, observation_questions_it: p.observation_questions_it, observations: ["", "", ""], outline: "", created_at: now, request_id: obj.request_id });
-      target = `#/task/${id}`;
-      break;
-    }
-    case "WRITE_FEEDBACK": {
-      const taskId = req.context.task_id;
-      const fid = `FB-${obj.request_id}`;
-      let transfer = null;
-      if (p.transfer) {
-        const v = core.transferVerdict(p.transfer.occurrences, req.data?.text ?? null);
-        transfer = { tool: p.transfer.tool, ...v };
-        await put("transfer_checks", { id: `TR-${obj.request_id}`, tool: p.transfer.tool, text_id: taskId, version: p.version, date: now, ...v });
-      }
-      await put("feedback", { id: fid, kind: "feedback", task_id: taskId, version: p.version, payload: p, transfer, card_candidates: obj.card_candidates, date: now, request_id: obj.request_id });
-      for (const e of p.errors) await put("error_log", { id: core.makeId("err"), date: now, source: taskId, ...e });
-      target = `#/task/${taskId}`;
-      break;
-    }
-    case "WRITE_MODEL": {
-      const taskId = req.context.task_id;
-      await put("feedback", { id: `MD-${obj.request_id}`, kind: "model", task_id: taskId, payload: p, date: now, request_id: obj.request_id });
-      if (taskId === "D4") { const s = await getSettings(); s.diag.D6 = { ...(s.diag.D6 || {}), submitted_at: s.diag.D6?.submitted_at || now }; await saveSettings(s); }
-      target = `#/task/${taskId}`;
-      break;
-    }
-    case "CHECK_TRANSFER": {
-      const v = core.transferVerdict(p.transfer.occurrences, req.data?.text ?? null);
-      await put("transfer_checks", { id: `TR-${obj.request_id}`, tool: p.transfer.tool, text_id: p.text_id, date: now, ...v });
-      target = "#/more";
-      break;
-    }
-    case "WEEK_PLAN": {
-      const s = await getSettings(); s.week_plan = p; await saveSettings(s); target = "#/home"; break;
-    }
-    case "DIAG_ITEMS": {
-      const s = await getSettings(); s.retest_items = p.items; await saveSettings(s); target = "#/diag"; break;
-    }
+    const w=state.writings.find(x=>x.id===id);if(!w)return [title("SCRITTURA","Testo non trovato."),link("Apri i tuoi testi","writing")];
+    const bind=(key,value)=>autosave(s=>{s.writings.find(x=>x.id===id)[key]=value;});
+    const draftCount=p(countWords(w.draft)+" parole · obiettivo indicativo "+GENRES[w.type].range,"muted");
+    const draft=field("La tua bozza","draft",w.draft,value=>{draftCount.textContent=countWords(value)+" parole · obiettivo indicativo "+GENRES[w.type].range;bind("draft",value);},{area:true,placeholder:"Scrivi qui il testo in inglese…"});
+    draft.querySelector("textarea").setAttribute("lang","en");
+    const rewriteCount=p(countWords(w.rewrite)+" parole","muted"),rewrite=field("La tua riscrittura","rewrite",w.rewrite,value=>{rewriteCount.textContent=countWords(value)+" parole";bind("rewrite",value);},{area:true,placeholder:"Riscrivi tenendo conto delle priorità…"});
+    rewrite.querySelector("textarea").setAttribute("lang","en");
+    const comparison=w.comparison;
+    return [link("← I tuoi testi","writing","back"),title(w.mode==="exam"?"SCRITTURA · SIMULAZIONE":"SCRITTURA · ALLENAMENTO",GENRES[w.type].label),card(p(w.topic)),
+      w.mode!=="exam"&&h("details",{class:"card"},h("summary",{},"Prima di scrivere: idee e scaletta"),p(w.type==="report"?"Ordina i fatti nel tempo e attribuisci le dichiarazioni.":"Definisci destinatario, scopo e un punto per paragrafo."),field("Appunti","ideas",w.ideas,value=>bind("ideas",value),{area:true,max:2000}),field("Scaletta","outline",w.outline,value=>bind("outline",value),{area:true,max:2000})),
+      card(h("h2",{},"1. Stesura"),draft,draftCount,button(w.feedback?"Revisiona la bozza attuale":"Chiedi la revisione",async()=>{const current=repo.get().writings.find(x=>x.id===id);writingReady(current,"review");const result=await tutor(state.settings,"/tutor","writing_review",{type:current.type,topic:current.topic,text:current.draft,mode:current.mode});await change(s=>{const x=s.writings.find(x=>x.id===id);x.feedback=sanitizeFeedback(result,current.draft);x.feedback_source=current.draft;x.comparison=null;});await refresh();},"secondary"),p("La revisione invia consegna e bozza a Groq. Usa dati fittizi nei tuoi esercizi.","small muted")),
+      feedbackPanel(w),
+      w.feedback&&card(h("h2",{},"2. Riscrittura"),p("Riscrivi tu il testo. Cerca di risolvere gli errori mantenendo fatti, significato e voce."),rewrite,rewriteCount,button("Confronta bozza e riscrittura",async()=>{const current=repo.get().writings.find(x=>x.id===id);writingReady(current,"compare");const result=await tutor(state.settings,"/tutor","writing_compare",{type:current.type,topic:current.topic,text:current.draft,rewrite:current.rewrite,issues:current.feedback.issues});await change(s=>{const x=s.writings.find(x=>x.id===id);x.comparison=result;x.compare_source={draft:current.draft,rewrite:current.rewrite};x.transfer=[];});await refresh();})),
+      comparison&&card(h("h2",{},"3. Confronto e trasferimento"),p(comparison.summary),w.compare_source?.rewrite!==w.rewrite&&p("La riscrittura è cambiata: rifai il confronto prima della verifica.","warning"),h("h3",{},"Risolto secondo il tutor"),list(comparison.resolved),h("h3",{},"Da controllare ancora"),comparison.remaining.length?list(comparison.remaining):p("Il tutor non segnala errori residui; la verifica successiva resta utile."),button("Verifica in un nuovo contesto",async()=>{const current=repo.get().writings.find(x=>x.id===id);if(current.compare_source?.rewrite!==current.rewrite||current.compare_source?.draft!==current.draft)throw new Error("Il testo è cambiato: rifai il confronto.");const session=await makeSession("mixed",current.comparison.transfer.map(i=>({...i,id:uid("transfer"),kind:"completion",skill:"form",options:[]})),"groq",{writing_id:id});await change(s=>{s.writings.find(x=>x.id===id).transfer.push(session);});},"secondary"),w.transfer?.map(sid=>{const results=state.attempts.filter(a=>a.session_id===sid);return results.length?p("Nuovo contesto: "+results.filter(a=>a.correct&&!a.assisted).length+"/"+results.length+" corrette senza aiuti."):link("Riprendi la verifica","practice/"+sid,"text-link");})),
+      sourceNotes("","WRITING_REVIEW",w.type)];
   }
-  req.status = "answered"; req.answered_at = now; req.response = obj;
-  await put("requests", req);
-  await updateBadge();
-  return target;
-}
-
-function previewResponse(obj) {
-  const p = obj.payload;
-  switch (obj.mode) {
-    case "DIAG_EVAL": return `Profilo con stima ${p.stanag_estimate.range}, ${p.priorities.length} priorità, partenza da ${p.start_capability}; ${p.item_rulings.length} risposte giudicate.`;
-    case "GRAMMAR": return `${p.items.length} esercizi su ${AREA_LABELS[p.tool]} (${p.purpose === "check" ? "verifica" : "esercitazione"}).`;
-    case "WRITE_PLAN": return `Consegna ${p.task.text_type}, ${p.task.words[0]}-${p.task.words[1]} parole, ${p.task.draft_sessions} sessione/i di stesura.`;
-    case "WRITE_FEEDBACK": return `${p.priorities.length} priorità, ${p.errors.length} errori, ${p.alternatives.length} alternative${p.transfer ? `, ${p.transfer.occurrences.length} usi di ${AREA_LABELS[p.transfer.tool]}` : ""}.`;
-    case "WRITE_MODEL": return `Modello di ${core.wordCount(p.model_text_en)} parole con confronto.`;
-    case "CHECK_TRANSFER": return `${p.transfer.occurrences.length} usi di ${AREA_LABELS[p.transfer.tool]}.`;
-    case "WEEK_PLAN": return `Piano dalla settimana del ${p.week_start}.`;
-    case "DIAG_ITEMS": return `${p.items.length} frasi nuove.`;
+  function reading(id) {
+    if(!id)return [title("LETTURA","Dal testo al significato.","Incolla un passaggio inglese da studiare. Aggiungi l'indirizzo della fonte se è un articolo."),
+      card(button("Nuova lettura",async()=>{const r={id:uid("reading"),title:"Nuova lettura",source:"",text:"",translation:"",feedback:null,created_at:now()};await change(s=>s.readings.push(r));await goto("reading/"+r.id);})),
+      state.readings.length>0&&card(h("h2",{},"Letture salvate"),state.readings.slice().reverse().map(r=>link(r.title+" · "+date(r.created_at),"reading/"+r.id,"word-row")))];
+    const r=state.readings.find(x=>x.id===id);if(!r)return [title("LETTURA","Lettura non trovata."),link("Tutte le letture","reading")];
+    const bind=(key,value)=>autosave(s=>{s.readings.find(x=>x.id===id)[key]=value;});
+    const term=h("input",{id:"reading-term",maxlength:120,placeholder:"Es. account for"});
+    const meaning=h("input",{id:"reading-meaning",maxlength:300,placeholder:"Significato nel passaggio"});
+    return [link("← Letture salvate","reading","back"),title("LETTURA",r.title),
+      card(field("Titolo","reading-title",r.title,v=>bind("title",v),{max:200}),field("Fonte (facoltativa)","reading-source",r.source,v=>bind("source",v),{max:1000}),field("Passaggio inglese","reading-text",r.text,v=>bind("text",v),{area:true,max:8000}),field("La tua traduzione italiana","translation",r.translation,v=>bind("translation",v),{area:true,max:12000}),button("Confronta la traduzione con Groq",async()=>{const current=repo.get().readings.find(x=>x.id===id);if(countWords(current.text)<10||countWords(current.translation)<5)throw new Error("Inserisci un passaggio e una tua traduzione.");const result=await tutor(state.settings,"/tutor","reading_review",{text:current.text,translation:current.translation});await change(s=>{const x=s.readings.find(x=>x.id===id);x.feedback={...result,segments:result.segments.filter(v=>current.text.includes(v.quote)),terms:result.terms.filter(v=>normal(current.text).includes(normal(v.expression)))};x.feedback_source={text:current.text,translation:current.translation};});await refresh();})),
+      r.feedback&&card(h("h2",{},"Confronto ragionato"),(r.feedback_source.text!==r.text||r.feedback_source.translation!==r.translation)&&p("Hai modificato il testo: questo confronto si riferisce alla versione precedente.","warning"),p(r.feedback.summary),r.feedback.segments.map(v=>h("div",{class:"issue"},h("blockquote",{lang:"en"},v.quote),p(v.translation),p(v.explanation,"muted"))),r.feedback.terms.map(v=>h("div",{class:"word-row"},h("strong",{},v.expression),p(v.meaning_it),button("Aggiungi al ripasso",async()=>{await change(s=>addTerm(s,v,r.text.slice(0,1200)));notify("Termine aggiunto al recupero attivo.");},"quiet")))),
+      card(h("h2",{},"Conserva una parola utile"),h("label",{for:"reading-term"},"Espressione"),term,h("label",{for:"reading-meaning"},"Significato"),meaning,h("div",{class:"actions"},button("Salva nel lessico",async()=>{if(!term.value.trim()||!meaning.value.trim())throw new Error("Inserisci espressione e significato.");await change(s=>addTerm(s,{expression:term.value.trim(),meaning_it:meaning.value.trim(),example:"",topic:"lettura"},r.text.slice(0,1200)));notify("Parola salvata nel ripasso.");},"secondary"),button("Spiega nel contesto",async()=>{if(!term.value.trim())throw new Error("Inserisci il termine da spiegare.");const known=VOCABULARY.find(v=>normal(v.expression)===normal(term.value));if(known){meaning.value=known.meaning_it;notify(known.example+" "+(PATTERNS[known.pattern]||""));return;}const result=await tutor(state.settings,"/tutor","clarify",{term:term.value.trim(),context:repo.get().readings.find(x=>x.id===id).text.slice(0,1200)});meaning.value=result.meaning_it;notify(result.explanation+" Esempio: "+result.example);},"quiet"))),
+      sourceNotes("","ARTICLE_FEEDBACK")];
   }
-  return "";
-}
-
-/* ================================================================== */
-/* Schermate                                                           */
-/* ================================================================== */
-
-async function screenHome() {
-  const s = await loadState();
-  const learning = {...freshLearning(), ...(s.settings.learning || {})};
-  const lesson = suggestedLesson(learning, s.settings.plan?.focus_tool);
-  const placement = placementProfile(learning.placement);
-  const due = learning.reviews.filter(r => Date.parse(r.due) <= Date.now()).length;
-  const unfinished = learning.writers.find(w => w.stage < 6);
-  const completed = learning.attempts.filter(a => a.submitted).length;
-  const n = nextStep(s);
-  const pending = s.requests.filter((r) => r.status === "pending");
-  const plan = s.settings.plan;
-  const lastExport = s.settings.last_export;
-  const exportOld = !lastExport || Date.now() - new Date(lastExport).getTime() > 7 * 864e5;
-  const dow = (new Date().getDay() + 6) % 7;
-  const week = core.WEEK_TEMPLATE;
-  const kindLabel = { grammar: "Grammatica", write_plan: "Scrittura: pianificazione", write_draft: "Scrittura: stesura", grammar_review: "Grammatica: ripasso e verifiche", write_revise: "Scrittura: revisione", rest: "Riposo o recupero" };
-  view.innerHTML = `
-    <span class="eyebrow">Un passo alla volta</span><h2>Oggi</h2>
-    <p class="muted page-intro">Capire la grammatica. Usarla nelle tue parole.</p>
-    <div class="home-grid">
-      <section class="panel hero" aria-labelledby="today-lesson">
-        <div class="hero-meta"><span class="tag">Sessione consigliata</span><span>20 minuti di studio</span></div>
-        <h3 id="today-lesson">${placement?esc(lesson.title):"Il tuo punto di partenza"}</h3><p>${placement?esc(lesson.goal):"45 domande per scegliere le priorità e saltare le basi già acquisite."}</p>
-        <div class="row"><a class="btn" href="${placement?`#/lesson/${lesson.id}`:`#/placement${learning.placement?"/run":""}`}">${placement?"Inizia la lezione":learning.placement?"Riprendi il pre-test":"Inizia il pre-test"} <span aria-hidden="true">→</span></a><a class="btn ghost" href="#/tenses">Tempi verbali</a><a class="btn ghost" href="#/learn">Tutto il programma</a></div>
-      </section>
-      <section class="panel resume-card"><span class="card-icon">${icon("writing")}</span><h3>${unfinished ? "Riprendi il tuo testo" : "Scrivi, passo passo"}</h3><p class="small muted">${unfinished ? esc(unfinished.topic) : "Prima le idee, poi le parole giuste. Un paragrafo alla volta."}</p><a class="btn ghost" href="#/guided/${unfinished?.id||"new"}">${unfinished ? "Continua a scrivere" : "Prepara un testo"}</a></section>
-    </div>
-    <div class="metric-grid" aria-label="Il tuo studio finora">
-      <a class="panel metric tile" href="#/review"><strong>${due}</strong><span>Carte da ripassare</span></a>
-      <a class="panel metric tile" href="#/lexicon"><strong>${learning.vocabulary.length}</strong><span>Parole dai tuoi testi</span></a>
-      <a class="panel metric tile" href="#/progress"><strong>${completed}</strong><span>Risposte valutate</span></a>
-    </div>
-    <section class="panel" aria-labelledby="next-t">
-      <span class="eyebrow">Scrittura: diagnostico approfondito</span>
-      <h3 id="next-t" style="margin-top:0">${esc(n.title)}</h3>
-      <p>${esc(n.text)}</p>
-      <a class="btn ghost" href="${n.href}" id="next-go">${esc(n.cta)}</a>
-    </section>
-    ${pending.length ? `<section class="panel warn"><p style="margin:0">${pending.length} ${pending.length === 1 ? "richiesta" : "richieste"} al Tutor in attesa di risposta. <a href="#/requests">Apri</a></p></section>` : ""}
-    ${plan ? `
-    <h3>La settimana</h3>
-    <ul class="steps">${week.map((w, i) => `<li class="${i === dow ? "current" : ""}"><span class="dot">${i + 1}</span><span>${kindLabel[w.kind]}${w.kind.startsWith("grammar") ? ` · ${esc(AREA_LABELS[plan.focus_tool])}` : ""}</span><span class="small muted">${["lun", "mar", "mer", "gio", "ven", "sab", "dom"][i]}</span></li>`).join("")}</ul>
-    <p class="small muted">Strumento in corso: ${esc(AREA_LABELS[plan.focus_tool])}. Capacità: ${plan.capability} (${esc(CAPABILITY_LABELS[plan.capability])}).</p>` : ""}
-    ${exportOld ? `<section class="panel"><p style="margin:0 0 8px">${lastExport ? `Ultimo backup: ${fmtDate(lastExport)}.` : "Non hai ancora fatto un backup."} Esporta i dati una volta a settimana su File o iCloud.</p><a class="btn ghost" href="#/more">Fai il backup</a></section>` : ""}
-    <a href="#/week">Apri il piano settimanale aggiornato</a>`;
-}
-
-async function screenDiag() {
-  const s = await loadState();
-  const status = (id) => {
-    if (id === "D5") return s.profile ? "done" : (pendingFor(s, "DIAG_EVAL") ? "wait" : "");
-    if (id === "D6") return diagDone(s, "D6") ? "done" : "";
-    return diagDone(s, id) ? "done" : (s.settings.diag?.[id]?.started_at ? "current" : "");
-  };
-  const href = (id) => (id === "D6" ? "#/task/D4" : `#/diag/${id}`);
-  view.innerHTML = `
-    <h2>Diagnostico</h2>
-    <p class="muted">Sei sessioni da 20 minuti. Il giorno è un consiglio: puoi procedere nell'ordine che ti è comodo.</p>
-    <ul class="steps">${DIAG_SESSIONS.map((d) => {
-      const st = status(d.id);
-      return `<li class="${st}"><span class="dot">${st === "done" ? "✓" : ""}</span><a href="${href(d.id)}">${d.id}: ${esc(d.label)}</a><span class="small muted">${st === "wait" ? "in attesa del Tutor" : esc(d.day.toLowerCase())}</span></li>`;
-    }).join("")}</ul>
-    <p class="small muted">Regole per tutte le prove: niente dizionario, traduttore, AI né correttore. Disattiva la correzione automatica in Impostazioni › Generali › Tastiera.</p>`;
-}
-
-/* ---------- D1 e D2 ---------- */
-async function screenDiagItems(sid) {
-  const s = await getSettings();
-  const ses = DIAG_SESSIONS.find((x) => x.id === sid);
-  const items = DIAG_ITEMS.filter((i) => i.session === sid);
-  const st = s.diag[sid] || {};
-  const responses = Object.fromEntries((await all("diag_responses")).map((r) => [r.id, r]));
-
-  if (st.submitted_at) {
-    const scored = items.map((it) => responses[it.id]?.score || "wrong");
-    const c = (k) => scored.filter((x) => x === k).length;
-    view.innerHTML = `
-      <h2>${sid} consegnato</h2>
-      <div class="panel ok"><p style="margin:0">Risposte riconosciute come corrette: <strong>${c("correct")}</strong> su ${items.length}. Da far valutare al Tutor nel profilo: <strong>${c("unclear")}</strong>.</p></div>
-      <p class="muted">Le soluzioni e l'analisi per area arrivano con il profilo (D5), per non influenzare le prove successive.</p>
-      <a class="btn" href="#/diag">Torna al diagnostico</a>`;
-    return;
+  function progress() {
+    const recent=state.attempts.filter(a=>a.source!=="legacy"),rows=recommendation(state).filter(l=>l.attempts>0),guided=state.writings.filter(w=>w.mode!=="exam"),independent=state.writings.filter(w=>w.mode==="exam");
+    return [title("PROGRESSI","Conta ciò che riesci a fare.","Il pretest orienta; le risposte senza suggerimenti confermano. La scrittura richiede anche un nuovo contesto."),
+      h("div",{class:"stats"},card(h("strong",{class:"big"},recent.filter(a=>!a.assisted).length),p("Risposte senza aiuti")),card(h("strong",{class:"big"},guided.length),p("Scritti guidati")),card(h("strong",{class:"big"},independent.length),p("Scritti in simulazione"))),
+      card(h("h2",{},"Le strutture esercitate"),rows.length?h("table",{},h("thead",{},h("tr",{},["Struttura","Senza aiuti","Proposta"].map(v=>h("th",{},v)))),h("tbody",{},rows.map(l=>h("tr",{},h("td",{},link(l.title,"lesson/"+l.id,"text-link")),h("td",{},Math.round(l.accuracy*100)+"% · "+l.attempts+" risposte"),h("td",{},statusLabels[l.status]))))):p("I risultati appariranno dopo i primi esercizi.")),
+      card(h("h2",{},"Gli errori da riprendere"),list(recent.filter(a=>!a.correct).slice(-8).reverse().map(a=>h("span",{},a.stem," → ",a.answer))),state.legacy&&p("L'archivio precedente è conservato nel backup. Le vecchie auto-valutazioni non diventano nuove prove di padronanza.","muted")),link("Continua a studiare","home")];
   }
-  if (!st.started_at) {
-    view.innerHTML = `
-      <h2>${sid}: ${items.length} frasi</h2>
-      <div class="panel">
-        <p>${ses.minutes} minuti. Allo scadere le risposte vengono consegnate così come sono.</p>
-        <p>Per ogni frase indica anche se sei <strong>sicuro</strong> o <strong>incerto</strong>: serve a distinguere le regole apprese male dalle lacune note.</p>
-        <p class="small muted">Niente dizionario né correttore. Correzione automatica della tastiera disattivata.</p>
-      </div>
-      <button id="start" class="full">Inizia</button>`;
-    $("#start").onclick = async () => { s.diag[sid] = { started_at: new Date().toISOString(), index: 0 }; await saveSettings(s); render(); };
-    return;
+  async function checkHealth(){try{health=await tutor(state.settings,"/health");healthError="";}catch(e){health=null;healthError=e.message;}return health;}
+  function settings() {
+    const address=h("input",{id:"endpoint",type:"url",value:state.settings.endpoint,maxlength:200}),token=h("input",{id:"token",type:"password",autocomplete:"off",placeholder:getToken()?"Codice già presente sul dispositivo":"Codice personale APP_TOKEN",maxlength:300}),remember=h("input",{type:"checkbox",id:"remember"});
+    const statusBox=card(h("h2",{},"Stato del tutor"),h("dl",{},h("dt",{},"App"),h("dd",{},VERSION),h("dt",{},"Worker"),h("dd",{},health?health.version:"Da verificare"),h("dt",{},"Groq"),h("dd",{},groq?"Risposta verificata il "+new Date(groq).toLocaleTimeString("it-IT"):health?.groq_configured?"Chiave configurata; risposta non ancora verificata":"Da verificare")),healthError&&p(healthError,"warning"),h("div",{class:"actions"},button("Verifica collegamento Worker",async()=>{await checkHealth();await refresh();},"secondary"),button("Verifica Groq",async()=>{const result=await tutor(state.settings,"/check");if(result.provider_checked){groq=now();await checkHealth();}await refresh();})),p("Il collegamento al Worker non consuma una chiamata Groq. Il test Groq ne usa una.","small muted"));
+    const file=h("input",{type:"file",id:"backup-file",accept:".json,application/json"});
+    const preview=h("div",{});let candidate=null;
+    file.onchange=()=>run(async()=>{candidate=null;preview.replaceChildren();if(!file.files[0])return;const parsed=parseBackup(await file.files[0].text());candidate=parsed;preview.replaceChildren(p("Backup valido: "+parsed.writings.length+" scritti, "+parsed.attempts.length+" tentativi, "+parsed.vocabulary.length+" termini."),button("Importa questo backup",async()=>{if(!candidate)return;await repo.replace(candidate);state=repo.get();candidate=null;notify("Backup importato. Il token del tutor resta sul dispositivo.");await refresh();},"secondary"),p("L'importazione sostituisce i dati della nuova app. Esporta prima una copia dei progressi attuali.","warning"));});
+    return [title("IMPOSTAZIONI","Una connessione, uno stato chiaro.","I progressi restano sul dispositivo. Il tutor usa il tuo Worker Cloudflare e Groq."),
+      card(h("h2",{},"Collega il tutor"),h("label",{for:"endpoint"},"Indirizzo Worker"),address,h("label",{for:"token"},"Codice personale del tutor"),token,h("label",{class:"inline-check"},remember,"Ricorda il codice su questo dispositivo"),button("Salva collegamento",async()=>{const value=endpoint(address.value);await change(s=>s.settings.endpoint=value);if(token.value.trim())saveToken(token.value,remember.checked);health=null;groq=null;await checkHealth();await refresh();}),button("Rimuovi il codice dal dispositivo",async()=>{saveToken("");health=null;groq=null;await refresh();},"quiet"),p("La chiave Groq va nei secret Cloudflare. Qui si inserisce solo il codice personale APP_TOKEN; non viene incluso nei backup.","small muted")),
+      statusBox,card(h("h2",{},"Proteggi i tuoi progressi"),button("Esporta backup JSON",async()=>{const text=await repo.backup(),blob=new Blob([text],{type:"application/json"}),url=URL.createObjectURL(blob),a=h("a",{href:url,download:"jflt-progressi-"+now().slice(0,10)+".json"});document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);notify("Backup preparato. Conserva il file scaricato.");},"secondary"),h("label",{for:"backup-file"},"Importa un backup 0.2.x o 1.0.0"),file,preview,p("L'aggiornamento sulla stessa origine recupera automaticamente il vecchio archivio. Il backup serve anche per cambiare dispositivo.","muted")),
+      card(h("h2",{},"Studio senza connessione"),p("Lezioni, pretest, esercizi originali, lessico e bozze funzionano offline dopo il primo caricamento. Le richieste Groq partono solo quando premi un comando del tutor."),button("Cerca aggiornamenti",async()=>{const reg=await navigator.serviceWorker?.getRegistration();if(!reg)throw new Error("Aggiornamenti disponibili dopo la pubblicazione HTTPS dell'app.");await reg.update();notify("Controllo avviato. Se arriva una nuova versione comparirà un avviso.");},"quiet")),link("Vedi i progressi","progress","text-link")];
   }
-
-  const endsAt = new Date(st.started_at).getTime() + ses.minutes * 60e3;
-  let idx = Math.min(st.index || 0, items.length - 1);
-
-  const submit = async (auto = false) => {
-    const rs = Object.fromEntries((await all("diag_responses")).map((r) => [r.id, r]));
-    for (const it of items) {
-      const r = rs[it.id] || { id: it.id, session: sid, text: "", marked_correct: false, confidence: "unset" };
-      r.score = core.scoreItem(it, r);
-      await put("diag_responses", r);
-    }
-    const fresh = await getSettings();
-    fresh.diag[sid] = { ...fresh.diag[sid], submitted_at: new Date().toISOString(), auto_submitted: auto };
-    await saveSettings(fresh);
-    toast(auto ? "Tempo scaduto: risposte consegnate." : "Risposte consegnate.");
-    render();
-  };
-
-  const draw = () => {
-    const it = items[idx];
-    const r = responses[it.id] || { id: it.id, session: sid, text: "", marked_correct: false, confidence: "unset" };
-    view.innerHTML = `
-      <div class="row"><span class="grow small muted">${sid} · frase ${idx + 1} di ${items.length}</span><span class="timer" id="timer">--:--</span></div>
-      <div class="progress"><i style="width:${((idx + 1) / items.length) * 100}%"></i></div>
-      <p class="small muted">${esc(TYPE_LABELS[it.type])}</p>
-      <p class="stem">${esc(it.stem)}</p>
-      ${it.type === "error_correction" ? `<label class="checkline"><input type="checkbox" id="ok" ${r.marked_correct ? "checked" : ""}> La frase è già corretta</label>` : ""}
-      <label for="ans">${it.type === "completion" ? "Parola o parole mancanti" : "La tua frase"}</label>
-      <textarea id="ans" class="answer" ${sheetAttrs} ${r.marked_correct ? "disabled" : ""}>${esc(r.text)}</textarea>
-      <label>Quanto sei sicuro?</label>
-      <div class="seg" role="group" aria-label="Sicurezza">
-        <button type="button" data-conf="sure" aria-pressed="${r.confidence === "sure"}">Sicuro</button>
-        <button type="button" data-conf="unsure" aria-pressed="${r.confidence === "unsure"}">Incerto</button>
-      </div>
-      <div class="row" style="margin-top:20px">
-        <button class="ghost" id="prev" ${idx === 0 ? "disabled" : ""}>Indietro</button>
-        <span class="grow"></span>
-        ${idx < items.length - 1 ? `<button id="next">Avanti</button>` : `<button id="submit">Consegna</button>`}
-      </div>`;
-    const save = async () => { responses[it.id] = r; await put("diag_responses", r); };
-    const saveDeb = debounce(save, 300);
-    $("#ans").oninput = (e) => { r.text = e.target.value; saveDeb(); };
-    $("#ok")?.addEventListener("change", (e) => { r.marked_correct = e.target.checked; $("#ans").disabled = e.target.checked; save(); });
-    $$("[data-conf]").forEach((b) => (b.onclick = () => { r.confidence = b.dataset.conf; $$("[data-conf]").forEach((x) => x.setAttribute("aria-pressed", x === b)); save(); }));
-    const go = async (d) => { await save(); idx += d; const f = await getSettings(); f.diag[sid].index = idx; await saveSettings(f); draw(); };
-    $("#prev").onclick = () => go(-1);
-    $("#next")?.addEventListener("click", () => go(1));
-    $("#submit")?.addEventListener("click", async () => {
-      await save();
-      const missing = items.filter((x) => { const y = responses[x.id]; return !y || (!y.text?.trim() && !y.marked_correct); }).length;
-      if (missing && !confirm(`${missing} frasi senza risposta. Consegnare comunque?`)) return;
-      submit(false);
-    });
-    const t = document.getElementById("timer");
-    if (t) t.textContent = fmtTime(endsAt - Date.now());
-  };
-  draw();
-  const tick = () => {
-    const left = endsAt - Date.now();
-    const t = document.getElementById("timer");
-    if (t) { t.textContent = fmtTime(left); t.classList.toggle("low", left < 120e3); }
-    if (left <= 0) { clearTimers(); submit(true); }
-  };
-  tick();
-  timers.push(setInterval(tick, 1000));
-}
-
-/* ---------- D3 e D4 ---------- */
-async function screenDiagText(sid) {
-  const s = await getSettings();
-  const ses = DIAG_SESSIONS.find((x) => x.id === sid);
-  const task = DIAG_TASKS[sid];
-  const st = s.diag[sid] || {};
-  const rec = (await get("diag_texts", sid)) || { id: sid, text: "" };
-  const head = `
-    <h2>${sid}: ${esc(ses.label)}</h2>
-    <p class="task" lang="en">${esc(task.prompt_en)}</p>
-    <ul class="small">${task.content_points.map((c) => `<li lang="en">${esc(c)}</li>`).join("")}</ul>`;
-
-  if (st.submitted_at) {
-    view.innerHTML = `${head}
-      <div class="panel ok"><p style="margin:0">Consegnato: ${core.wordCount(rec.text)} parole in ${rec.minutes_used ?? "?"} minuti.</p></div>
-      <div class="panel model" lang="en">${esc(rec.text)}</div>
-      <a class="btn" href="#/diag">Torna al diagnostico</a>`;
-    return;
+  async function render() {
+    const turn=++renderId;await repo.flush();if(turn!==renderId)return;
+    state=repo.get();const [route="home",id]=location.hash.replace(/^#\/?/,"").split("/");
+    const paths={learn:"studio",guided:"writing",articles:"reading",connect:"settings",lexicon:"phrasals",write:"writing",tenses:"studio"};
+    const page=paths[route]||route;
+    const pages={home,studio,lesson:()=>lesson(id),practice:()=>practice(id),placement,phrasals,word:()=>word(id),review,writing:()=>writing(id==="new"?undefined:id),reading:()=>reading(id==="new"?undefined:id),progress,settings};
+    root.replaceChildren(...(pages[page]||home)().flat().filter(Boolean));
+    document.querySelectorAll("nav a").forEach(a=>{const section=a.dataset.section;const active=section===page||section==="studio"&&["lesson","practice","phrasals","word","placement","reading"].includes(page)||section==="home"&&page==="progress";a.setAttribute("aria-current",active?"page":"false");});
+    document.title=(root.querySelector("h1")?.textContent||"Studio")+" · JFLT Coach";
+    window.scrollTo?.(0,0);
   }
-  if (!st.started_at) {
-    view.innerHTML = `${head}
-      <div class="panel"><p style="margin:0">${ses.minutes} minuti di scrittura e ${ses.review} di rilettura. Niente aiuti. Allo scadere il testo viene consegnato.</p></div>
-      <button id="start" class="full">Inizia</button>`;
-    $("#start").onclick = async () => { s.diag[sid] = { started_at: new Date().toISOString() }; await saveSettings(s); render(); };
-    return;
-  }
-  const start = new Date(st.started_at).getTime();
-  const writeEnd = start + ses.minutes * 60e3;
-  const end = writeEnd + ses.review * 60e3;
-  view.innerHTML = `${head}
-    <div class="row"><span class="grow small muted" id="phase">Scrittura</span><span class="timer" id="timer">--:--</span></div>
-    <textarea id="txt" class="sheet" lang="en" ${sheetAttrs} aria-label="Il tuo testo">${esc(rec.text)}</textarea>
-    <div class="row"><span class="wc grow" id="wc"></span><button id="submit">Consegna</button></div>`;
-  const wc = () => { const n = core.wordCount($("#txt").value); const el = $("#wc"); el.textContent = `${n} parole (richieste ${task.words[0]}-${task.words[1]})`; el.classList.toggle("out", n < task.words[0] || n > task.words[1]); };
-  wc();
-  const save = debounce(async (v) => { rec.text = v; await put("diag_texts", rec); }, 400);
-  $("#txt").oninput = (e) => { wc(); save(e.target.value); };
-  const submit = async (auto) => {
-    rec.text = $("#txt")?.value ?? rec.text;
-    rec.minutes_used = Math.min(Math.round((Date.now() - start) / 60e3), ses.minutes + ses.review);
-    rec.submitted_at = new Date().toISOString();
-    await put("diag_texts", rec);
-    const f = await getSettings(); f.diag[sid] = { ...f.diag[sid], submitted_at: rec.submitted_at, auto_submitted: auto }; await saveSettings(f);
-    toast(auto ? "Tempo scaduto: testo consegnato." : "Testo consegnato.");
-    render();
-  };
-  $("#submit").onclick = () => submit(false);
-  const tick = () => {
-    const now = Date.now();
-    const t = document.getElementById("timer");
-    if (!t) return;
-    const inWrite = now < writeEnd;
-    $("#phase").textContent = inWrite ? "Scrittura" : "Rilettura";
-    t.textContent = fmtTime((inWrite ? writeEnd : end) - now);
-    t.classList.toggle("low", !inWrite);
-    if (now >= end) { clearTimers(); submit(true); }
-  };
-  tick();
-  timers.push(setInterval(tick, 1000));
-}
-
-/* ---------- D5: profilo ---------- */
-async function screenProfile() {
-  const s = await loadState();
-  const missing = ["D1", "D2", "D3", "D4"].filter((id) => !diagDone(s, id));
-  if (missing.length) {
-    view.innerHTML = `<h2>Profilo (D5)</h2><div class="panel warn"><p style="margin:0">Completa prima: ${missing.join(", ")}.</p></div><a class="btn" href="#/diag">Torna al diagnostico</a>`;
-    return;
-  }
-  if (!s.profile) {
-    const p = pendingFor(s, "DIAG_EVAL");
-    view.innerHTML = `<h2>Profilo (D5)</h2>
-      <p>Il Tutor valuterà i due scritti con la griglia, giudicherà le risposte che l'app non riconosce e proporrà due o tre priorità.</p>
-      ${tutorNote()}
-      ${p ? `<a class="btn" href="#/req/${p.id}">Apri la richiesta in attesa</a>` : `<button id="mk">Prepara la richiesta di profilo</button>`}`;
-    $("#mk")?.addEventListener("click", async () => createRequest("DIAG_EVAL", await buildDiagEval(), { key: "DIAG_EVAL" }));
-    return;
-  }
-  const pr = s.profile;
-  const responses = Object.fromEntries((await all("diag_responses")).map((r) => [r.id, r]));
-  const stats = core.areaStats(DIAG_ITEMS, responses, pr.rulings);
-  const offer = s.feedback.find((f) => f.kind === "cards_offer" && f.task_id === "D5");
-  const focusDefault = core.focusToolFromProfile(pr, stats);
-  const plan = s.settings.plan;
-  const t3 = pr.texts.find((t) => t.text_id === "D3");
-  const t4 = pr.texts.find((t) => t.text_id === "D4");
-  const prios = pr.priorities.slice().sort((a, b) => a.rank - b.rank);
-  view.innerHTML = `
-    <h2>Profilo</h2>
-    <section class="panel">
-      <p style="margin:0"><span class="tag">Stima di scrittura</span> <strong style="font:600 22px var(--serif)">${esc(pr.stanag_estimate.range)}</strong> <span class="small muted">fiducia ${pr.stanag_estimate.confidence === "low" ? "bassa" : "media"}</span></p>
-      <p class="small" style="margin:8px 0 0">${esc(pr.stanag_estimate.basis_it)}</p>
-      <p class="small muted" style="margin:6px 0 0">Stima orientativa, non ufficiale.</p>
-    </section>
-    <h3>Priorità</h3>
-    <ol>${prios.map((p) => `<li><strong>${esc(p.kind === "grammar_tool" ? AREA_LABELS[p.tool] : CRITERION_LABELS[p.criterion])}</strong>: ${esc(p.issue_it)} <span class="small muted">${esc(p.why_it)}</span></li>`).join("")}</ol>
-    <p>Capacità di partenza: <strong>${pr.start_capability}</strong> (${esc(CAPABILITY_LABELS[pr.start_capability])}). <span class="small muted">${esc(pr.start_rationale_it)}</span></p>
-    ${plan ? `<div class="panel ok"><p style="margin:0">Priorità confermate: strumento ${esc(AREA_LABELS[plan.focus_tool])}, capacità ${plan.capability}.</p></div>` : `
-    <section class="panel next">
-      <label for="tool">Strumento da esercitare per primo</label>
-      <select id="tool">${core.AREAS.map((a) => `<option value="${a}" ${a === focusDefault ? "selected" : ""}>${esc(AREA_LABELS[a])}</option>`).join("")}</select>
-      <label for="cap">Capacità di scrittura</label>
-      <select id="cap">${core.CAPABILITIES.map((c) => `<option value="${c}" ${c === pr.start_capability ? "selected" : ""}>${c} · ${esc(CAPABILITY_LABELS[c])}</option>`).join("")}</select>
-      <button id="confirm" class="full" style="margin-top:14px">Conferma le priorità</button>
-    </section>`}
-    <h3>Griglia di scrittura</h3>
-    <table><thead><tr><th>Criterio</th><th class="num">D3</th><th class="num">D4</th></tr></thead><tbody>
-    ${Object.keys(CRITERION_LABELS).map((c) => `<tr><td>${esc(CRITERION_LABELS[c])}<details><summary class="small muted">motivazione</summary><p class="small">D3: ${esc(t3.rubric[c].evidence)}</p><p class="small">D4: ${esc(t4.rubric[c].evidence)}</p></details></td><td class="num">${t3.rubric[c].score}/4</td><td class="num">${t4.rubric[c].score}/4</td></tr>`).join("")}
-    </tbody></table>
-    <h3>Frasi per area</h3>
-    <table><thead><tr><th>Area</th><th class="num">Esatte</th><th></th><th class="num">Errori sicuri</th></tr></thead><tbody>
-    ${core.AREAS.map((a) => { const x = stats[a]; return `<tr><td>${esc(AREA_LABELS[a])}</td><td class="num">${x.correct}/${x.total}</td><td><div class="bar"><i style="width:${x.pct}%"></i></div></td><td class="num">${x.wrong_sure}</td></tr>`; }).join("")}
-    </tbody></table>
-    <p class="small muted">Errore sicuro = regola appresa in modo errato, priorità alta. Errore incerto = lacuna nota.</p>
-    <details><summary>Soluzioni del diagnostico</summary>
-      ${DIAG_ITEMS.map((it) => { const r = responses[it.id] || {}; let sc = r.score; if (sc === "unclear" && it.id in pr.rulings) sc = pr.rulings[it.id] ? "correct" : "wrong"; return `<div class="fix"><span class="small muted">${it.id} · ${esc(AREA_LABELS[it.area])}</span><div class="${sc === "correct" ? "mark-good" : "mark-bad"}">${sc === "correct" ? "Esatta" : "Da rivedere"}</div><div class="small">Tua: ${esc(r.marked_correct ? "(frase già corretta)" : r.text || "—")}</div><div class="small" lang="en">Riferimento: ${esc(it.answer)}</div></div>`; }).join("")}
-    </details>
-    ${renderCardOffer(offer)}`;
-  $("#confirm")?.addEventListener("click", async () => {
-    const f = await getSettings();
-    f.plan = { focus_tool: $("#tool").value, capability: $("#cap").value, confirmed_at: new Date().toISOString() };
-    await saveSettings(f);
-    toast("Priorità confermate.");
-    location.hash = "#/home";
-  });
-  bindCardOffer(offer);
-}
-
-function renderCardOffer(offer) {
-  if (!offer || !offer.card_candidates?.length) return "";
-  if (offer.decided) return `<p class="small muted">Flashcard: ${offer.kept} salvate su ${offer.card_candidates.length} proposte.</p>`;
-  return `<h3>Flashcard proposte</h3>
-    <p class="small muted">Nascono solo da errori sistematici. Scegli tu quali tenere: nessuna è selezionata in automatico.</p>
-    ${offer.card_candidates.map((c, i) => `<label class="checkline"><input type="checkbox" data-card="${i}"><span><span lang="en">${esc(c.front)}</span><br><span class="small muted">${esc(c.back)}</span></span></label>`).join("")}
-    <button class="ghost" id="cards-save">Salva le flashcard scelte</button>`;
-}
-function bindCardOffer(offer) {
-  $("#cards-save")?.addEventListener("click", async () => {
-    const chosen = $$("[data-card]").filter((x) => x.checked).map((x) => offer.card_candidates[+x.dataset.card]);
-    for (const c of chosen) await put("cards", { id: core.makeId("card"), ...c, created_at: new Date().toISOString(), source: offer.task_id });
-    offer.decided = true; offer.kept = chosen.length;
-    await put("feedback", offer);
-    toast(`${chosen.length} flashcard salvate. Apri Studio → Ripasso.`);
-    render();
-  });
-}
-
-/* ---------- Grammatica ---------- */
-async function screenGrammarNew(recovery = false) {
-  const s = await getSettings();
-  const tool = s.plan?.focus_tool || "tenses";
-  view.innerHTML = `<h2>${recovery ? "Esercitazione mirata" : "Nuovi esercizi"}</h2>
-    ${recovery ? `<div class="panel warn"><p style="margin:0">Lo strumento è tornato in esercitazione dopo la verifica del trasferimento. Gli esercizi si concentreranno sui tuoi errori recenti.</p></div>` : ""}
-    <label for="tool">Strumento</label>
-    <select id="tool">${core.AREAS.map((a) => `<option value="${a}" ${a === tool ? "selected" : ""}>${esc(AREA_LABELS[a])}</option>`).join("")}</select>
-    <label>Tipo</label>
-    <div class="seg" role="group"><button type="button" data-p="practice" aria-pressed="true">Esercitazione (6)</button><button type="button" data-p="check" aria-pressed="false">Verifica (10)</button></div>
-    ${tutorNote()}
-    <button id="mk" class="full">Prepara la richiesta</button>`;
-  let purpose = "practice";
-  $$("[data-p]").forEach((b) => (b.onclick = () => { purpose = b.dataset.p; $$("[data-p]").forEach((x) => x.setAttribute("aria-pressed", x === b)); }));
-  $("#mk").onclick = async () => {
-    const t = $("#tool").value;
-    const cap = s.plan?.capability || "A2";
-    const seen = (await all("grammar_sets")).filter((g) => g.tool === t).flatMap((g) => g.items.map((i) => i.stem));
-    const data = {
-      tool: t, capability: cap, purpose, n_items: purpose === "check" ? 10 : 6,
-      ...(recovery ? { recovery: { reason_it: "Lo strumento è tornato in esercitazione dopo esiti deboli nel trasferimento.", transfer_history: (await all("transfer_checks")).filter((c) => c.tool === t).map(({ date, verdict, n, correct, wrong }) => ({ date, verdict, n, correct, wrong })) } } : {}),
-      recent_errors: (await recentErrors()).filter((e) => !e.tool || e.tool === t),
-      already_seen: seen, ...knowledgeFor({ tool: t, capability: cap })
-    };
-    createRequest("GRAMMAR", data, { key: `GRAMMAR:${t}` });
-  };
-}
-
-async function screenGrammarSet(id) {
-  const set = await get("grammar_sets", id);
-  if (!set) { view.innerHTML = `<p>Serie non trovata.</p>`; return; }
-  const answers = Object.fromEntries((await all("grammar_answers")).filter((a) => a.set_id === id).map((a) => [a.item_id, a]));
-  const ref = set.book_ref && BOOK_REFS.find((b) => b.ref_id === set.book_ref.ref_id);
-  const errata = ref ? ERRATA.filter((e) => e.tags.includes(ref.ref_id)) : [];
-  const answered = set.items.filter((i) => answers[i.id]?.final);
-  const firstSix = set.items.slice(0, 6).map((i) => answers[i.id]?.final).filter(Boolean);
-  const stop = firstSix.filter((x) => x === "wrong").length >= 3;
-  const limit = stop ? Math.max(4, answered.length) : set.items.length;
-  const finished = answered.length >= limit;
-
-  if (finished && set.status !== "done") {
-    const correct = answered.filter((i) => answers[i.id].final === "correct").length;
-    set.status = "done"; set.score = { correct, total: answered.length, stopped: stop, date: new Date().toISOString() };
-    await put("grammar_sets", set);
-  }
-
-  const itemHtml = (it, i) => {
-    const a = answers[it.id];
-    if (i >= limit && !a) return "";
-    let res = "";
-    if (a?.final) res = `<p class="${a.final === "correct" ? "mark-good" : "mark-bad"}">${a.final === "correct" ? "Esatta" : "Sbagliata"}${a.self_judged ? " (giudicata da te)" : ""}</p><p class="small" lang="en">Soluzione: ${esc(it.answer)}</p><p class="small">${esc(it.explanation_it)}</p>`;
-    else if (a?.auto === "unclear") res = `<div class="panel warn"><p class="small">La tua risposta non coincide con le soluzioni previste. Soluzione: <span lang="en">${esc(it.answer)}</span>${it.accept.length > 1 ? ` (accettate anche: ${esc(it.accept.filter((x) => x !== it.answer).join("; "))})` : ""}.</p><p class="small">${esc(it.explanation_it)}</p><div class="row"><button class="ghost" data-judge="correct" data-id="${it.id}">Era equivalente</button><button class="ghost" data-judge="wrong" data-id="${it.id}">Era sbagliata</button></div></div>`;
-    return `<section class="panel" id="it-${it.id}">
-      <p class="small muted">${i + 1}. ${esc(it.instruction_it)}</p>
-      <p class="stem" lang="en">${esc(it.stem)}</p>
-      <textarea class="answer" data-ans="${it.id}" lang="en" ${sheetAttrs} ${a ? "disabled" : ""}>${esc(a?.text || "")}</textarea>
-      ${a ? res : `<button class="ghost" data-check="${it.id}" style="margin-top:8px">Controlla</button>`}
-    </section>`;
-  };
-
-  view.innerHTML = `
-    <h2>${esc(AREA_LABELS[set.tool])}</h2>
-    <p class="small muted">${set.purpose === "check" ? "Verifica" : "Esercitazione"} · ${set.items.length} esercizi · disponibile offline</p>
-    <section class="panel"><p style="margin:0">${esc(set.explanation_it)}</p>
-    ${ref ? `<p class="small" style="margin:8px 0 0">Libro: ${esc(ref.book)} p. ${esc(ref.pages)}${ref.unit ? `, unità ${esc(ref.unit)}` : ""} <span class="tag ${ref.page_status === "verified" ? "ok" : "warn"}">${STATUS_LABELS[ref.page_status]}</span> <span class="tag">${RELIABILITY_LABELS[ref.reliability]}</span></p>
-    ${errata.map((e) => `<p class="small" style="margin:6px 0 0"><span class="tag err">errata ${e.id}</span> ${esc(e.quote)} → ${esc(e.fix)}</p>`).join("")}` : ""}</section>
-    ${stop ? `<div class="panel warn"><p style="margin:0">Tre errori nelle prime sei risposte: fermati con gli esercizi nuovi e rileggi la spiegazione. Il tempo che resta serve a capire le correzioni.</p></div>` : ""}
-    ${set.items.map(itemHtml).join("")}
-    ${set.status === "done" ? `<div class="panel ok"><p style="margin:0">Serie completata: ${set.score.correct} su ${set.score.total}.${set.purpose === "check" && set.score.total === 10 ? (set.score.correct >= 9 ? " Verifica superata (regola dell'app, non soglia STANAG)." : " Verifica non superata.") : ""}</p></div><a class="btn" href="#/home">Torna a Oggi</a>` : ""}`;
-
-  $$("[data-check]").forEach((b) => (b.onclick = async () => {
-    const it = set.items.find((x) => x.id === b.dataset.check);
-    const text = $(`[data-ans="${it.id}"]`).value;
-    const auto = core.scoreItem({ type: it.type, already_correct: null, accept: it.accept, stem: it.stem }, { text });
-    await put("grammar_answers", { id: `${id}:${it.id}`, set_id: id, item_id: it.id, text, auto, final: auto === "unclear" ? null : auto, date: new Date().toISOString() });
-    await render();
-    document.getElementById(`it-${it.id}`)?.scrollIntoView({ block: "center" });
-  }));
-  $$("[data-judge]").forEach((b) => (b.onclick = async () => {
-    const a = answers[b.dataset.id];
-    a.final = b.dataset.judge; a.self_judged = true;
-    await put("grammar_answers", a);
-    render();
-  }));
-}
-
-/* ---------- Scritti ---------- */
-async function screenWriteList() {
-  const s = await loadState();
-  const rows = [
-    ...["D3", "D4"].filter((id) => diagDone(s, id)).map((id) => ({ id, title: `${id} · ${DIAG_TASKS[id].text_type === "note" ? "Email" : "Rapporto"} del diagnostico`, stage: id === "D4" ? (diagDone(s, "D6") ? "rewritten" : "feedback") : "done", href: id === "D4" ? "#/task/D4" : "#/diag/D3" })),
-    ...s.tasks.map((t) => ({ id: t.id, title: `${t.capability} · ${CAPABILITY_LABELS[t.capability]}`, stage: taskStage(t, s.texts, s.feedback), href: `#/task/${t.id}` }))
-  ];
-  view.innerHTML = `<h2>Scritti</h2>
-    <p><a class="btn" href="#/guided/new">Laboratorio passo passo o simulazione</a></p>
-    ${rows.length ? `<ul class="steps">${rows.map((r) => `<li class="${r.stage === "done" ? "done" : ""}"><span class="dot">${r.stage === "done" ? "✓" : ""}</span><a href="${r.href}">${esc(r.title)}</a><span class="small muted">${STAGE_LABELS[r.stage] || ""}</span></li>`).join("")}</ul>` : `<p class="muted">Ancora nessuno scritto. Il primo arriva con il diagnostico.</p>`}
-    ${s.settings.plan ? `<a class="btn" href="#/write/new" style="margin-top:12px">Nuova consegna</a>` : ""}`;
-}
-
-async function screenWriteNew() {
-  const s = await getSettings();
-  const cap = s.plan?.capability || "A2";
-  view.innerHTML = `<h2>Nuova consegna</h2>
-    <label for="cap">Capacità</label>
-    <select id="cap">${core.CAPABILITIES.map((c) => `<option value="${c}" ${c === cap ? "selected" : ""}>${c} · ${esc(CAPABILITY_LABELS[c])}</option>`).join("")}</select>
-    <label for="tt">Tipo di testo (intervalli di allenamento: verifica la consegna del tuo JFLT)</label>
-    <select id="tt"><option value="note">Nota o email, 50-100 parole</option><option value="report_letter" selected>Rapporto o lettera formale, 150-250 parole</option><option value="essay">Saggio, 250-500 parole (stesura in due sessioni)</option></select>
-    ${tutorNote()}
-    <button id="mk" class="full">Prepara la richiesta</button>`;
-  $("#mk").onclick = async () => {
-    const st = await loadState();
-    const c = $("#cap").value;
-    const tt = $("#tt").value;
-    const words = { note: [50, 100], report_letter: [150, 250], essay: [250, 500] }[tt];
-    const data = {
-      capability: c, capability_label: CAPABILITY_LABELS[c], text_type: tt, words, draft_sessions: words[1] > 250 ? 2 : 1,
-      profile_priorities: st.profile?.priorities || [], recent_errors: await recentErrors(),
-      ...knowledgeFor({ capability: c, tool: st.settings.plan?.focus_tool })
-    };
-    createRequest("WRITE_PLAN", data, { key: "WRITE_PLAN" });
-  };
-}
-
-async function diagTaskAsTask(id) {
-  const t = DIAG_TASKS[id];
-  return { id, diag: true, capability: "A4", text_type: t.text_type, prompt_en: t.prompt_en, words: t.words, content_points: t.content_points, checklist_it: [], draft_sessions: 1 };
-}
-
-async function transferToolFor(s) {
-  const tool = s.settings.plan?.focus_tool;
-  if (!tool) return null;
-  return s.sets.some((g) => g.tool === tool && g.status === "done") ? tool : null;
-}
-
-function toolStatus(checks, tool) {
-  const seq = checks.filter((c) => c.tool === tool).sort((a, b) => a.date.localeCompare(b.date)).map((c) => c.verdict);
-  return core.transferStatus(seq);
-}
-
-async function screenTask(id) {
-  const s = await loadState();
-  const isDiag = id === "D4";
-  const task = isDiag ? await diagTaskAsTask("D4") : s.tasks.find((t) => t.id === id);
-  if (!task) { view.innerHTML = `<p>Scritto non trovato.</p>`; return; }
-  if (isDiag && !s.profile) { view.innerHTML = `<h2>D6</h2><div class="panel warn"><p style="margin:0">La riscrittura di D4 si fa dopo il profilo (D5).</p></div>`; return; }
-
-  let draft = s.texts.find((t) => t.id === `${id}:draft`);
-  if (isDiag) { const d4 = await get("diag_texts", "D4"); draft = { id: "D4:draft", text: d4?.text || "", submitted_at: d4?.submitted_at }; }
-  else draft ||= { id: `${id}:draft`, task_id: id, version: "draft", text: "", parts: [] };
-  let rewrite = s.texts.find((t) => t.id === `${id}:rewrite`) || { id: `${id}:rewrite`, task_id: id, version: "rewrite", text: "" };
-
-  // Correzione: per D4 viene dal profilo, per gli altri dal Tutor.
-  let fb = s.feedback.filter((f) => f.task_id === id && f.kind === "feedback").sort((a, b) => a.date.localeCompare(b.date)).pop();
-  if (isDiag) {
-    const t4 = s.profile.texts.find((t) => t.text_id === "D4");
-    fb = { diag: true, payload: { rubric: t4.rubric, errors: t4.errors, alternatives: [], priorities: s.profile.priorities.slice().sort((a, b) => a.rank - b.rank).map((p) => ({ criterion: p.criterion || "grammar", label: p.kind === "grammar_tool" ? AREA_LABELS[p.tool] : CRITERION_LABELS[p.criterion], issue_it: p.issue_it, why_it: p.why_it })), rewrite_request_it: "Riscrivi il rapporto applicando le priorità del profilo. Conserva le tue idee.", stanag_estimate: null, transfer: null } };
-  }
-  const model = s.feedback.find((f) => f.task_id === id && f.kind === "model");
-  const stage = isDiag ? (model ? "done" : rewrite.saved_at ? "rewritten" : "feedback") : taskStage(task, s.texts, s.feedback);
-  const parts = draft.parts || [];
-  const sessionsDone = parts.filter((p) => p.ended_at).length;
-
-  const consegna = `
-    <h2>${isDiag ? "D6 · Riscrittura di D4" : `Scritto ${esc(task.capability)}`}</h2>
-    <p class="task" lang="en">${esc(task.prompt_en)}</p>
-    <p class="small muted">${task.words[0]}-${task.words[1]} parole${task.draft_sessions === 2 ? " · stesura in due sessioni" : ""}</p>
-    <ul class="small">${task.content_points.map((c) => `<li lang="en">${esc(c)}</li>`).join("")}</ul>
-    ${task.checklist_it?.length ? `<details><summary>Checklist</summary><ul class="small">${task.checklist_it.map((c) => `<li>${esc(c)}</li>`).join("")}</ul></details>` : ""}`;
-
-  let body = "";
-  if (!isDiag && ["plan", "draft"].includes(stage)) {
-    body += `
-      <h3>Modello breve</h3>
-      <div class="panel model" lang="en">${esc(task.model_excerpt_en)}</div>
-      ${task.observation_questions_it.map((q, i) => `<label for="obs${i}">${esc(q)}</label><textarea class="answer" id="obs${i}" data-obs="${i}">${esc(task.observations?.[i] || "")}</textarea>`).join("")}
-      <h3>Scaletta</h3>
-      <textarea class="answer" id="outline" lang="en" ${sheetAttrs} placeholder="Un punto per riga">${esc(task.outline || "")}</textarea>
-      <h3>Stesura${task.draft_sessions === 2 ? ` · sessione ${Math.min(sessionsDone + 1, 2)} di 2` : ""}</h3>
-      <p class="small muted">15 minuti a tempo, senza dizionario né correttore. Il testo si salva da solo.</p>
-      <div class="row"><button class="ghost" id="tstart">${parts.some((p) => !p.ended_at) ? "Sessione in corso" : "Avvia il timer"}</button><span class="grow"></span><span class="timer" id="timer"></span></div>
-      <textarea id="draft" class="sheet" lang="en" ${sheetAttrs} aria-label="Stesura">${esc(draft.text)}</textarea>
-      <div class="row"><span class="wc grow" id="wc"></span>
-        ${task.draft_sessions === 2 && sessionsDone < 1 ? `<button class="ghost" id="endpart">Chiudi la sessione 1</button>` : ""}
-        <button id="submitdraft">Consegna la stesura</button></div>`;
-  } else if (!isDiag) {
-    body += `<h3>Stesura consegnata</h3><div class="panel model" lang="en">${esc(draft.text)}</div><p class="small muted">${core.wordCount(draft.text)} parole</p>`;
-  } else {
-    body += `<h3>Il tuo rapporto D4</h3><div class="panel model" lang="en">${esc(draft.text)}</div>`;
-  }
-
-  if (stage === "submitted") {
-    const p = pendingFor(s, `WRITE_FEEDBACK:${id}`);
-    body += `<h3>Correzione</h3>${tutorNote()}${p ? `<a class="btn" href="#/req/${p.id}">Apri la richiesta in attesa</a>` : `<button id="askfb">Chiedi la correzione</button>`}`;
-  }
-
-  if (fb && ["feedback", "rewritten", "done"].includes(stage)) {
-    const p = fb.payload;
-    body += `
-      <h3>Correzione${fb.diag ? " (dal profilo)" : ""}</h3>
-      <section class="panel"><p class="small muted" style="margin-top:0">Priorità</p>
-        <ol>${p.priorities.map((x) => `<li><strong>${esc(x.label || CRITERION_LABELS[x.criterion])}</strong>: ${esc(x.issue_it)} <span class="small muted">${esc(x.why_it)}</span></li>`).join("")}</ol></section>
-      <section class="panel"><p class="small muted" style="margin-top:0">Errori, con correzione minima</p>
-        ${p.errors.map((e) => `<div class="fix"><span class="was" lang="en">${esc(e.quote)}</span><span class="now" lang="en">${esc(e.minimal_fix)}</span><div class="why">${esc(e.rule_it)}${e.systematic ? ` <span class="tag err">ricorrente</span>` : ""}</div></div>`).join("") || `<p class="small">Nessun errore effettivo.</p>`}</section>
-      ${p.alternatives.length ? `<section class="panel alt"><p class="small muted" style="margin-top:0">Alternative di stile (non sono errori)</p>${p.alternatives.map((a) => `<div class="fix"><span lang="en">${esc(a.quote)}</span><span class="now" lang="en">${esc(a.option)}</span><div class="why">${esc(a.note_it)}</div></div>`).join("")}</section>` : ""}
-      ${fb.transfer ? `<section class="panel ${fb.transfer.verdict === "confirmed" ? "ok" : fb.transfer.verdict === "not_acquired" ? "err" : "warn"}" id="transfer"><p style="margin:0"><strong>Trasferimento · ${esc(AREA_LABELS[fb.transfer.tool])}</strong>: ${fb.transfer.correct} corretti su ${fb.transfer.n} usi.</p><p class="small" style="margin:6px 0 0">${esc(core.VERDICT_LABELS[fb.transfer.verdict])}</p><p class="small muted" style="margin:6px 0 0">Stato dello strumento: ${TOOL_STATUS[toolStatus(s.checks, fb.transfer.tool)]}</p></section>` : ""}
-      ${p.stanag_estimate ? `<p class="small">Stima orientativa: <strong>${esc(p.stanag_estimate.range)}</strong>. ${esc(p.stanag_estimate.basis_it)}</p>` : ""}
-      ${fb.diag ? "" : renderCardOffer(fb)}
-      <h3>Riscrittura</h3>
-      <p>${esc(p.rewrite_request_it)}</p>
-      <textarea id="rewrite" class="sheet" lang="en" ${sheetAttrs} aria-label="Riscrittura" ${stage === "done" ? "readonly" : ""}>${esc(rewrite.text || draft.text)}</textarea>
-      <div class="row"><span class="wc grow" id="wc2"></span>${stage === "done" ? "" : `<button id="saverw">Salva la riscrittura</button>`}</div>`;
-  }
-
-  if (stage === "rewritten") {
-    const p = pendingFor(s, `WRITE_MODEL:${id}`);
-    body += `<h3>Testo modello</h3><p class="small muted">Il modello completo si vede solo dopo la tua riscrittura.</p>${tutorNote()}${p ? `<a class="btn" href="#/req/${p.id}">Apri la richiesta in attesa</a>` : `<button id="askmodel">Chiedi il modello</button>`}`;
-  }
-  if (model) {
-    const m = model.payload;
-    body += `<h3>Confronto e modello</h3>
-      ${m.improvements_it.length ? `<p class="small muted">Migliorato</p><ul>${m.improvements_it.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
-      ${m.still_open_it.length ? `<p class="small muted">Ancora da lavorare</p><ul>${m.still_open_it.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
-      <div class="panel model" lang="en" id="modeltext">${esc(m.model_text_en)}</div>`;
-  }
-
-  view.innerHTML = consegna + body;
-
-  // Pianificazione e stesura
-  if ($("#draft")) {
-    const wc = () => { const n = core.wordCount($("#draft").value); const el = $("#wc"); el.textContent = `${n} parole (${task.words[0]}-${task.words[1]})`; el.classList.toggle("out", n < task.words[0] || n > task.words[1]); };
-    wc();
-    const saveDraft = debounce(async (v) => { draft.text = v; await put("texts", draft); }, 400);
-    $("#draft").oninput = (e) => { wc(); saveDraft(e.target.value); };
-    $("#outline").oninput = debounce(async (e) => { task.outline = e.target.value; await put("tasks", task); }, 400);
-    $$("[data-obs]").forEach((el) => (el.oninput = debounce(async () => { task.observations[+el.dataset.obs] = el.value; await put("tasks", task); }, 400)));
-    const running = parts.find((p) => !p.ended_at);
-    const runTimer = (p) => {
-      const end = new Date(p.started_at).getTime() + 15 * 60e3;
-      const tick = () => { const t = document.getElementById("timer"); if (!t) return; const left = end - Date.now(); t.textContent = fmtTime(left); t.classList.toggle("low", left < 120e3); };
-      tick(); timers.push(setInterval(tick, 1000));
-    };
-    if (running) runTimer(running);
-    $("#tstart").onclick = async () => {
-      if (parts.some((p) => !p.ended_at)) return;
-      const p = { session: parts.length + 1, started_at: new Date().toISOString() };
-      draft.parts = [...parts, p]; await put("texts", draft); parts.push(p); runTimer(p);
-      $("#tstart").textContent = "Sessione in corso";
-    };
-    $("#endpart")?.addEventListener("click", async () => {
-      const p = draft.parts?.find((x) => !x.ended_at) || { session: 1, started_at: new Date().toISOString() };
-      p.ended_at = new Date().toISOString(); p.words = core.wordCount($("#draft").value);
-      draft.text = $("#draft").value;
-      draft.parts = [...(draft.parts || []).filter((x) => x !== p && x.session !== p.session), p];
-      await put("texts", draft); toast("Sessione 1 chiusa. Riprendi con la sessione 2."); render();
-    });
-    $("#submitdraft").onclick = async () => {
-      draft.text = $("#draft").value;
-      if (!draft.text.trim()) { toast("Il testo è vuoto."); return; }
-      if (task.draft_sessions === 2 && sessionsDone < 1 && !confirm("È prevista una seconda sessione di stesura. Consegnare comunque?")) return;
-      (draft.parts || []).forEach((p) => { if (!p.ended_at) { p.ended_at = new Date().toISOString(); p.words = core.wordCount(draft.text); } });
-      draft.submitted_at = new Date().toISOString();
-      await put("texts", draft); toast("Stesura consegnata."); render();
-    };
-  }
-  $("#askfb")?.addEventListener("click", async () => {
-    const st = await loadState();
-    const tool = await transferToolFor(st);
-    const data = {
-      text_id: id, version: "draft",
-      task: { prompt_en: task.prompt_en, text_type: task.text_type, words: task.words, content_points: task.content_points, checklist_it: task.checklist_it, capability: task.capability },
-      text: draft.text, word_count: core.wordCount(draft.text), outline: task.outline || "",
-      transfer_tool: tool, profile_priorities: st.profile?.priorities || [], recent_errors: await recentErrors(),
-      ...knowledgeFor({ capability: task.capability, tool })
-    };
-    createRequest("WRITE_FEEDBACK", data, { key: `WRITE_FEEDBACK:${id}`, task_id: id });
-  });
-  if ($("#rewrite")) {
-    const wc2 = () => { const n = core.wordCount($("#rewrite").value); $("#wc2").textContent = `${n} parole`; };
-    wc2();
-    $("#rewrite").oninput = wc2;
-    $("#saverw")?.addEventListener("click", async () => {
-      rewrite.text = $("#rewrite").value; rewrite.saved_at = new Date().toISOString();
-      await put("texts", rewrite);
-      if (isDiag) { const f = await getSettings(); f.diag.D6 = { submitted_at: rewrite.saved_at }; await saveSettings(f); }
-      toast("Riscrittura salvata."); render();
-    });
-    if (!fb.diag) bindCardOffer(fb);
-  }
-  $("#askmodel")?.addEventListener("click", async () => {
-    const data = {
-      text_id: id, task: { prompt_en: task.prompt_en, text_type: task.text_type, words: task.words, content_points: task.content_points },
-      draft_text: draft.text, rewrite_text: rewrite.text,
-      feedback: { priorities: fb.payload.priorities, errors: fb.payload.errors.map(({ quote, minimal_fix, rule_it }) => ({ quote, minimal_fix, rule_it })) },
-      ...knowledgeFor({ capability: task.capability })
-    };
-    createRequest("WRITE_MODEL", data, { key: `WRITE_MODEL:${id}`, task_id: id });
-  });
-}
-
-/* ---------- Richieste ---------- */
-async function screenRequests() {
-  const reqs = (await all("requests")).sort((a, b) => b.created_at.localeCompare(a.created_at));
-  const pend = reqs.filter((r) => r.status === "pending");
-  const done = reqs.filter((r) => r.status !== "pending");
-  const li = (r) => `<li class="${r.status === "pending" ? "wait" : "done"}"><span class="dot">${r.status === "pending" ? "" : "✓"}</span><a href="#/req/${r.id}">${esc(MODE_LABELS[r.mode])}</a><span class="small muted">${fmtDate(r.created_at)}</span></li>`;
-  view.innerHTML = `<h2>Tutor</h2>
-    <p class="muted">Le richieste del percorso precedente restano qui. Configura il collegamento automatico per inviarle e importare la correzione senza copia-incolla.</p><a class="btn" href="#/connect">Tutor automatico</a><a class="btn ghost" href="#/learn">Nuovo Studio</a>
-    ${!online() ? `<div class="panel warn"><p style="margin:0">Sei offline: le richieste restano in attesa. Esercizi già importati, diagnostico e scrittura funzionano normalmente.</p></div>` : ""}
-    <h3>In attesa</h3>${pend.length ? `<ul class="steps">${pend.map(li).join("")}</ul>` : `<p class="small muted">Nessuna richiesta in attesa.</p>`}
-    <a class="btn ghost" href="#/import">Incolla una risposta</a>
-    ${done.length ? `<h3>Completate</h3><ul class="steps">${done.slice(0, 20).map(li).join("")}</ul>` : ""}`;
-}
-
-async function screenRequest(id) {
-  const req = await get("requests", id);
-  if (!req) { view.innerHTML = `<p>Richiesta non trovata.</p>`; return; }
-  const s = await getSettings();
-  const msg = core.buildMessage(req, { tutorPrompt: TUTOR_PROMPT, includeInstructions: s.include_instructions });
-  view.innerHTML = `
-    <h2>${esc(MODE_LABELS[req.mode])}</h2>
-    <p class="small muted">Richiesta ${esc(req.request_id)} · ${fmtDate(req.created_at)} · <span class="tag ${req.status === "pending" ? "warn" : "ok"}">${req.status === "pending" ? "in attesa" : "importata"}</span></p>
-    ${req.status === "pending" ? `
-      <div class="panel"><p>Invio diretto al tutor Groq tramite il tuo Worker.</p><button id="send-ai" ${sendingLegacy.has(req.id)?"disabled":""}>${sendingLegacy.has(req.id)?"Tutor al lavoro…":"Invia e importa automaticamente"}</button><a href="#/connect">Configura collegamento</a></div>
-      ${!online() ? `<div class="panel warn"><p style="margin:0">Sei offline. La richiesta è salvata: copiala e inviala quando torni in linea.</p></div>` : ""}
-      <h3>1. Copia il messaggio</h3>
-      <p class="small muted">${s.include_instructions ? "Contiene le istruzioni complete del Tutor: funziona anche in una chat nuova." : "Senza istruzioni: usalo in un progetto ChatGPT che le ha già."}</p>
-      <textarea class="code" id="msg" readonly>${esc(msg)}</textarea>
-      <div class="row" style="margin-top:8px"><button id="copy">Copia messaggio</button><a class="btn ghost" href="https://chatgpt.com/" target="_blank" rel="noopener">Apri ChatGPT</a></div>
-      <h3>2. Incolla la risposta</h3>
-      <textarea class="code" id="resp" placeholder="Incolla qui il JSON del Tutor"></textarea>
-      <div class="row" style="margin-top:8px"><button class="ghost" id="paste">Incolla dagli appunti</button><button id="check">Controlla la risposta</button></div>
-      <div id="out"></div>` : `<div class="panel ok"><p style="margin:0">Importata il ${fmtDate(req.answered_at)}.</p></div><details><summary>Messaggio inviato</summary><textarea class="code" readonly>${esc(msg)}</textarea></details>`}`;
-  if (req.status !== "pending") return;
-  $("#send-ai").onclick=async()=>{const b=$("#send-ai");b.disabled=true;try{await sendLegacy(req);}catch(e){toast(e.message);}finally{if(b.isConnected)b.disabled=false;}};
-  $("#copy").onclick = async () => toast((await copyText(msg)) ? "Messaggio copiato." : "Copia non riuscita: seleziona il testo a mano.");
-  $("#paste").onclick = async () => {
-    try { $("#resp").value = await navigator.clipboard.readText(); } catch { toast("Lettura degli appunti non consentita: incolla a mano."); }
-  };
-  $("#check").onclick = () => checkAndImport($("#resp").value, req);
-}
-
-async function checkAndImport(text, fixedReq) {
-  const out = $("#out");
-  let obj;
-  try { obj = core.extractJson(text); } catch (e) { out.innerHTML = `<div class="panel err"><p style="margin:0">${esc(e.message)}</p></div>`; return; }
-  let req = fixedReq;
-  if (!req) {
-    req = await get("requests", obj.request_id);
-    if (!req) { out.innerHTML = `<div class="panel err"><p style="margin:0">Nessuna richiesta con request_id ${esc(obj.request_id)}. Controlla di aver incollato la risposta giusta.</p></div>`; return; }
-    if (req.status !== "pending") { out.innerHTML = `<div class="panel err"><p style="margin:0">Questa risposta è già stata importata.</p></div>`; return; }
-  }
-  const r = core.validateResponse(obj, req);
-  if (!r.ok) {
-    out.innerHTML = `<div class="panel err"><p>La risposta non è valida. Copia questi errori nella chat e chiedi al Tutor di correggere il JSON:</p><ul class="errors" id="errlist">${r.errors.map((e) => `<li>${esc(e)}</li>`).join("")}</ul><button class="ghost" id="copyerr">Copia gli errori</button></div>`;
-    $("#copyerr").onclick = async () => { await copyText(`Il JSON non è valido per jflt-coach/v2. Correggi questi punti e restituisci di nuovo SOLO il JSON:\n- ${r.errors.join("\n- ")}`); toast("Errori copiati."); };
-    return;
-  }
-  out.innerHTML = `<div class="panel ok"><p>${esc(previewResponse(obj))}</p>${obj.questions.length ? `<p class="small">Domande del Tutor: ${obj.questions.map(esc).join(" · ")}</p>` : ""}<button id="doimport">Importa</button></div>`;
-  $("#doimport").onclick = async () => { const target = await applyResponse(obj, req); toast("Risposta importata."); location.hash = target; };
-}
-
-async function screenImport() {
-  view.innerHTML = `<h2>Incolla una risposta</h2>
-    <p class="muted">L'app riconosce la richiesta dal request_id.</p>
-    <textarea class="code" id="resp" placeholder="Incolla qui il JSON del Tutor"></textarea>
-    <div class="row" style="margin-top:8px"><button class="ghost" id="paste">Incolla dagli appunti</button><button id="check">Controlla la risposta</button></div>
-    <div id="out"></div>`;
-  $("#paste").onclick = async () => { try { $("#resp").value = await navigator.clipboard.readText(); } catch { toast("Lettura degli appunti non consentita: incolla a mano."); } };
-  $("#check").onclick = () => checkAndImport($("#resp").value, null);
-}
-
-/* ---------- Altro: backup, impostazioni, libri, laboratorio ---------- */
-async function exportData() {
-  await studio.flush();
-  const stores = {};
-  for (const s of core.STORES) stores[s] = await all(s);
-  const backup = { format: core.BACKUP_FORMAT, exported_at: new Date().toISOString(), app_version: core.APP_VERSION, stores };
-  const json = JSON.stringify(backup, null, 1);
-  const name = `jflt-coach-backup-${core.todayISO()}.json`;
-  const file = new File([json], name, { type: "application/json" });
-  let shared = false;
-  if (navigator.canShare?.({ files: [file] })) {
-    try { await navigator.share({ files: [file], title: name }); shared = true; } catch (e) { if (e.name === "AbortError") return false; }
-  }
-  if (!shared) {
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(file); a.download = name; document.body.appendChild(a); a.click();
-    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
-  }
-  const s = await getSettings(); s.last_export = backup.exported_at; await saveSettings(s);
-  return backup;
-}
-
-// Ripristino atomico: una sola transazione su tutti gli archivi. Se un record non
-// può essere scritto la transazione viene annullata e i dati precedenti restano intatti.
-async function restoreData(obj) {
-  await studio.flush();
-  const v = core.validateBackup(obj);
-  if (!v.ok) throw new Error(`backup non valido: ${v.errors.join("; ")}`);
-  if (memory) {
-    const next = {};
-    for (const name of core.STORES) next[name] = Object.fromEntries(obj.stores[name].map((r) => [r.id, structuredClone(r)]));
-    memory = next; // sostituzione solo a copia riuscita
-    return;
-  }
-  await new Promise((resolve, reject) => {
-    let tx;
-    try { tx = db.transaction(core.STORES, "readwrite"); } catch (e) { reject(e); return; }
-    tx.oncomplete = () => resolve();
-    tx.onabort = () => reject(tx.error || new Error("ripristino annullato"));
-    try {
-      for (const name of core.STORES) {
-        const st = tx.objectStore(name);
-        st.clear();
-        for (const r of obj.stores[name]) st.put(r);
-      }
-    } catch (e) {
-      try { tx.abort(); } catch {}
-      reject(e);
-    }
-  });
-}
-
-async function screenMore() {
-  const s = await loadState();
-  const tools = [...new Set(s.checks.map((c) => c.tool))];
-  const cards = await all("cards");
-  view.innerHTML = `<h2>Altro</h2>
-    <div class="row"><a class="btn" href="#/connect">Tutor automatico</a><a class="btn ghost" href="#/learn">Studio</a><a class="btn ghost" href="#/diag">Diagnostico</a></div>
-    <h3>Backup</h3>
-    <p class="small muted">${s.settings.last_export ? `Ultimo backup: ${fmtDate(s.settings.last_export)}.` : "Nessun backup finora."} Il file contiene tutti i dati dell'app; salvalo su File o iCloud.</p>
-    <div class="row"><button id="exp">Esporta i dati</button><label class="btn ghost" for="imp" style="margin:0">Ripristina da file</label><input type="file" id="imp" accept="application/json,.json" hidden></div>
-    <div id="restore"></div>
-    <h3>Tutor</h3><p><a href="#/requests">Richieste e risposte del percorso precedente</a></p>
-    <label for="slp">Profilo SLP attuale (resta solo su questo telefono)</label>
-    <input type="text" id="slp" placeholder="es. 2-2-2-2" value="${esc(s.settings.student_slp || "")}" autocomplete="off">
-    <label class="checkline"><input type="checkbox" id="instr" ${s.settings.include_instructions ? "checked" : ""}> Includi le istruzioni complete in ogni messaggio</label>
-    <p class="small muted">Disattivalo solo se usi un progetto ChatGPT con le istruzioni già inserite.</p>
-    <button class="ghost" id="copyprompt">Copia le istruzioni del Tutor</button>
-    <h3>Cosa funziona offline</h3>
-    <table><tbody>
-      <tr><td>Diagnostico D1-D4, riscritture, stesure, scalette</td><td><span class="tag ok">offline</span></td></tr>
-      <tr><td>Esercizi già importati, punteggio automatico</td><td><span class="tag ok">offline</span></td></tr>
-      <tr><td>Preparare e copiare le richieste al Tutor</td><td><span class="tag ok">offline</span></td></tr>
-      <tr><td>Profilo, esercizi nuovi, consegne, correzioni, modelli</td><td><span class="tag warn">richiede connessione</span></td></tr>
-      <tr><td>Backup e ripristino</td><td><span class="tag ok">offline</span></td></tr>
-    </tbody></table>
-    ${tools.length ? `<h3>Trasferimento</h3><table><tbody>${tools.map((t) => `<tr><td>${esc(AREA_LABELS[t])}</td><td>${TOOL_STATUS[toolStatus(s.checks, t)]}</td></tr>`).join("")}</tbody></table>` : ""}
-    <p class="small muted">Flashcard del percorso precedente: ${cards.length}. <a href="#/review">Apri il ripasso distribuito</a>.</p>
-    <h3>Altre sezioni</h3>
-    <div class="row"><a class="btn ghost" href="#/books">Libri ed errata</a><a class="btn ghost" href="#/lab">Laboratorio dispositivo</a></div>
-    <p class="small muted" style="margin-top:16px">JFLT Coach ${core.APP_VERSION}</p>`;
-  $("#exp").onclick = async () => { const b = await exportData(); if (b) toast("Backup esportato."); render(); };
-  $("#slp").onchange = async (e) => { const f = await getSettings(); f.student_slp = e.target.value.trim(); await saveSettings(f); toast("Profilo salvato."); };
-  $("#instr").onchange = async (e) => { const f = await getSettings(); f.include_instructions = e.target.checked; await saveSettings(f); };
-  $("#copyprompt").onclick = async () => toast((await copyText(TUTOR_PROMPT)) ? "Istruzioni copiate." : "Copia non riuscita.");
-  $("#imp").onchange = async (e) => {
-    const file = e.target.files[0]; if (!file) return;
-    let obj;
-    try { obj = JSON.parse(await file.text()); } catch { $("#restore").innerHTML = `<div class="panel err"><p style="margin:0">Il file non è un JSON leggibile.</p></div>`; return; }
-    const v = core.validateBackup(obj);
-    if (!v.ok) { $("#restore").innerHTML = `<div class="panel err"><p>Backup non valido:</p><ul class="errors">${v.errors.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>`; return; }
-    const counts = Object.entries(obj.stores).filter(([, r]) => r.length).map(([k, r]) => `${k}: ${r.length}`).join(", ");
-    $("#restore").innerHTML = `<div class="panel warn"><p>Backup del ${fmtDate(obj.exported_at)} (${esc(counts)}). Il ripristino sostituisce tutti i dati attuali.</p><button class="danger" id="dorestore">Sostituisci i dati</button></div>`;
-    $("#dorestore").onclick = async () => {
-      try {
-        await restoreData(obj);
-      } catch (err) {
-        $("#restore").innerHTML = `<div class="panel err"><p style="margin:0">Ripristino non riuscito: ${esc(err.message)}. I dati precedenti sono rimasti intatti.</p></div>`;
-        return;
-      }
-      await updateBadge(); toast("Dati ripristinati."); location.hash = "#/home";
-    };
-  };
-}
-
-async function screenBooks() {
-  view.innerHTML = `<h2>Libri ed errata</h2>
-    <p class="small muted">Una chiave o un modello vale solo su pagine verificate e senza errata pertinente.</p>
-    <table><thead><tr><th>Riferimento</th><th>Stato</th></tr></thead><tbody>
-    ${BOOK_REFS.map((b) => `<tr><td><strong>${esc(b.book)}</strong> p. ${esc(b.pages)}${b.unit ? ` (unità ${esc(b.unit)})` : ""}<br><span class="small muted">${esc(b.use_it)}</span></td><td><span class="tag ${b.page_status === "verified" ? "ok" : "warn"}">${STATUS_LABELS[b.page_status]}</span><br><span class="tag ${b.reliability === "ok" ? "" : "err"}">${RELIABILITY_LABELS[b.reliability]}</span></td></tr>`).join("")}
-    </tbody></table>
-    <h3>Errata</h3>
-    ${ERRATA.map((e) => `<div class="fix"><span class="small muted">${e.id} · ${esc(e.book)} p. ${esc(e.pages)} · gravità ${e.severity}</span><span class="was" style="display:block">${esc(e.quote)}</span><span class="now">${esc(e.fix)}</span></div>`).join("")}
-    <h3>Osservazioni</h3>
-    ${OBSERVATIONS.map((o) => `<div class="fix"><span class="small muted">${o.id} · ${esc(o.book)} p. ${esc(o.pages)}</span><div>${esc(o.passage)}</div><div class="why">${esc(o.assessment)}</div></div>`).join("")}`;
-}
-
-const LAB_TESTS = [
-  { id: "t1", title: "La web app avvia un Comando Rapido", how: "Crea in Comandi Rapidi un comando \"JFLT-Tutor\", poi tocca il pulsante qui sotto.", action: "shortcut" },
-  { id: "t2", title: "Il Comando riceve il testo integro", how: "Nel Comando, mostra il testo ricevuto: deve arrivare intero (circa 4.000 caratteri).", action: "shortcut-long" },
-  { id: "t3", title: "L'app legge gli appunti al ritorno", how: "Copia un testo qualsiasi e tocca il pulsante.", action: "clipboard" },
-  { id: "t4", title: "Il Comando riporta all'app", how: "Aggiungi in fondo al Comando l'azione Apri URL con l'indirizzo dell'app." },
-  { id: "t5", title: "I modelli restituiscono JSON valido", how: "Su 10 richieste per motore (ChatGPT, On-Device, Cloud), almeno 9 risposte importate senza errori." },
-  { id: "t6", title: "I dati restano salvati per 30 giorni", how: "Automatico: non blocca l'uso. Il backup settimanale resta comunque necessario.", auto: "persist" },
-  { id: "t7", title: "I campi di scrittura non correggono da soli", how: "Scrivi \"teh\" in una stesura: non deve diventare \"the\"." },
-  { id: "t8", title: "L'app funziona offline", how: "Attiva la modalità aereo, chiudi l'app e riaprila dalla Home.", auto: "offline" }
-];
-
-async function screenLab() {
-  const s = await getSettings();
-  const results = Object.fromEntries((await all("device_tests")).map((t) => [t.id, t]));
-  const first = new Date(s.first_run);
-  const due = new Date(first.getTime() + 30 * 864e5);
-  const persistLine = Date.now() >= due.getTime()
-    ? "Superato: i dati del primo avvio sono ancora presenti dopo 30 giorni."
-    : `In corso dal ${fmtDate(s.first_run)}: esito il ${fmtDate(due.toISOString())}. Persistenza richiesta al sistema: ${s.persist === true ? "concessa" : s.persist === false ? "non concessa" : "non disponibile"}.`;
-  const swReady = !!navigator.serviceWorker?.controller;
-  view.innerHTML = `<h2>Laboratorio dispositivo</h2>
-    <p class="muted">Prove da fare sull'iPhone. Nessuna blocca l'uso dell'app: le funzioni non verificate restano spente o con il percorso manuale.</p>
-    ${LAB_TESTS.map((t) => {
-      const r = results[t.id];
-      const auto = t.auto === "persist" ? persistLine : t.auto === "offline" ? (swReady ? "Cache pronta: prova in modalità aereo." : "Cache non ancora attiva: riapri l'app una volta online.") : "";
-      return `<section class="panel"><p style="margin:0"><strong>${esc(t.title)}</strong> ${r ? `<span class="tag ${r.status === "pass" ? "ok" : "err"}">${r.status === "pass" ? "superato" : "non superato"}</span>` : ""}</p>
-        <p class="small" style="margin:6px 0">${esc(t.how)}</p>${auto ? `<p class="small muted">${esc(auto)}</p>` : ""}
-        <div class="row">${t.action === "shortcut" ? `<a class="btn ghost" href="shortcuts://run-shortcut?name=JFLT-Tutor&input=text&text=${encodeURIComponent("prova JFLT Coach")}">Avvia il Comando</a>` : ""}
-        ${t.action === "shortcut-long" ? `<a class="btn ghost" href="shortcuts://run-shortcut?name=JFLT-Tutor&input=text&text=${encodeURIComponent("x".repeat(3990) + "FINE")}">Invia 4.000 caratteri</a>` : ""}
-        ${t.action === "clipboard" ? `<button class="ghost" data-clip>Leggi gli appunti</button>` : ""}
-        <button class="ghost" data-res="${t.id}" data-v="pass">Superato</button><button class="ghost" data-res="${t.id}" data-v="fail">Non superato</button></div></section>`;
-    }).join("")}`;
-  $$("[data-res]").forEach((b) => (b.onclick = async () => { await put("device_tests", { id: b.dataset.res, status: b.dataset.v, date: new Date().toISOString() }); render(); }));
-  $("[data-clip]")?.addEventListener("click", async () => {
-    try { const t = await navigator.clipboard.readText(); toast(`Letti ${t.length} caratteri dagli appunti.`); } catch { toast("Lettura non consentita: usa l'incolla manuale."); }
-  });
-}
-
-/* ================================================================== */
-/* Router                                                              */
-/* ================================================================== */
-
-async function render() {
-  await studio.flush();
-  clearTimers();
-  const hash = location.hash.replace(/^#\/?/, "") || "home";
-  const [a, b] = hash.split("/");
-  view.dataset.screen = a;
-  const tab = { home: "home", placement:"learn", diag: "learn", learn:"learn", tenses:"learn", lesson:"learn", practice:"learn", lexicon:"lexicon", review:"learn", progress:"learn", week:"learn",articles:"learn",guided:"write",connect:"more",task: "write", write: "write", grammar: "home", requests: "more", req: "more", import: "more", more: "more", books: "more", lab: "more" }[a] || "home";
-  document.querySelectorAll("nav.tabs a").forEach((x) => (x.dataset.tab === tab ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current")));
-  try {
-    if (await studio.render(hash)) {}
-    else if (a === "home") await screenHome();
-    else if (a === "diag" && !b) await screenDiag();
-    else if (a === "diag" && (b === "D1" || b === "D2")) await screenDiagItems(b);
-    else if (a === "diag" && (b === "D3" || b === "D4")) await screenDiagText(b);
-    else if (a === "diag" && b === "D5") await screenProfile();
-    else if (a === "diag" && b === "D6") { location.hash = "#/task/D4"; return; }
-    else if (a === "grammar" && b === "new") await screenGrammarNew(hash.split("/")[2] === "recovery");
-    else if (a === "grammar") await screenGrammarSet(b);
-    else if (a === "write" && b === "new") await screenWriteNew();
-    else if (a === "write") await screenWriteList();
-    else if (a === "task") await screenTask(b);
-    else if (a === "requests") await screenRequests();
-    else if (a === "req") await screenRequest(b);
-    else if (a === "import") await screenImport();
-    else if (a === "more") await screenMore();
-    else if (a === "books") await screenBooks();
-    else if (a === "lab") await screenLab();
-    else await screenHome();
-  } catch (e) {
-    console.error(e);
-    view.innerHTML = `<div class="panel err"><p>Si è verificato un errore: ${esc(e.message)}</p><p class="small">I dati salvati non sono stati toccati. Torna a <a href="#/home">Oggi</a>.</p></div>`;
-  }
-  window.scrollTo(0, 0);
-}
-
-async function boot() {
-  await openDb();
-  const s = await getSettings();
-  if (memory) toast("Archiviazione non disponibile: i dati non verranno salvati. Esporta prima di chiudere.");
-  if (s.persist == null && navigator.storage?.persist) {
-    // richiesta non bloccante; l'esito viene solo registrato
-    navigator.storage.persist().then(async (granted) => { const f = await getSettings(); f.persist = granted; await saveSettings(f); }).catch(() => {});
-  }
-  updateNet();
-  addEventListener("online", () => { updateNet(); if (/requests|req\//.test(location.hash)) render(); });
-  addEventListener("offline", () => { updateNet(); if (/requests|req\//.test(location.hash)) render(); });
-  addEventListener("hashchange", render);
-  await updateBadge();
+  window.addEventListener("hashchange",()=>render().catch(e=>notify(e.message,true)));
   await render();
-  if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
-    let ready=false;
-    navigator.serviceWorker.addEventListener("controllerchange",()=>{if(ready)toast("Aggiornamento pronto. Riapri l'app dopo aver salvato il lavoro.");ready=true;});
-    navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{});
-  }
+  if(getToken())checkHealth().then(()=>{if(location.hash==="#/settings")refresh();});
+  return {render,goto,flush:()=>repo.flush(),get:()=>repo.get(),notify};
 }
-
-if (new URLSearchParams(location.search).has("selftest")) window.__jflt = { restoreData, all, get, put };
-
-boot();
+export async function start() {
+  try {
+    const repo=await openRepository(globalThis.indexedDB,()=>{document.getElementById("notice").hidden=false;document.getElementById("notice").textContent="Chiudi le altre schede di JFLT Coach per aggiornare l'archivio, poi riapri l'app.";});
+    const app=await mountApp(repo);
+    function online(){document.getElementById("connection").textContent=navigator.onLine?"Online":"Offline";}
+    online();window.addEventListener("online",online);window.addEventListener("offline",online);
+    if("serviceWorker" in navigator) {
+      const reg=await navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"});
+      const offer=worker=>{if(!worker)return;const banner=document.getElementById("update");banner.hidden=false;banner.querySelector("button").onclick=async()=>{await app.flush();let reload=true;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(reload){reload=false;location.reload();}});worker.postMessage({type:"SKIP_WAITING"});};};
+      if(reg.waiting)offer(reg.waiting);
+      reg.addEventListener("updatefound",()=>{const worker=reg.installing;worker?.addEventListener("statechange",()=>{if(worker.state==="installed"&&navigator.serviceWorker.controller)offer(reg.waiting);});});
+      reg.update().catch(()=>{});
+    }
+    navigator.storage?.persist?.().catch(()=>{});
+    return app;
+  }catch(e){document.getElementById("view").replaceChildren(title("AVVIO","Non ho potuto aprire l'archivio."),p(e.message,"warning"),p("I dati precedenti non vengono cancellati. Prova a chiudere le altre schede e a riaprire l'app."));}
+}

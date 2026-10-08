@@ -1,62 +1,71 @@
-# JFLT Coach 0.2.5
+# JFLT Coach 1.0.0
 
-L'aggiornamento rende diagnosticabili i rifiuti Groq e distingue la verifica del Worker dalla prova reale del provider. Il messaggio «Groq non ha accettato la richiesta. Controlla modello, schema e quota nella console; nessun fallback a pagamento» appartiene al primo Worker compilato. Se compare ancora, verificare che anche Cloudflare abbia ricevuto il nuovo codice.
+Riscrittura completa dell'app e del tutor. L'app continua a usare GitHub Pages, il Worker Cloudflare **jflt-coach** e Groq. Il pacchetto contiene già il Worker aggiornato, la sua configurazione e i test.
 
-Restano il pre-test di 45 domande, il percorso adattivo e la correzione del blocco «Manca il recupero del lessico selezionato»: gli esercizi strutturalmente validi vengono accettati con un avviso; il vocabolo omesso resta candidato per il ripasso.
+## Pubblicazione sul tuo progetto esistente
 
-## Aggiornare l'app esistente
+1. Nell'app attuale esporta un backup dei progressi, poi estrai questo ZIP sul computer.
+2. Apri [il repository Jflt-coach](https://github.com/p7z4dm5cjz-ux/Jflt-coach), scegli **Add file → Upload files** e carica nella radice i file estratti, comprese le cartelle **worker**, **legacy** e **scripts**. Conferma il commit su **main**. **index.html**, **package.json** e **wrangler.jsonc** devono essere direttamente nella radice del repository.
+3. Attendi la pubblicazione GitHub Pages e la build Cloudflare collegata a **quel commit**. La build Cloudflare deve usare la radice del repository e il comando già configurato **npx wrangler deploy**.
+4. Chiudi e riapri [JFLT Coach](https://p7z4dm5cjz-ux.github.io/Jflt-coach/). Apri **Impostazioni → Verifica collegamento Worker**: app e Worker devono entrambi mostrare **1.0.0**. Poi premi **Verifica Groq** per provare una richiesta reale.
 
-1. Esportare i dati da Altro e conservare il backup sul dispositivo.
-2. Estrarre `jflt-coach-correzione-groq-0.2.5.zip`.
-3. Nel repository GitHub caricare tutto il contenuto estratto nella radice, mantenendo le sottocartelle `worker` e `tests`. `index.html`, `app.js`, `learning.js`, `placement.js`, `placement-ui.js` e `bookshelf.js` sono nella radice; `policy.js` è dentro `worker`.
-4. Confermare il commit sul ramo pubblicato. Attendere GitHub Pages. Se Cloudflare è collegato al repository, verificare che abbia pubblicato anch'esso il nuovo codice. Se il Worker è stato incollato a mano, sostituire tutto il suo codice con `worker-pronto/index.js` e pubblicare sullo stesso Worker. Non incollare il solo sorgente `worker/index.js`, che ha importazioni locali.
-5. Chiudere e riaprire l'app senza cancellare i dati del sito. In Altro verificare la versione 0.2.5; in Tutor automatico salvare/verificare il collegamento, controllare la versione del Worker, poi premere **Verifica Groq**. Deve risultare Worker 0.2.5 e Groq verificato. Infine provare una lezione.
+Il Worker usa ancora [lo stesso indirizzo](https://jflt-coach.crl-r90.workers.dev). I secret **GROQ_API_KEY** e **APP_TOKEN** già configurati restano nel servizio Cloudflare esistente. Il codice personale del tutor può essere recuperato dallo stesso dispositivo; se manca, va inserito in Impostazioni.
 
-Non occorre creare un altro Worker né cambiare i segreti. Chiavi, token e backup non sono nel pacchetto. I dati e le impostazioni esistenti vengono mantenuti; i backup precedenti sono ancora importabili. Per una prima configurazione vedere SETUP.md.
+Una build riferita a un commit precedente non dimostra l'esito del nuovo aggiornamento. Verifica il commit della build e le due versioni nell'app.
 
-## Controllo Groq
+## Cosa cambia
 
-`GET /health` restituisce versione, modello e formato, senza chiamare Groq o consumare il contatore. `POST /check`, disponibile solo con codice personale e origine consentita, esegue una sola richiesta con output massimo di 200 token. Usa lo stesso modello e JSON Object Mode delle lezioni; non invia scritti, articoli o risposte dello studente. Il test passa solo se Groq restituisce il JSON di verifica atteso. Consuma una richiesta del contatore personale e una piccola parte della quota Groq.
+- **Pretest di 45 domande**, interrompibile e riprendibile. Tempi, negazioni e phrasal verbs hanno più peso. Le risposte corrette ma incerte restano da confermare; le basi già controllate vengono lasciate fuori dalle priorità.
+- **59 lezioni**, incluse le forme verbali singole, i confronti tra tempi e una lezione specifica sulle negazioni. Ogni lezione ha esercizi originali offline; Groq può generare blocchi misti nuovi.
+- **Scrittura in un editor unico**: appunti e scaletta facoltativi, bozza, revisione ancorata a citazioni reali, riscrittura, confronto e tre esercizi in contesti nuovi. La simulazione separa la stesura autonoma dagli aiuti.
+- **161 phrasal verbs ed espressioni multiword**: significato contestuale, particelle, posizione del pronome e registro. Gli esercizi riguardano il significato selezionato nella scheda.
+- **Recupero del lessico separato**: se l'AI omette un termine selezionato, gli esercizi validi rimangono utilizzabili e l'app aggiunge una domanda locale per ogni parola da recuperare. Una semplice menzione non dimostra apprendimento.
+- **Lettura e traduzione**, lessico personale, ripasso distribuito, risultati senza suggerimenti e backup.
+- **Tutor verificabile**: collegamento Worker, versione del codice e risposta Groq hanno stati separati. Gli errori indicano se il problema riguarda codice personale, secret, modello, quota, risposta incompleta o connessione.
 
-Le risposte delle lezioni restano validate integralmente nel Worker e nell'app. La prova minima non dimostra la qualità didattica degli esercizi né la disponibilità di quota per un blocco lungo. Gli errori mostrano il codice HTTP e i dettagli sanitizzati del provider. Chiavi e `failed_generation` non vengono esposti. Le quote Groq e il limite personale sono distinti; il frontend conserva il motivo e il tempo di attesa. Nessun retry, cambio di modello o provider a pagamento avviene automaticamente. Il piano Free dell'account va mantenuto nella console del proprietario.
+## Progressi e materiali
 
-## Pre-test e percorso
+Sulla stessa origine web, l'app aggiorna l'archivio IndexedDB **jflt-coach** creando una nuova tabella. Conserva le tabelle precedenti, recupera scritti, letture, pretest e lessico e mantiene una copia dei record originali nei backup nuovi.
 
-45 domande originali: 14 tempi verbali, 8 negazioni/domande, 8 phrasal verbs, 3 controlli delle basi, 3 nomi/quantificatori, 3 modali, 3 frasi complesse, 3 costruzioni/connettivi. Alterna risposte a scelta e completamenti. Le domande e le opzioni hanno un ordine ripetibile per sessione; la sessione funziona offline dopo il primo caricamento.
+I backup **jflt-coach-backup/v1** delle versioni 0.2.x e quelli nuovi **v2** sono importabili. L'importazione viene validata prima della sostituzione dei dati della nuova app. Esporta prima il lavoro attuale. Il codice del tutor e la chiave Groq sono esclusi dai backup.
 
-Le risposte si salvano immediatamente. È possibile interrompere, riprendere, scegliere Non so e rivedere le risposte prima della consegna. Le spiegazioni restano nascoste fino alla consegna completa. Il risultato mostra errori, risposte corrette ma incerte, priorità e argomenti che si possono saltare provvisoriamente. Nessun livello ufficiale CEFR/JFLT/STANAG viene assegnato.
+Le vecchie parole segnate come conosciute sono conservate, ma restano da verificare con recupero attivo. Il nuovo percorso non trasforma auto-valutazioni o vecchi tentativi non valutati in prove di padronanza.
 
-La priorità nasce dagli errori specifici. Una risposta positiva isolata normalmente richiede conferma; il controllo delle basi permette di saltare la parte su soggetto e pronomi quando tutte e tre le risposte sono corrette e sicure. I risultati successivi senza aiuti possono riaprire lezioni saltate o superare una difficoltà iniziale. I phrasal verbs sbagliati entrano nel ripasso; gli esercizi AI ricevono anche le difficoltà iniziali pertinenti alla lezione.
+Le sintesi si riferiscono a **Oxford Complete English Grammar**, **CAMPAIGN**, **MISSION** e **TARGET**, con rimandi e correzioni dei passaggi difettosi già individuati. Le spiegazioni e gli esercizi sono originali; i PDF dei libri non sono ridistribuiti. Alcuni rimandi sono indicazioni di consultazione, esplicitamente distinti dalle sintesi.
 
-Le soglie sono criteri pratici dell'app, non scale validate. Il pre-test campiona gli argomenti: non dimostra la padronanza di tutti gli usi di ogni struttura. Per consolidare si usano verifiche nuove e la scrittura.
+## Groq e funzionamento offline
 
-## Materiali didattici
+Il backend invia una sola richiesta Groq per operazione, con **response_format: json_object**, modello esplicito e contratto validato anche nell'app. Non cambia automaticamente modello o provider e non usa fallback a pagamento. Sono supportati **openai/gpt-oss-120b** e **openai/gpt-oss-20b**; il modello configurato è il primo.
 
-`bookshelf.js` contiene sintesi originali dei passaggi pertinenti consultati nei quattro PDF forniti: Oxford, CAMPAIGN, MISSION e TARGET. Oxford guida strutture, usi e contrasti; i manuali operativi guidano contesti, rapporti, comunicazioni e argomentazione. Si distinguono pagine stampate e pagine del PDF, quando differiscono. Le errata già registrate prevalgono sulle formulazioni difettose.
+Il limite personale resta 10 richieste al minuto e 80 al giorno. I limiti del tuo account Groq possono essere più bassi. Il controllo del Worker non usa Groq; il pulsante **Verifica Groq** usa una richiesta. Nessuna richiesta AI viene inviata automaticamente alla riconnessione.
 
-Le lezioni mostrano i riferimenti e le sintesi. Il Worker ricostruisce il contesto dei libri dal catalogo, anziché fidarsi di riferimenti forniti dal client, e lo include nelle richieste di esercizi, scrittura e traduzione. Il genere dello scritto determina i passaggi pertinenti. Gli esempi e gli esercizi sono originali: non si distribuiscono i PDF o copie dei loro esercizi. Per le integrazioni avanzate si distingue il metodo di scrittura dai contenuti grammaticali originali dell'app. Questa è una lettura mirata dei passaggi utili, non una verifica integrale di ogni pagina dei quattro manuali.
+Dopo il primo caricamento completo, lezioni, pretest, esercizi originali, schede e bozze sono disponibili offline. Le correzioni AI richiedono la connessione. La lettura usa un passaggio incollato dall'utente, con fonte facoltativa.
 
-Il programma comprende 59 lezioni, incluse 15 lezioni sui singoli tempi/costruzioni verbali e una lezione dedicata alle negazioni. Restano lessico crescente, parole cliccabili, scrittura guidata, simulazione senza aiuti, lettura/traduzione, ripasso, backup e percorsi precedenti.
+Gli aggiornamenti successivi vengono proposti con un pulsante che attende il salvataggio prima del ricaricamento. Il passaggio dalle vecchie versioni 0.2.x attiva la nuova cache senza ricaricare a forza una bozza aperta; chiudi e riapri l'app per entrare nella nuova versione.
 
-## Correzione del recupero lessicale
+## Verifica e manutenzione del codice
 
-L'assenza di un termine selezionato non è più un errore bloccante. Il Worker restituisce gli esercizi inalterati e un avviso. Il termine resta candidato per i blocchi successivi; non viene segnato come conosciuto o appreso. Non si eseguono chiamate AI aggiuntive e non si inseriscono parole a forza nelle frasi.
+Requisito per i test: Node 24 LTS, dalla versione 24.15.0. Il deploy Cloudflare già configurato usa Node 24.18.0.
 
-I controlli strutturali sugli esercizi restano attivi: schema, numero e tipi richiesti, completamenti con lacuna, soluzioni presenti nelle alternative, duplicazioni e citazioni. Le annotazioni incoerenti possono essere omesse. Questi controlli non certificano la correttezza semantica di ogni spiegazione AI.
-
-## Verifiche
-
-90 test automatici superati, con risposte AI simulate. Comprendono la verifica distinta Worker/Groq, il riconoscimento del vecchio backend, i rifiuti di parametri/chiave/modello/quota, autenticazione e contatori, assenza di invii aggiuntivi, una sessione completa di 45 domande, salvataggio/ripresa, adattamento delle priorità, backup e regressione del blocco lessicale. L'interfaccia è verificata con JSDOM. Bundle del Worker compilato interamente in locale con esbuild.
-
-Da provare dopo la pubblicazione: verifica e generazione reale con Groq e uso su Safari/iPhone. Nessun nuovo deploy è stato eseguito da questa sessione, che non ha accesso agli account del proprietario. I test non usano una chiave Groq reale.
-
-```sh
+~~~sh
 npm ci
+npm run build:worker
+npm run check
 npm test
-```
+~~~
 
-## Architettura
+**worker/index.js** è il file autonomo distribuito a Cloudflare. **worker/runtime.js**, **contract.js** e le sintesi dei libri sono i sorgenti usati dal comando **build:worker**. Dopo una modifica a questi sorgenti, rigenera il file e includilo nel commit.
 
-Frontend statico su GitHub Pages, moduli JavaScript, IndexedDB e service worker. Cloudflare Worker ESM come proxy autenticato verso Groq; il modello è scelto dall'allowlist del progetto. I segreti GROQ_API_KEY e APP_TOKEN restano nelle impostazioni Cloudflare. Il token del dispositivo viene ricordato solo con scelta esplicita ed è escluso dai backup.
+La configurazione mantiene il binding **BUDGET**, la classe **Budget** e la migrazione SQLite **v1** esistenti. Il nome del servizio è **jflt-coach**.
 
-Il Durable Object BUDGET conserva solo contatori: dieci richieste al minuto, ottanta al giorno secondo la configurazione attuale. Quote o errori non causano retry automatici o passaggi a servizi a pagamento. Lo Studio è salvato in settings.main.learning; il pre-test è in learning.placement, con validazione anche nel ripristino.
+Per verificare localmente la compilazione del Worker senza pubblicare:
+
+~~~sh
+npx wrangler deploy --dry-run --outdir worker-build
+~~~
+
+I test coprono flussi DOM, tutte le 45 domande, esercizi, recupero lessicale, scrittura e trasferimento, migrazione IndexedDB, backup, cache offline, autenticazione, CORS, quota, contratto Groq ed errori del provider.
+
+La build di prova non verifica la tua chiave Groq né il deploy sul tuo account. Il test finale reale è **Impostazioni → Verifica Groq** dopo che app e Worker mostrano 1.0.0. Le verifiche UI automatiche usano JSDOM; la resa su browser e dispositivi reali resta da controllare.
+
+Documentazione tecnica di riferimento: [API Groq](https://console.groq.com/docs/api-reference), [GPT-OSS 120B](https://console.groq.com/docs/model/openai/gpt-oss-120b), [configurazione Wrangler](https://developers.cloudflare.com/workers/wrangler/configuration/).

@@ -1,34 +1,41 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>JFLT Coach</title>
-<meta name="robots" content="noindex, nofollow">
-<meta name="description" content="Grammatica e scrittura in inglese per la preparazione al JFLT, 20 minuti al giorno.">
-<meta name="theme-color" content="#F5F4EF" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#101E23" media="(prefers-color-scheme: dark)">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="JFLT Coach">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icon-180.png">
-<link rel="icon" href="icon-192.png">
-<link rel="stylesheet" href="theme.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f5f4ef">
+  <meta name="description" content="Il tuo percorso di inglese: grammatica mirata, phrasal verbs e scrittura.">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="app-version" content="1.0.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="JFLT Coach">
+  <title>JFLT Coach</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icon-180.png">
+  <link rel="icon" href="./icon-192.png">
+  <link rel="stylesheet" href="./theme.css">
+  <script type="module" src="./boot.js"></script>
 </head>
 <body>
-<header class="top">
-  <div class="brand"><span class="brand-mark" aria-hidden="true">J</span><div><h1>JFLT Coach</h1><small>GRAMMATICA · SCRITTURA</small></div></div>
-  <span class="net" id="net" role="status">online</span>
-</header>
-<main id="view" aria-live="polite"><p class="muted">Caricamento…</p></main>
-<nav class="tabs" aria-label="Sezioni">
-  <a href="#/home" data-tab="home"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg>Oggi</a>
-  <a href="#/learn" data-tab="learn"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 4h14v16H5z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>Studio</a>
-  <a href="#/guided/new" data-tab="write"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg>Scritti</a>
-  <a href="#/lexicon" data-tab="lexicon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 4h14v16H5zM8 8h8M8 12h3M8 16h5"/></svg>Lessico</a>
-  <a href="#/more" data-tab="more"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/></svg>Altro<span class="badge" id="badge" hidden></span></a>
-</nav>
-<script type="module" src="app.js"></script>
+  <a href="#view" class="skip">Vai al contenuto</a>
+  <aside class="sidebar">
+    <a class="brand" href="#/home"><span class="brand-icon" aria-hidden="true">J</span><span>JFLT Coach<small>IL TUO INGLESE, OGNI GIORNO</small></span></a>
+    <nav aria-label="Sezioni">
+      <a href="#/home" data-section="home"><span aria-hidden="true">⌂</span><span>Oggi</span></a>
+      <a href="#/studio" data-section="studio"><span aria-hidden="true">Aa</span><span>Studio</span></a>
+      <a href="#/writing" data-section="writing"><span aria-hidden="true">✎</span><span>Scrittura</span></a>
+      <a href="#/review" data-section="review"><span aria-hidden="true">↻</span><span>Ripasso</span></a>
+      <a href="#/settings" data-section="settings"><span aria-hidden="true">⚙</span><span>Impostazioni</span></a>
+    </nav>
+    <div class="sidebar-note">Un po’ di pratica.<br>Una nuova capacità.<small>Release 1.0.0</small></div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar"><span>IL TUO SPAZIO DI STUDIO</span><div><span id="connection">Online</span><span id="saved" role="status">Salvato sul dispositivo</span></div></header>
+    <div id="update" class="update-banner" hidden><span>Aggiornamento pronto. Salva e passa alla nuova versione.</span><button type="button">Aggiorna l’app</button></div>
+    <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+    <main id="view" tabindex="-1"><p>Preparazione del tuo percorso…</p></main>
+    <noscript>Per usare JFLT Coach devi abilitare JavaScript nel browser.</noscript>
+    <footer>JFLT Coach · Materiali originali basati sui tuoi libri · 1.0.0</footer>
+  </div>
 </body>
 </html>
