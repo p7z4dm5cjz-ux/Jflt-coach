@@ -8,7 +8,8 @@ import {validateAgainst} from "../core.js";
 import {MODES} from "../schema.js";
 import {budgetDecision,secureEqual,providerRequest} from "../worker/policy.js";
 import {articleExcerpt} from "../worker/articles.js";
-import {setAppToken,askAI,workerUrl,forgetToken} from "../ai-client.js";
+import {setAppToken,askAI,workerUrl,forgetToken,inspectTutor} from "../ai-client.js";
+import {APP_VERSION} from "../core.js";
 const origin="https://p7z4dm5cjz-ux.github.io",token="a-test-token-longer-than-24-characters";
 const env=()=>({ALLOWED_ORIGIN:origin,APP_TOKEN:token,GROQ_API_KEY:"not-a-real-key",BUDGET:{idFromName:()=>"id",get:()=>({fetch:async()=>Response.json({ok:true,retry:0})})}});
 const req=(body,headers={},path="/ai")=>new Request(`https://test.workers.dev${path}`,{method:"POST",headers:{Origin:origin,"Content-Type":"application/json",Authorization:`Bearer ${token}`,...headers},body:JSON.stringify(body)});
@@ -27,6 +28,43 @@ test("piano di sicurezza limita dieci al minuto e ottanta al giorno",()=>{let re
 test("contatore Durable Object non conserva testi",async()=>{const values=new Map(),storage={transaction:async fn=>fn({get:async k=>values.get(k),put:async(k,v)=>values.set(k,v)})};const b=new Budget({storage});await b.fetch();assert.deepEqual([...values.keys()],["budget"]);assert.equal(values.get("budget").dayCount,1);});
 test("mode sconosciuto e formato non valido respinti",async()=>{assert.throws(()=>providerRequest({request_id:"x",mode:"OTHER",data:{}}));assert.equal((await handle(req({request_id:"x",mode:"OTHER",data:{}}),env())).status,400);});
 test("quota Groq gestita senza retry o provider a pagamento",async()=>{let calls=0;const body={request_id:"x",mode:"WRITING_MODEL",data:{rewrite:"A rewrite",feedback:{}}};const res=await handle(req(body),env(),async()=>{calls++;return Response.json({error:"quota"},{status:429,headers:{"Retry-After":"37"}});});assert.equal(res.status,429);assert.equal(res.headers.get("retry-after"),"37");assert.equal(calls,1);});
+test("health dichiara build e modello, non certifica Groq e non consuma quota",async()=>{
+  const e=env();e.MODEL="openai/gpt-oss-20b";e.BUDGET.get=()=>{throw new Error("Health must not consume quota");};
+  const request=new Request("https://test.workers.dev/health",{headers:{Origin:origin,Authorization:`Bearer ${token}`}});
+  const r=await handle(request,e,()=>{throw new Error("Health must not contact Groq");}),p=await r.json();
+  assert.equal(r.status,200);assert.equal(p.version,APP_VERSION);assert.equal(p.model,e.MODEL);assert.equal(p.response_format,"json_object");assert.equal(p.groq_verified,false);assert.ok(p.capabilities.includes("groq_check"));
+  e.MODEL="unapproved-model";assert.equal((await handle(request,e)).status,503);
+});
+test("verifica Groq: stesso modello e formato, una chiamata minima senza testi personali",async()=>{
+  const e=env();e.MODEL="openai/gpt-oss-20b";let calls=0,counts=0;e.BUDGET.get=()=>({fetch:async()=>{counts++;return Response.json({ok:true});}});
+  const r=await handle(req({request_id:"probe"},{},"/check"),e,async(url,options)=>{
+    calls++;assert.equal(url,"https://api.groq.com/openai/v1/chat/completions");const wire=JSON.parse(options.body);assert.equal(wire.model,e.MODEL);assert.deepEqual(wire.response_format,{type:"json_object"});assert.equal(wire.max_completion_tokens,200);assert.deepEqual(JSON.parse(wire.messages[1].content),{check:true});
+    return providerReply({ok:true})();
+  });const p=await r.json();assert.equal(r.status,200);assert.equal(p.request_id,"probe");assert.equal(p.version,APP_VERSION);assert.equal(p.groq_verified,true);assert.equal(calls,1);assert.equal(counts,1);
+  const invalid=await handle(req({request_id:"probe",text:"Private draft"},{},"/check"),e,()=>{throw new Error("Must not send draft");});assert.equal(invalid.status,400);
+});
+test("verifica Groq resta autenticata e limitata, rifiuti non provocano altri invii",async()=>{
+  const input=req({request_id:"probe"},{},"/check");let calls=0;
+  assert.equal((await handle(req({request_id:"probe"},{Authorization:"Bearer wrong"},"/check"),env(),()=>{calls++;})).status,401);
+  const blocked=env();blocked.BUDGET.get=()=>({fetch:async()=>Response.json({ok:false,retry:60})});assert.equal((await handle(input,blocked,()=>{calls++;})).status,429);assert.equal(calls,0);
+  for(const status of [400,401,403,404,413,429,503]){calls=0;const r=await handle(req({request_id:"probe"},{},"/check"),env(),async()=>{calls++;return Response.json({error:{code:"provider_error",message:"Safe detail"}},{status});});const p=await r.json();assert.equal(p.provider_status,status);assert.equal(p.source,"groq");assert.match(p.message,new RegExp(`Groq HTTP ${status}`));assert.equal(calls,1);}
+  for(const payload of [{ok:false},{ok:true,extra:"unexpected"},{}])assert.equal((await handle(req({request_id:"probe"},{},"/check"),env(),providerReply(payload))).status,502);
+});
+test("client conserva il motivo della quota Groq e distingue il limite personale",async()=>{
+  setAppToken(token);try{
+    for(const message of ["Groq HTTP 429. rate_limit_exceeded: tokens per minute.","Limite personale del tutor raggiunto."]){let calls=0;await assert.rejects(askAI("https://test.workers.dev","EVALUATE",{},{fetcher:async()=>{calls++;return Response.json({message},{status:429,headers:{"Retry-After":"37"}});}}),e=>e.message.includes(message)&&e.message.includes("37 secondi")&&e.message.includes("Nessun passaggio automatico a pagamento"));assert.equal(calls,1);}
+    await assert.rejects(askAI("https://test.workers.dev","EVALUATE",{},{fetcher:async()=>Response.json({message:"Groq non ha accettato la richiesta. Controlla modello, schema e quota nella console; nessun fallback a pagamento."},{status:502})}),/aggiorna anche il Worker Cloudflare/);
+  }finally{forgetToken();}
+});
+test("client verifica Groq solo su richiesta, riconosce Worker vecchio senza consumare AI",async()=>{
+  setAppToken(token);try{
+    let calls=0;const old=async()=>{calls++;return Response.json({ready:true,version:"0.2.0"});};assert.equal((await inspectTutor("https://test.workers.dev",{fetcher:old})).groq_verified,undefined);assert.equal(calls,1);
+    await assert.rejects(inspectTutor("https://test.workers.dev",{verifyGroq:true,fetcher:old}),/Aggiorna il Worker Cloudflare/);assert.equal(calls,2);
+    let upstream=0;const e=env(),fake=async(url,options)=>handle(new Request(url,{...options,headers:{...options.headers,Origin:origin}}),e,async()=>{upstream++;return providerReply({ok:true})();});
+    assert.equal((await inspectTutor("https://test.workers.dev",{fetcher:fake})).groq_verified,false);assert.equal(upstream,0);
+    const result=await inspectTutor("https://test.workers.dev",{verifyGroq:true,fetcher:fake});assert.equal(result.groq_verified,true);assert.equal(upstream,1);
+  }finally{forgetToken();}
+});
 test("rifiuto Groq espone stato e causa senza segreti o generazioni",async()=>{
   const e=env();e.GROQ_API_KEY="gsk_fake-private-test-key";const body={request_id:"x",mode:"WRITING_MODEL",data:{rewrite:"A rewrite",feedback:{}}};let calls=0;
   const res=await handle(req(body),e,async()=>{calls++;return Response.json({error:{code:"invalid_json_schema",param:"response_format",message:`Schema rejected. ${e.GROQ_API_KEY} ${e.APP_TOKEN} Bearer leaked-private-key gsk_another_secret`,failed_generation:"learner text should not be reflected"},headers:{Authorization:e.APP_TOKEN}},{status:400});});
