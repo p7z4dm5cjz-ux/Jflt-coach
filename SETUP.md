@@ -1,4 +1,6 @@
-# Attivare JFLT Coach 0.2.1
+# Attivare JFLT Coach 0.2.4
+
+Se il tutor è già configurato, seguire prima **Aggiornare l’app esistente** nel README: non servono nuovi segreti né un nuovo Worker.
 
 L'aggiornamento mantiene l'indirizzo `https://p7z4dm5cjz-ux.github.io/Jflt-coach/`. La pubblicazione va fatta sul repository esistente: non crearne uno nuovo e non cambiare dominio, così il browser ritrova l'archivio precedente.
 
@@ -17,7 +19,7 @@ Dal computer, estrai l'archivio completo e apri [il repository](https://github.c
 3. **Commit changes** sul ramo usato da Pages (attualmente verificare **Settings → Pages**). Non modificare la cartella o la fonte di pubblicazione già funzionante.
 4. Attendi la conclusione del deployment Pages. Apri il sito in Safari, attendi l'aggiornamento, poi chiudi e riapri l'app. Deve comparire la scheda **Studio**.
 
-Nel pacchetto frontend, `jflt-coach-frontend-0.2.1.zip`, ci sono solo i file per Pages. Il pacchetto completo include anche il Worker e i test, necessari per configurare il backend e riprodurre le verifiche.
+Nel pacchetto frontend, `jflt-coach-frontend-0.2.4.zip`, ci sono solo i file per Pages. Il pacchetto completo include anche il Worker e i test, necessari per configurare il backend e riprodurre le verifiche.
 
 ## 3. Creare il servizio AI gratuito
 

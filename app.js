@@ -4,6 +4,7 @@ import { createStudio } from "./studio.js";
 import { askAI, appToken } from "./ai-client.js";
 import { freshLearning, suggestedLesson } from "./learning.js";
 import { icon } from "./ui.js";
+import {placementProfile} from "./placement.js";
 import {
   DIAG_ITEMS, DIAG_SESSIONS, DIAG_TASKS, BOOK_REFS, ERRATA, OBSERVATIONS, TUTOR_PROMPT,
   AREA_LABELS, CAPABILITY_LABELS, CRITERION_LABELS, TYPE_LABELS
@@ -386,6 +387,7 @@ async function screenHome() {
   const s = await loadState();
   const learning = {...freshLearning(), ...(s.settings.learning || {})};
   const lesson = suggestedLesson(learning, s.settings.plan?.focus_tool);
+  const placement = placementProfile(learning.placement);
   const due = learning.reviews.filter(r => Date.parse(r.due) <= Date.now()).length;
   const unfinished = learning.writers.find(w => w.stage < 6);
   const completed = learning.attempts.filter(a => a.submitted).length;
@@ -403,8 +405,8 @@ async function screenHome() {
     <div class="home-grid">
       <section class="panel hero" aria-labelledby="today-lesson">
         <div class="hero-meta"><span class="tag">Sessione consigliata</span><span>20 minuti di studio</span></div>
-        <h3 id="today-lesson">${esc(lesson.title)}</h3><p>${esc(lesson.goal)}</p>
-        <div class="row"><a class="btn" href="#/lesson/${lesson.id}">Inizia la lezione <span aria-hidden="true">→</span></a><a class="btn ghost" href="#/tenses">Tempi verbali</a><a class="btn ghost" href="#/learn">Tutto il programma</a></div>
+        <h3 id="today-lesson">${placement?esc(lesson.title):"Il tuo punto di partenza"}</h3><p>${placement?esc(lesson.goal):"45 domande per scegliere le priorità e saltare le basi già acquisite."}</p>
+        <div class="row"><a class="btn" href="${placement?`#/lesson/${lesson.id}`:`#/placement${learning.placement?"/run":""}`}">${placement?"Inizia la lezione":learning.placement?"Riprendi il pre-test":"Inizia il pre-test"} <span aria-hidden="true">→</span></a><a class="btn ghost" href="#/tenses">Tempi verbali</a><a class="btn ghost" href="#/learn">Tutto il programma</a></div>
       </section>
       <section class="panel resume-card"><span class="card-icon">${icon("writing")}</span><h3>${unfinished ? "Riprendi il tuo testo" : "Scrivi, passo passo"}</h3><p class="small muted">${unfinished ? esc(unfinished.topic) : "Prima le idee, poi le parole giuste. Un paragrafo alla volta."}</p><a class="btn ghost" href="#/guided/${unfinished?.id||"new"}">${unfinished ? "Continua a scrivere" : "Prepara un testo"}</a></section>
     </div>
@@ -414,7 +416,7 @@ async function screenHome() {
       <a class="panel metric tile" href="#/progress"><strong>${completed}</strong><span>Risposte valutate</span></a>
     </div>
     <section class="panel" aria-labelledby="next-t">
-      <span class="eyebrow">Diagnostico e percorso iniziale</span>
+      <span class="eyebrow">Scrittura: diagnostico approfondito</span>
       <h3 id="next-t" style="margin-top:0">${esc(n.title)}</h3>
       <p>${esc(n.text)}</p>
       <a class="btn ghost" href="${n.href}" id="next-go">${esc(n.cta)}</a>
@@ -1226,7 +1228,7 @@ async function render() {
   const hash = location.hash.replace(/^#\/?/, "") || "home";
   const [a, b] = hash.split("/");
   view.dataset.screen = a;
-  const tab = { home: "home", diag: "learn", learn:"learn", tenses:"learn", lesson:"learn", practice:"learn", lexicon:"lexicon", review:"learn", progress:"learn", week:"learn",articles:"learn",guided:"write",connect:"more",task: "write", write: "write", grammar: "home", requests: "more", req: "more", import: "more", more: "more", books: "more", lab: "more" }[a] || "home";
+  const tab = { home: "home", placement:"learn", diag: "learn", learn:"learn", tenses:"learn", lesson:"learn", practice:"learn", lexicon:"lexicon", review:"learn", progress:"learn", week:"learn",articles:"learn",guided:"write",connect:"more",task: "write", write: "write", grammar: "home", requests: "more", req: "more", import: "more", more: "more", books: "more", lab: "more" }[a] || "home";
   document.querySelectorAll("nav.tabs a").forEach((x) => (x.dataset.tab === tab ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current")));
   try {
     if (await studio.render(hash)) {}

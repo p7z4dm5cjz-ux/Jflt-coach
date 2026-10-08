@@ -1,0 +1,8 @@
+JFLT Coach 0.2.4
+
+1. Esporta i dati dall’app.
+2. Carica tutto il contenuto estratto nella radice del repository GitHub. Mantieni worker e tests come cartelle. Non caricare lo ZIP o una cartella contenitore aggiuntiva.
+3. Conferma Commit changes e attendi i deploy GitHub Pages e Cloudflare.
+4. Chiudi e riapri l’app; verifica 0.2.4 in Altro. Apri il pre-test da Oggi e riprova la generazione.
+
+I file del Worker si trovano esclusivamente dentro worker; i moduli condivisi, inclusi learning.js e bookshelf.js, restano nella radice. Non creare un nuovo Worker e non cambiare i segreti esistenti.

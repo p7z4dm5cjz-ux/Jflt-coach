@@ -1,91 +1,54 @@
-# JFLT Coach 0.2.1
+# JFLT Coach 0.2.4
 
-Aggiornamento della web app già ospitata su GitHub Pages. Il frontend resta statico; la generazione e la correzione passano da un Worker Cloudflare a Groq. Non si collega a una conversazione ChatGPT e non richiede di copiare le risposte del tutor fra due app.
+L'app sceglie il punto di partenza con un pre-test di 45 domande anziché imporre le lezioni elementari. L'aggiornamento risolve anche il blocco «Manca il recupero del lessico selezionato»: un blocco grammaticalmente valido viene accettato con un avviso; il vocabolo omesso resta nel ripasso.
 
-## Grafica 0.2.1
+## Aggiornare l'app esistente
 
-Nuovo tema locale in `theme.css`: sfondo caldo, verde petrolio, carte più ampie e variante scura automatica. La schermata Oggi mostra la lezione consigliata, uno scritto da riprendere e conteggi ricavati dai dati salvati. La barra principale apre Oggi, Studio, Scritti guidati, Lessico e Altro; l’archivio precedente e le richieste manuali restano raggiungibili. Gli esercizi sono numerati e la scrittura mostra il passaggio attuale. Le icone sono SVG locali e non sono aggiunti font, dipendenze o richieste esterne.
+1. Esportare i dati da Altro e conservare il backup sul dispositivo.
+2. Estrarre `jflt-coach-aggiornamento-0.2.4.zip`.
+3. Nel repository GitHub caricare tutto il contenuto estratto nella radice, mantenendo le sottocartelle `worker` e `tests`. `index.html`, `app.js`, `learning.js`, `placement.js`, `placement-ui.js` e `bookshelf.js` sono nella radice; `policy.js` è dentro `worker`.
+4. Confermare il commit sul ramo pubblicato. Attendere GitHub Pages e il deploy del Worker Cloudflare già collegato.
+5. Chiudere e riaprire l'app senza cancellare i dati del sito. In Altro verificare la versione 0.2.4; in Oggi aprire il pre-test. Riprovare una generazione.
 
-Il service worker usa una nuova cache e include il tema e le icone vettoriali. Il formato dei dati e le impostazioni del tutor non cambiano. Il Worker conserva la versione API 0.2.0: questo aggiornamento riguarda l’interfaccia.
+Non occorre creare un altro Worker né cambiare i segreti. Chiavi, token e backup non sono nel pacchetto. I dati e le impostazioni esistenti vengono mantenuti; i backup precedenti sono ancora importabili. Per una prima configurazione vedere SETUP.md.
 
-Verifiche: suite automatica con percorsi DOM simulati, navigazione e caching. La resa grafica su Safari/iPhone richiede una prova sul dispositivo; l’anteprima in `design/anteprima.svg` illustra il tema e non è una cattura del browser.
+## Pre-test e percorso
 
-## Funzioni aggiunte
+45 domande originali: 14 tempi verbali, 8 negazioni/domande, 8 phrasal verbs, 3 controlli delle basi, 3 nomi/quantificatori, 3 modali, 3 frasi complesse, 3 costruzioni/connettivi. Alterna risposte a scelta e completamenti. Le domande e le opzioni hanno un ordine ripetibile per sessione; la sessione funziona offline dopo il primo caricamento.
 
-- **43 lezioni**: fondamenta, tutti i principali tempi e loro contrasti, some/any, quantificatori, modali, condizionali, passivi, discorso indiretto, subordinate, coesione e argomentazione. Ogni lezione spiega quando scegliere una forma, con esempi a confronto ed errori frequenti.
-- **Esercizi generati su richiesta**: allenamento di 6 o verifica di 10; almeno tre tipi, un cambio di contesto e una produzione personale. La richiesta include gli errori recenti, quelli dello scritto e il lessico selezionato. Le ripetizioni identiche vengono rifiutate; la novità concettuale e la qualità linguistica dipendono ancora dal tutor.
-- **Lessico**: 161 verbi multi-parola e 60 termini/collocazioni iniziali, più quelli dai propri testi. Costruzione, registro, significato selezionato ed esempio originale. È una raccolta ampia, non un dizionario esaustivo; alcuni verbi sono preposizionali.
-- **Parole cliccabili** nell'allenamento: significato, contesto e un altro esempio. Si può indicare “lo conosco” o “non lo conoscevo”. I termini elementari della lista di esclusione non vengono proposti come glossario.
-- **Scrittura guidata**: consiglio → idee → lessico → scaletta → paragrafi → feedback → riscrittura → modello. La simulazione disattiva gli aiuti durante la stesura. Gli errori scelti si possono salvare nel ripasso.
-- **Leggere e tradurre**: testo inglese → traduzione autonoma in italiano → confronto del significato → spiegazione di passaggi fraintesi → selezione dei termini sconosciuti. Il tutor non mostra il confronto prima del tentativo. Le parole selezionate tornano nelle richieste di esercizi.
-- **Ripasso, progressi e settimana**: intervalli crescenti, piano di base e proposta del tutor, stesura lunga distribuita su due settimane. Aiuti, risposte dubbie e bozze non aumentano i risultati autonomi. Le verifiche consegnate non si possono modificare dopo aver visto il feedback.
-- Archivio precedente e backup conservano lo stesso formato. Lo Studio è salvato in `settings.main.learning`; il ripristino originale resta atomico.
+Le risposte si salvano immediatamente. È possibile interrompere, riprendere, scegliere Non so e rivedere le risposte prima della consegna. Le spiegazioni restano nascoste fino alla consegna completa. Il risultato mostra errori, risposte corrette ma incerte, priorità e argomenti che si possono saltare provvisoriamente. Nessun livello ufficiale CEFR/JFLT/STANAG viene assegnato.
 
-## Progressione e limiti didattici
+La priorità nasce dagli errori specifici. Una risposta positiva isolata normalmente richiede conferma; il controllo delle basi permette di saltare la parte su soggetto e pronomi quando tutte e tre le risposte sono corrette e sicure. I risultati successivi senza aiuti possono riaprire lezioni saltate o superare una difficoltà iniziale. I phrasal verbs sbagliati entrano nel ripasso; gli esercizi AI ricevono anche le difficoltà iniziali pertinenti alla lezione.
 
-Il carico proposto parte da 3 termini per blocco e arriva fino a 8 dopo pratica distribuita e almeno l'80% di risposte autonome corrette nelle ultime 30 valutate. Si abbassa se emergono difficoltà. Le soglie sono scelte dell'app, non risultati clinici o una scala CEFR/STANAG validata.
+Le soglie sono criteri pratici dell'app, non scale validate. Il pre-test campiona gli argomenti: non dimostra la padronanza di tutti gli usi di ogni struttura. Per consolidare si usano verifiche nuove e la scrittura.
 
-La lezione consigliata tiene conto degli ultimi tentativi senza aiuti. Può progredire fino alle lezioni complesse; tutti gli argomenti restano accessibili. Un buon risultato negli esercizi non prova da solo l'uso spontaneo nello scritto. Nessun voto ufficiale JFLT viene assegnato dai nuovi percorsi.
+## Materiali didattici
 
-I libri e le errata della versione precedente rimangono disponibili. Questo aggiornamento non costituisce una nuova lettura o verifica integrale dei quattro manuali. I range di parole sono intervalli di allenamento, non requisiti ufficiali JFLT verificati.
+`bookshelf.js` contiene sintesi originali dei passaggi pertinenti consultati nei quattro PDF forniti: Oxford, CAMPAIGN, MISSION e TARGET. Oxford guida strutture, usi e contrasti; i manuali operativi guidano contesti, rapporti, comunicazioni e argomentazione. Si distinguono pagine stampate e pagine del PDF, quando differiscono. Le errata già registrate prevalgono sulle formulazioni difettose.
 
-## Collegamento gratuito
+Le lezioni mostrano i riferimenti e le sintesi. Il Worker ricostruisce il contesto dei libri dal catalogo, anziché fidarsi di riferimenti forniti dal client, e lo include nelle richieste di esercizi, scrittura e traduzione. Il genere dello scritto determina i passaggi pertinenti. Gli esempi e gli esercizi sono originali: non si distribuiscono i PDF o copie dei loro esercizi. Per le integrazioni avanzate si distingue il metodo di scrittura dai contenuti grammaticali originali dell'app. Questa è una lettura mirata dei passaggi utili, non una verifica integrale di ogni pagina dei quattro manuali.
 
-Servono **Cloudflare Workers Free e Groq Free**, configurati una volta. Le API hanno quote, non sono illimitate: al raggiungimento del limite l'app si ferma e conserva il lavoro. Il codice non ha fallback verso altri provider o piani a pagamento; non può però verificare il piano di fatturazione dell'account, che deve restare Free.
+Il programma comprende 59 lezioni, incluse 15 lezioni sui singoli tempi/costruzioni verbali e una lezione dedicata alle negazioni. Restano lessico crescente, parole cliccabili, scrittura guidata, simulazione senza aiuti, lettura/traduzione, ripasso, backup e percorsi precedenti.
 
-La chiave `GROQ_API_KEY` viene inserita solo nei segreti Cloudflare. `APP_TOKEN` è un diverso codice personale, richiesto dall'app. Di default dura la sessione; si può ricordarlo sul proprio dispositivo con una scelta esplicita. Non entra nei backup. “Disconnetti” lo cancella.
+## Correzione del recupero lessicale
 
-Il Worker conserva soltanto i contatori di quota, con un massimo personale di 10 richieste/minuto e 80/giorno UTC. I testi e il contesto necessari alla correzione transitano su Cloudflare e vengono inviati a Groq; l'archivio dell'app resta nel browser. Il codice non registra testi nei log. Consultare anche le policy dei servizi per il trattamento da parte dei provider.
+L'assenza di un termine selezionato non è più un errore bloccante. Il Worker restituisce gli esercizi inalterati e un avviso. Il termine resta candidato per i blocchi successivi; non viene segnato come conosciuto o appreso. Non si eseguono chiamate AI aggiuntive e non si inseriscono parole a forza nelle frasi.
 
-**Attivazione:** [SETUP.md](SETUP.md) oppure [istruzioni leggibili nel browser](SETUP.html).
+I controlli strutturali sugli esercizi restano attivi: schema, numero e tipi richiesti, completamenti con lacuna, soluzioni presenti nelle alternative, duplicazioni e citazioni. Le annotazioni incoerenti possono essere omesse. Questi controlli non certificano la correttezza semantica di ogni spiegazione AI.
 
-## Articoli
+## Verifiche
 
-Il link importa un **estratto di massimo 25 parole**, da BBC, Guardian, Reuters, AP, NPR o DW. Non legge l'intero articolo e non aggira paywall. L'utente può incollare un passaggio più lungo da studiare: per la quota gratuita sono consigliati 150–350 parole alla volta. Il limite locale dell'editor è 12.000 caratteri; richieste troppo grandi vengono fermate prima di Groq. Non tutti i siti consentono il caricamento automatico.
+84 test automatici superati, con risposte AI simulate. Comprendono una sessione completa di 45 domande, salvataggio/ripresa, soluzioni nascoste, adattamento delle priorità, phrasal verbs nel ripasso, backup e regressione del blocco lessicale. L'interfaccia è verificata con JSDOM. Bundle del Worker compilato interamente in locale con esbuild.
 
-I termini sconosciuti sono suggeriti dal tutor e confermati dallo studente: non si presume che ogni parola difficile sia nuova per tutti.
-
-## Verifiche effettuate il 7 ottobre 2026
-
-- Test Node sulla logica, regressioni dei backup e del collegamento, schemi compilati con Ajv indipendente. Controlli del service worker in ambiente simulato: cache di altre app, ambito delle richieste e fallback offline.
-- Test dell'interfaccia **JSDOM**: programma/ricerca, esercizi/glossario, verifica senza aiuti, scrittura/riscrittura, articoli/backup. Risposte AI simulate.
-- `wrangler deploy --dry-run` eseguito con successo: bundle e binding Durable Object SQLite riconosciuti.
-
-**Non verificato:** qualità delle risposte Groq reali (manca una chiave), pubblicazione Cloudflare/GitHub, layout e persistenza su Safari/iPhone, offline in un browser reale. Chromium non era disponibile e il suo download è fallito; `wrangler dev` locale si è fermato per un errore di sistema sulle interfacce di rete. La compilazione del Worker e i test del suo handler non sostituiscono queste prove.
+Da provare dopo la pubblicazione: generazione reale con Groq e uso su Safari/iPhone. Nessun nuovo deploy è stato eseguito da questa sessione. Il controllo Wrangler è stato bloccato dalla revisione automatica per il possibile invio di codice/metadati a Cloudflare; è stato sostituito dalla compilazione locale. Un browser reale non è disponibile nell'ambiente di verifica.
 
 ```sh
 npm ci
 npm test
-npx wrangler deploy --dry-run --outdir worker-build
 ```
 
-Node 24 è la versione usata per le verifiche. Il frontend non ha dipendenze esterne o un passaggio di compilazione.
+## Architettura
 
-## File principali
+Frontend statico su GitHub Pages, moduli JavaScript, IndexedDB e service worker. Cloudflare Worker ESM come proxy autenticato verso Groq; il modello è scelto dall'allowlist del progetto. I segreti GROQ_API_KEY e APP_TOKEN restano nelle impostazioni Cloudflare. Il token del dispositivo viene ricordato solo con scelta esplicita ed è escluso dai backup.
 
-| File | Funzione |
-|---|---|
-| `catalog.js` | Lezioni e lessico iniziale |
-| `learning.js` | Schemi, controlli e progressione |
-| `studio.js` | Nuove schermate e salvataggio |
-| `theme.css` | Tema, interfaccia mobile e variante scura |
-| `ui.js` | Icone vettoriali locali |
-| `ai-client.js` | Collegamento al Worker e codice personale |
-| `worker/index.js` | Autenticazione, quote e Groq |
-| `worker/articles.js` | Estratti pubblici e controllo dei redirect |
-| `wrangler.jsonc` | Configurazione Cloudflare, senza segreti |
-| `tests/` | Verifiche riproducibili |
-
-## Fonti di riferimento
-
-Spiegazioni ed esempi sono originali. Le modalità di ripasso sono una scelta didattica coerente con la ricerca sulla pratica distribuita, non l'implementazione di un algoritmo dimostrato ottimale.
-
-- [British Council: grammatica](https://learnenglish.britishcouncil.org/free-resources/grammar)
-- [British Council: phrasal verbs](https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/phrasal-verbs)
-- [Cambridge: verbi multi-parola](https://dictionary.cambridge.org/grammar/british-grammar/verbs-multi-word-verbs)
-- [Kim e Webb: meta-analisi della pratica distribuita](https://doi.org/10.1111/lang.12479)
-- [Groq: output strutturati](https://console.groq.com/docs/structured-outputs)
-- [Groq: quote](https://console.groq.com/docs/rate-limits)
-- [Cloudflare: Workers Free e pricing](https://developers.cloudflare.com/workers/platform/pricing/)
-- [Cloudflare: Durable Objects](https://developers.cloudflare.com/durable-objects/get-started/)
-- [Cloudflare: segreti](https://developers.cloudflare.com/workers/configuration/secrets/)
+Il Durable Object BUDGET conserva solo contatori: dieci richieste al minuto, ottanta al giorno secondo la configurazione attuale. Quote o errori non causano retry automatici o passaggi a servizi a pagamento. Lo Studio è salvato in settings.main.learning; il pre-test è in learning.placement, con validazione anche nel ripristino.

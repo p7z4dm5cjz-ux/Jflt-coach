@@ -1,4 +1,5 @@
 import { LESSONS, VOCABULARY, BASIC_WORDS } from "./catalog.js";
+import {placementProfile,validPlacement} from "./placement.js";
 const text = {type:"string",maxLength:12000};
 const short = {type:"string",minLength:1,maxLength:1800};
 const obj = properties=>({type:"object",additionalProperties:false,required:Object.keys(properties),properties});
@@ -37,7 +38,7 @@ WRITING_COACH: accompagna UN SOLO PASSO. advice: consiglio sullo scopo, domande 
 WRITING_REVIEW: 2-3 priorità e criteri qualitativi motivati, non un voto ufficiale; errori veri distinti da style, quote esatte dal testo. Chiedi una riscrittura autonoma. NON fornire il testo riscritto né un modello.
 WRITING_MODEL: solo dopo la riscrittura, modello che conserva i fatti e le idee dell'utente, confronto e problemi ancora aperti. Niente invenzioni di fatti.
 ARTICLE_FEEDBACK: lo studente ha prima letto text e scritto translation in italiano. Confronta il significato, non una traduzione parola per parola. Copia source_quote ALLA LETTERA da text e user_quote da translation; per omissioni user_quote può essere vuota. Analizza fino a otto passaggi significativi e spiega errori, ambiguità, collocazioni e sfumature. Non giudicare sbagliata una parafrasi corretta. Proponi fino a DATA.vocabulary_limit termini non elementari presenti ALLA LETTERA nel testo, non già conosciuti, con esempio originale. Per input con source_kind=link_excerpt usa solo il breve estratto fornito, non pretendere di avere letto tutto l'articolo.`;
-export function freshLearning(){return {version:1,sets:[],attempts:[],writers:[],reviews:[],known:[],pending:[],articles:[],vocabulary:[]};}
+export function freshLearning(){return {version:1,sets:[],attempts:[],writers:[],reviews:[],known:[],pending:[],articles:[],vocabulary:[],placement:null};}
 export const normal = value=>String(value||"").toLowerCase().replace(/[’‘]/g,"'").replace(/\s+/g," ").replace(/[.!?]+$/g,"").trim();
 export const newId = prefix=>`${prefix}-${crypto.randomUUID()}`;
 export function glossParts(stem,glosses=[]){
@@ -70,7 +71,7 @@ export function validateLearningReply(mode,payload,data,validate){
       for(const it of payload.items)if(it.kind==="completion"&&!it.stem.includes("___"))errors.push("Un completamento deve avere una lacuna ___, non una frase già svolta.");
     }
     if(terms.size>(data.vocabulary_limit||3))errors.push("Troppi termini nuovi per questa fase.");
-    if(data.vocabulary?.length&&!payload.items.some(it=>data.vocabulary.some(v=>glossParts(it.stem,[{term:v.expression}]).some(p=>p.gloss))))errors.push("Manca il recupero del lessico selezionato.");
+    // Il recupero lessicale è un obiettivo accessorio: non invalida gli esercizi.
   }
   if(mode==="EVALUATE"){
     const answers=new Map(data.answers.map(a=>[a.item_id,a]));const ids=new Set();
@@ -109,9 +110,22 @@ export function scheduleReview(card,grade,now=Date.now()){
   return {...old,reps:(old.reps||0)+(good||easy?1:0),lapses:(old.lapses||0)+(grade==="again"?1:0),interval,due:new Date(now+(interval?interval*864e5:10*60e3)).toISOString()};
 }
 export function skillProgress(attempts){return SKILLS.map(skill=>{const list=attempts.filter(a=>a.skill===skill&&!a.assisted&&a.submitted&&a.verdict!=="uncertain");return {skill,total:list.length,correct:list.filter(a=>["correct","acceptable"].includes(a.verdict)).length};});}
+export function lessonStatus(state,id){
+  const a=state.attempts.filter(x=>x.lesson_id===id&&!x.assisted&&x.submitted&&x.verdict!=="uncertain").slice(-10),correct=a.filter(x=>["correct","acceptable"].includes(x.verdict)).length;
+  if((a.length-correct)*5-correct>0)return "review";
+  if(a.length>=8&&correct/a.length>=0.8&&new Set(a.map(x=>x.set_id)).size>=2)return "skip";
+  return placementProfile(state.placement)?.lessonStatus[id]||"unassessed";
+}
 export function suggestedLesson(state,focusTool=""){
+  const profile=placementProfile(state.placement);
   const rows=LESSONS.map(lesson=>{const a=state.attempts.filter(x=>x.lesson_id===lesson.id&&!x.assisted&&x.submitted&&x.verdict!=="uncertain").slice(-10),correct=a.filter(x=>["correct","acceptable"].includes(x.verdict)).length,errors=a.length-correct;return {lesson,weakness:errors*5-correct,practised:a.length>=8&&correct/a.length>=0.8&&new Set(a.map(x=>x.set_id)).size>=2};});
   const weak=rows.filter(r=>r.weakness>0).sort((a,b)=>b.weakness-a.weakness);if(weak.length)return weak[0].lesson;
+  if(profile){
+    const priority=profile.priorityIds.map(id=>rows.find(r=>r.lesson.id===id)).find(r=>r&&!r.practised);if(priority)return priority.lesson;
+    const confirm=rows.find(r=>!r.practised&&profile.lessonStatus[r.lesson.id]==="confirm");if(confirm)return confirm.lesson;
+    const unexplored=rows.find(r=>!r.practised&&profile.lessonStatus[r.lesson.id]!=="skip"&&r.lesson.stage>0);if(unexplored)return unexplored.lesson;
+    return LESSONS.find(l=>l.id==="mixed");
+  }
   const remaining=rows.filter(r=>!r.practised);return (remaining.find(r=>focusTool&&r.lesson.tool===focusTool)||remaining[0]||rows.at(-1)).lesson;
 }
 export function vocabularyLoad(state){const all=state.attempts.filter(x=>x.submitted&&!x.assisted&&x.verdict!=="uncertain"),a=all.slice(-30),days=new Set(all.map(x=>x.date.slice(0,10))).size;const rate=a.length?a.filter(x=>["correct","acceptable"].includes(x.verdict)).length/a.length:0;return rate>=0.8&&days>=2?Math.min(8,3+Math.floor(all.length/10),2+days):3;}
@@ -128,6 +142,7 @@ export function validateLearningState(state,validate){
   const errors=[];
   if(!state||state.version!==1)return ["Stato Studio non riconosciuto."];
   for(const k of Object.keys(state))if(!Object.hasOwn(freshLearning(),k))errors.push(`Studio: proprietà inattesa ${k}.`);
+  if(state.placement!==undefined&&state.placement!==null&&!validPlacement(state.placement))errors.push("Studio: pre-test non valido o incompleto dopo la consegna.");
   const schemas={
     sets:obj({id:short,lesson_id:short,purpose:choice(["practice","check"]),created_at:short,items:PAYLOADS.EXERCISES.properties.items}),
     attempts:obj({id:short,set_id:short,item_id:short,lesson_id:short,answer:text,rationale:text,skill:choice(SKILLS),assisted:{type:"boolean"},submitted:{type:"boolean"},hint_level:{type:"integer",minimum:0,maximum:3},verdict:choice(["correct","incorrect","acceptable","uncertain"]),date:short,explanation_it:text}),
