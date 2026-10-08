@@ -2,7 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import worker,{handle,Budget} from "../worker/index.js";
 import Ajv2020 from "ajv/dist/2020.js";
-import {PAYLOADS} from "../learning.js";
+import {PAYLOADS,validateLearningReply,exerciseBlueprint} from "../learning.js";
+import {LESSONS,TENSE_GROUPS} from "../catalog.js";
+import {validateAgainst} from "../core.js";
 import {MODES} from "../schema.js";
 import {budgetDecision,secureEqual,providerRequest} from "../worker/policy.js";
 import {articleExcerpt} from "../worker/articles.js";
@@ -10,15 +12,67 @@ import {setAppToken,askAI,workerUrl,forgetToken} from "../ai-client.js";
 const origin="https://p7z4dm5cjz-ux.github.io",token="a-test-token-longer-than-24-characters";
 const env=()=>({ALLOWED_ORIGIN:origin,APP_TOKEN:token,GROQ_API_KEY:"not-a-real-key",BUDGET:{idFromName:()=>"id",get:()=>({fetch:async()=>Response.json({ok:true,retry:0})})}});
 const req=(body,headers={},path="/ai")=>new Request(`https://test.workers.dev${path}`,{method:"POST",headers:{Origin:origin,"Content-Type":"application/json",Authorization:`Bearer ${token}`,...headers},body:JSON.stringify(body)});
+const glossary=term=>({term,meaning_it:"elementi di prova",context_it:"Elementi a sostegno di un resoconto.",example_en:"The evidence supports the account."});
+const exerciseReply=()=>({lesson_id:"some-any",items:["completion","transformation","context_switch","production"].map((kind,i)=>({id:`g${i}`,kind,skill:i===3?"write":"choose",instruction_it:"Completa e spiega.",context_it:"Un contesto operativo.",stem:`We need some evidence for case ${i}.`,answer:"some evidence",alternatives:["some evidence"],reason_it:"Evidence è non numerabile.",hints:["Pensa alla quantità.","Confronta some information.","Serve una quantità non specificata."],glosses:[glossary("evidence")],ambiguous:kind==="production"}))});
+const exerciseInput=()=>({request_id:"gloss",mode:"EXERCISES",data:{lesson:{id:"some-any"},n_items:4,vocabulary_limit:3,vocabulary:[{expression:"evidence"}]}});
+const providerReply=payload=>async()=>Response.json({choices:[{finish_reason:"stop",message:{content:JSON.stringify(payload)}}]});
+test("regressione reale: lessico selezionato assente produce avviso, non blocca il blocco",async()=>{
+  const input=exerciseInput();input.data.vocabulary=[{expression:"chain of custody"}];const original=exerciseReply(),before=structuredClone(original);let calls=0;
+  const res=await handle(req(input),env(),async(...args)=>{calls++;return providerReply(original)(...args);});assert.equal(res.status,200);assert.equal(calls,1);const body=await res.json();assert.deepEqual(body.payload,before);assert.ok(body.warnings.some(w=>w.includes("lessico selezionato")));assert.deepEqual(validateLearningReply("EXERCISES",body.payload,input.data,validateAgainst),[]);
+  const bad=exerciseReply();bad.items[0].alternatives=["wrong"];assert.equal((await handle(req(input),env(),providerReply(bad))).status,502);
+});
 test("confronto segreti e CORS non sostituisce autenticazione",async()=>{assert.ok(await secureEqual(token,token));assert.equal(await secureEqual(token,"other"),false);assert.equal((await handle(req({}, {Authorization:"Bearer wrong"}),env())).status,401);assert.equal((await handle(req({}, {Origin:"https://other.example"}),env())).status,403);});
 test("segreti mancanti e modello non previsto fermano invio",async()=>{let called=false;const f=async()=>{called=true;};const e=env();delete e.GROQ_API_KEY;assert.equal((await handle(req({}),e,f)).status,503);assert.equal(called,false);});
 test("piano di sicurezza limita dieci al minuto e ottanta al giorno",()=>{let record;for(let i=0;i<10;i++){const d=budgetDecision(record,1000);assert.ok(d.ok);record=d.record;}assert.equal(budgetDecision(record,1000).ok,false);assert.equal(budgetDecision({...record,minute:-1,dayCount:80},1000).ok,false);});
 test("contatore Durable Object non conserva testi",async()=>{const values=new Map(),storage={transaction:async fn=>fn({get:async k=>values.get(k),put:async(k,v)=>values.set(k,v)})};const b=new Budget({storage});await b.fetch();assert.deepEqual([...values.keys()],["budget"]);assert.equal(values.get("budget").dayCount,1);});
 test("mode sconosciuto e formato non valido respinti",async()=>{assert.throws(()=>providerRequest({request_id:"x",mode:"OTHER",data:{}}));assert.equal((await handle(req({request_id:"x",mode:"OTHER",data:{}}),env())).status,400);});
 test("quota Groq gestita senza retry o provider a pagamento",async()=>{let calls=0;const body={request_id:"x",mode:"WRITING_MODEL",data:{rewrite:"A rewrite",feedback:{}}};const res=await handle(req(body),env(),async()=>{calls++;return Response.json({error:"quota"},{status:429,headers:{"Retry-After":"37"}});});assert.equal(res.status,429);assert.equal(res.headers.get("retry-after"),"37");assert.equal(calls,1);});
+test("rifiuto Groq espone stato e causa senza segreti o generazioni",async()=>{
+  const e=env();e.GROQ_API_KEY="gsk_fake-private-test-key";const body={request_id:"x",mode:"WRITING_MODEL",data:{rewrite:"A rewrite",feedback:{}}};let calls=0;
+  const res=await handle(req(body),e,async()=>{calls++;return Response.json({error:{code:"invalid_json_schema",param:"response_format",message:`Schema rejected. ${e.GROQ_API_KEY} ${e.APP_TOKEN} Bearer leaked-private-key gsk_another_secret`,failed_generation:"learner text should not be reflected"},headers:{Authorization:e.APP_TOKEN}},{status:400});});
+  const result=await res.json(),serialized=JSON.stringify(result);assert.equal(res.status,502);assert.match(result.message,/Groq HTTP 400/);assert.match(result.message,/invalid_json_schema/);assert.match(result.message,/response_format/);for(const privateValue of [e.GROQ_API_KEY,e.APP_TOKEN,"leaked-private-key","gsk_another_secret","learner text should not be reflected"])assert.ok(!serialized.includes(privateValue));assert.equal(calls,1);
+});
+test("errori Groq distinguono permessi, dimensione e risposta non JSON",async()=>{
+  const body={request_id:"x",mode:"WRITING_MODEL",data:{rewrite:"A rewrite",feedback:{}}};
+  for(const [status,pattern] of [[401,/chiave Groq/],[403,/non autorizza/],[413,/ridurre il contesto/]]){const res=await handle(req(body),env(),async()=>Response.json({error:{message:"Provider detail"}},{status}));assert.match((await res.json()).message,pattern);}
+  const res=await handle(req(body),env(),async()=>new Response("<html>Upstream error</html>",{status:503}));assert.equal(res.status,502);assert.match((await res.json()).message,/Groq HTTP 503/);
+});
 test("limite personale ferma richiesta prima del provider",async()=>{const e=env();e.BUDGET.get=()=>({fetch:async()=>Response.json({ok:false,retry:60})});let called=false;const r=await handle(req({request_id:"x",mode:"WRITING_MODEL",data:{}}),e,async()=>{called=true;});assert.equal(r.status,429);assert.equal(called,false);});
 test("risposta AI non valida scartata",async()=>{const r=await handle(req({request_id:"x",mode:"WRITING_MODEL",data:{rewrite:"x",feedback:{}}}),env(),async()=>Response.json({choices:[{finish_reason:"stop",message:{content:JSON.stringify({model_en:"x",comparison_it:[],remaining_it:[]})}}]}));assert.equal(r.status,502);});
 test("risposta valida conserva ID e mode",async()=>{const payload={model_en:"An original model.",comparison_it:["Prima","Seconda"],remaining_it:[]};const r=await handle(req({request_id:"x",mode:"WRITING_MODEL",data:{rewrite:"x",feedback:{}}}),env(),async()=>Response.json({choices:[{finish_reason:"stop",message:{content:JSON.stringify(payload)}}]}));assert.equal(r.status,200);const j=await r.json();assert.equal(j.request_id,"x");assert.deepEqual(j.payload,payload);});
+test("compatibilità Groq JSON Object usa lo schema completo e una sola chiamata",async()=>{
+  const payload={model_en:"An original model.",comparison_it:["Prima","Seconda"],remaining_it:[]};let calls=0;
+  const res=await handle(req({request_id:"x",mode:"WRITING_MODEL",data:{rewrite:"A rewrite.",feedback:{}}}),env(),async(url,options)=>{
+    calls++;const wire=JSON.parse(options.body);assert.equal(url,"https://api.groq.com/openai/v1/chat/completions");assert.deepEqual(wire.response_format,{type:"json_object"});
+    const sentSchema=JSON.parse(wire.messages[0].content.split("SCHEMA DEL PAYLOAD:\n")[1]);assert.deepEqual(sentSchema,PAYLOADS.WRITING_MODEL);assert.equal(wire.max_completion_tokens,3500);
+    return Response.json({choices:[{finish_reason:"stop",message:{content:JSON.stringify(payload)}}]});
+  });assert.equal(res.status,200);assert.equal(calls,1);assert.deepEqual((await res.json()).payload,payload);
+});
+test("glossario incoerente omesso senza perdere esercizi o alterare soluzioni",async()=>{
+  const input=exerciseInput(),original=exerciseReply();original.items[0].glosses.push(glossary("custody"),glossary("evidence"));const before=structuredClone(original);let calls=0;
+  const res=await handle(req(input),env(),async(...args)=>{calls++;return providerReply(original)(...args);});assert.equal(res.status,200);const body=await res.json();assert.equal(calls,1);assert.equal(body.payload.items.length,4);assert.equal(body.payload.items[0].glosses.length,1);assert.equal(body.payload.items[0].glosses[0].term,"evidence");assert.equal(body.warnings.length,1);assert.deepEqual(original,before);
+  for(let i=0;i<4;i++){for(const field of ["stem","answer","alternatives","reason_it","hints"])assert.deepEqual(body.payload.items[i][field],original.items[i][field]);}
+  assert.deepEqual(validateLearningReply("EXERCISES",body.payload,input.data,validateAgainst),[]);
+});
+test("pulizia del glossario conserva i rifiuti di schema e soluzione",async()=>{
+  const input=exerciseInput(),malformed=exerciseReply();delete malformed.items[0].glosses[0].meaning_it;assert.equal((await handle(req(input),env(),providerReply(malformed))).status,502);
+  const invalid=exerciseReply();invalid.items[0].glosses.push(glossary("custody"));invalid.items[0].alternatives=["an invented solution"];const res=await handle(req(input),env(),providerReply(invalid));assert.equal(res.status,502);assert.match((await res.json()).message,/Soluzione assente/);
+});
+test("glossario filtrato rispetta parole note, livello e carico complessivo",async()=>{
+  const input=exerciseInput();input.data.vocabulary_limit=1;input.data.known_terms=["custody"];const original=exerciseReply();original.items[0].stem+=" An apple remains in custody with a statement.";original.items[0].glosses.push(glossary("apple"),glossary("custody"),glossary("statement"));const res=await handle(req(input),env(),providerReply(original));assert.equal(res.status,200);const body=await res.json();assert.deepEqual(body.payload.items[0].glosses.map(g=>g.term),["evidence"]);assert.deepEqual(validateLearningReply("EXERCISES",body.payload,input.data,validateAgainst),[]);
+});
+test("annotazioni degli articoli omesse ma citazioni inventate ancora rifiutate",async()=>{
+  const input={request_id:"article",mode:"ARTICLE_FEEDBACK",data:{text:"The evidence is clear.",translation:"Gli elementi di prova sono chiari.",vocabulary_limit:3}};
+  const payload={overview_it:"Significato conservato.",segments:[{source_quote:input.data.text,user_quote:input.data.translation,translation_it:input.data.translation,explanation_it:"Evidence è non numerabile.",understanding:"correct"}],terms:[glossary("evidence"),glossary("custody")],advice_it:"Ripassa evidence."};const res=await handle(req(input),env(),providerReply(payload));assert.equal(res.status,200);const body=await res.json();assert.deepEqual(body.payload.terms.map(g=>g.term),["evidence"]);assert.equal(body.warnings.length,1);
+  payload.segments[0].source_quote="An invented sentence.";assert.equal((await handle(req(input),env(),providerReply(payload))).status,502);
+});
+test("client mostra l'avviso del glossario conservando payload e richiesta",async()=>{
+  setAppToken(token);try{let notice="";const payload={items:[]};const result=await askAI("https://test.workers.dev","EXERCISES",{}, {request_id:"gloss",onWarning:message=>notice=message,fetcher:async()=>Response.json({request_id:"gloss",mode:"EXERCISES",payload,warnings:["Una spiegazione omessa.",null,{}]})});assert.deepEqual(result,payload);assert.equal(notice,"Una spiegazione omessa.");}finally{forgetToken();}
+});
+test("tutor usa la lezione canonica e la traccia per ogni forma verbale",()=>{
+  for(const id of TENSE_GROUPS.flatMap(g=>g.ids)){const config=providerRequest({request_id:"tense",mode:"EXERCISES",data:{lesson:{id,title:"Un titolo estraneo"},n_items:6,exercise_plan:exerciseBlueprint(6)}});assert.deepEqual(config.data.lesson,LESSONS.find(l=>l.id===id));assert.deepEqual(config.data.exercise_plan,exerciseBlueprint(6));assert.match(config.prompt,/argomento obbligatorio/);assert.match(config.prompt,/affermative, negative e interrogative/);}
+  assert.throws(()=>providerRequest({request_id:"tense",mode:"EXERCISES",data:{lesson:{id:"present-simple"},n_items:6,exercise_plan:[]}}));assert.throws(()=>providerRequest({request_id:"tense",mode:"EXERCISES",data:{lesson:{id:"invented"},n_items:6}}));
+});
 test("endpoint non consente HTTP, credenziali o chiavi in URL",()=>{assert.throws(()=>workerUrl("http://test.workers.dev"));assert.throws(()=>workerUrl("https://test.workers.dev?key=x"));assert.throws(()=>workerUrl("https://user:pass@test.workers.dev"));assert.equal(workerUrl("https://test.workers.dev/ai"),"https://test.workers.dev");});
 test("client rifiuta una risposta di un'altra richiesta",async()=>{setAppToken(token);await assert.rejects(askAI("https://test.workers.dev","EVALUATE",{}, {request_id:"mine",fetcher:async()=>Response.json({request_id:"other",mode:"EVALUATE",payload:{}})}),/altra richiesta/);forgetToken();});
 test("client non esegue richieste senza codice personale",async()=>{forgetToken();await assert.rejects(askAI("https://test.workers.dev","EVALUATE",{}),/codice personale/);});

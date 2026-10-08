@@ -1,12 +1,25 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {LESSONS,PHRASALS,TERMS,BASIC_WORDS} from "../catalog.js";
+import {LESSONS,PHRASALS,TERMS,BASIC_WORDS,TENSE_GROUPS,TENSE_COMPARISONS} from "../catalog.js";
 import * as l from "../learning.js";
 import * as c from "../core.js";
 const types=["completion","transformation","context_switch","production"];
 export const fixture=()=>({lesson_id:"some-any",items:types.map((kind,i)=>({id:`q${i}`,kind,skill:i===3?"write":"choose",instruction_it:"Completa la consegna.",context_it:"Il contesto operativo è descritto nella frase.",stem:`We need some evidence for case ${i}.`,answer:"some evidence",alternatives:["some evidence"],reason_it:"Evidence è non numerabile; la scelta dipende dal contesto.",hints:["Pensa alla quantità.","Confronta some information con two reports.","Serve una quantità non specificata."],glosses:[{term:"evidence",meaning_it:"elementi di prova",context_it:"Gli elementi che sostengono una conclusione.",example_en:"The available evidence supports the account."}],ambiguous:kind==="production"}))});
 const request=()=>({lesson:LESSONS.find(x=>x.id==="some-any"),n_items:4,already_seen:[],vocabulary_limit:3});
-test("programma completo per tappe e identificativi unici",()=>{assert.equal(LESSONS.length,43);assert.equal(new Set(LESSONS.map(x=>x.id)).size,43);for(const id of ["some-any","may-might","future-perfect","conditionals-unreal","cohesion"])assert.ok(LESSONS.some(x=>x.id===id));});
+test("programma completo per tappe e identificativi unici",()=>{assert.equal(LESSONS.length,59);assert.equal(new Set(LESSONS.map(x=>x.id)).size,59);for(const id of ["some-any","may-might","future-perfect","conditionals-unreal","cohesion"])assert.ok(LESSONS.some(x=>x.id===id));});
+test("forme verbali separate, confronti e vecchi identificativi conservati",()=>{
+  const ids=TENSE_GROUPS.flatMap(g=>g.ids);assert.equal(ids.length,15);assert.equal(new Set(ids).size,15);
+  for(const id of ids){const lesson=LESSONS.find(l=>l.id===id);assert.ok(lesson);assert.equal(lesson.tool,"tenses");assert.ok(lesson.forms&&lesson.when&&lesson.contrast&&lesson.pitfall);assert.equal(lesson.examples.length,2);}
+  for(const id of TENSE_COMPARISONS)assert.ok(LESSONS.some(l=>l.id===id));
+  for(const id of ["present-perfect-continuous","past-perfect-continuous","future-perfect-continuous","future-going-to","future-in-past"])assert.ok(ids.includes(id));
+});
+test("tracce diverse per esercitazione e verifica con costruzione e uso",()=>{
+  for(const n of [4,6,10]){const plan=l.exerciseBlueprint(n);assert.equal(plan.length,n);assert.ok(plan.some(t=>t.kind==="production"));assert.ok(plan.some(t=>t.kind==="context_switch"));assert.ok(plan.some(t=>t.kind==="completion"));}
+  assert.deepEqual(l.exerciseBlueprint(6).map(t=>t.kind),["meaning","completion","error_correction","transformation","context_switch","production"]);assert.throws(()=>l.exerciseBlueprint(3));
+});
+test("completamenti già svolti e tipi mancanti restano rifiutati",()=>{
+  const p=fixture(),r={...request(),exercise_plan:l.exerciseBlueprint(4)};assert.ok(l.validateLearningReply("EXERCISES",p,r,c.validateAgainst).some(e=>e.includes("lacuna")));p.items[0].stem="We need ___ evidence for case 0.";assert.deepEqual(l.validateLearningReply("EXERCISES",p,r,c.validateAgainst),[]);p.items[1].kind="choice";assert.ok(l.validateLearningReply("EXERCISES",p,r,c.validateAgainst).some(e=>e.includes("transformation")));
+});
 test("161 voci multi-parola e 60 termini con esempi",()=>{assert.equal(PHRASALS.length,161);assert.equal(TERMS.length,60);assert.equal(new Set(PHRASALS.map(x=>x.expression)).size,161);for(const p of PHRASALS){assert.ok(p.meaning_it&&p.example&&p.alternative);assert.ok(["S","I","U"].includes(p.pattern));}});
 test("fixture didattica valida",()=>assert.deepEqual(l.validateLearningReply("EXERCISES",fixture(),request(),c.validateAgainst),[]));
 test("frase già vista rifiutata",()=>{const r=request();r.already_seen=[fixture().items[0].stem];assert.ok(l.validateLearningReply("EXERCISES",fixture(),r,c.validateAgainst).some(e=>e.includes("già visto")));});
@@ -33,7 +46,7 @@ test("backup esercizi e risposte referenziati",()=>{const s=l.freshLearning();s.
 test("regressione: punteggiatura conta nel diagnostico",()=>{const item={answer:"It was late; however, we continued.",accept:["It was late; however, we continued."]};assert.equal(c.scoreItem(item,{text:"It was late, however, we continued."}),"unclear");});
 test("regressione: citazione doppia non prova due usi",()=>{const q={quote:"The road was closed.",correct:true,note_it:"Passivo."};assert.equal(c.transferVerdict([q,q],q.quote).n,1);});
 test("glossario rispetta carico e termini già conosciuti",()=>{const p=fixture(),r=request();r.known_terms=["evidence"];assert.ok(l.validateLearningReply("EXERCISES",p,r,c.validateAgainst).some(e=>e.includes("conosciuto")));r.known_terms=[];r.vocabulary_limit=1;p.items[1].stem="We need some evidence and a statement.";p.items[1].glosses.push({...p.items[1].glosses[0],term:"statement"});assert.ok(l.validateLearningReply("EXERCISES",p,r,c.validateAgainst).some(e=>e.includes("Troppi")));});
-test("nuovi esercizi devono recuperare almeno un termine selezionato",()=>{const r={...request(),vocabulary:[{expression:"custody"}]};assert.ok(l.validateLearningReply("EXERCISES",fixture(),r,c.validateAgainst).some(e=>e.includes("recupero")));});
+test("lessico non recuperato non invalida esercizi grammaticali validi",()=>{const r={...request(),vocabulary:[{expression:"custody"}]};assert.deepEqual(l.validateLearningReply("EXERCISES",fixture(),r,c.validateAgainst),[]);});
 test("backup rifiuta URL eseguibili e proprietà inattese",()=>{const s=l.freshLearning();s.articles.push({id:"article",source_url:"javascript:alert(1)",source_kind:"pasted",text:"An original source.",translation:"Una fonte originale.",feedback:null,created_at:"2026-10-07T00:00:00Z"});assert.equal(c.validateBackup(backup(s)).ok,false);s.articles=[];s.app_token="should-never-be-here";assert.equal(c.validateBackup(backup(s)).ok,false);});
 test("carico arriva a otto solo con pratica autonoma distribuita",()=>{const s=l.freshLearning();s.attempts=Array.from({length:60},(_,i)=>({submitted:true,assisted:false,verdict:"correct",date:`2026-10-${String(1+i%6).padStart(2,"0")}T00:00:00Z`}));assert.equal(l.vocabularyLoad(s),8);s.attempts.forEach(a=>a.assisted=true);assert.equal(l.vocabularyLoad(s),3);});
 test("termini selezionati del catalogo vengono recuperati nei nuovi contesti",()=>{const s=l.freshLearning();s.reviews=[{id:TERMS.find(t=>t.expression==="evidence").id}];assert.equal(l.vocabularyFor(s)[0].expression,"evidence");});
