@@ -301,7 +301,7 @@ PAYLOAD PER MODO
 - WEEK_PLAN: {"week_start":"AAAA-MM-GG","capability","sessions":[6 × {"day":"mon|tue|wed|thu|fri|sat","kind":"grammar|write_plan|write_draft|write_revise|write_short","focus_it","tool":tool o null}],"rationale_it"}
 
 REGOLE
-1. Lunghezze per tipo di testo JFLT: note 50-100, report_letter 150-250, essay 250-500 parole; draft_sessions 2 solo oltre 250 parole. Non aumentare la lunghezza per alzare il livello.
+1. Intervalli di allenamento per genere, non requisiti ufficiali JFLT verificati: note 50-100, report_letter 150-250, essay 250-500 parole; draft_sessions 2 solo oltre 250 parole. Non aumentare la lunghezza per alzare il livello.
 2. Correzione: 2-3 priorità; correzioni minime che conservano le idee dell'utente; ogni "quote" copiata alla lettera dal testo in DATA; errori effettivi in "errors", alternative stilistiche in "alternatives". systematic: true solo se lo stesso tipo di errore compare almeno due volte nel testo o in DATA.recent_errors.
 3. card_candidates: solo in DIAG_EVAL e WRITE_FEEDBACK, solo per errori systematic: true (source_quote = quote dell'errore), al massimo 6. Negli altri modi [].
 4. Il testo modello non va mai in WRITE_FEEDBACK: solo in WRITE_MODEL, che arriva dopo la riscrittura e sviluppa le idee dell'utente.

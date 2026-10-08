@@ -1,5 +1,9 @@
 // JFLT Coach — interfaccia e archiviazione (IndexedDB). Logica pura in core.js.
 import * as core from "./core.js";
+import { createStudio } from "./studio.js";
+import { askAI, appToken } from "./ai-client.js";
+import { freshLearning, suggestedLesson } from "./learning.js";
+import { icon } from "./ui.js";
 import {
   DIAG_ITEMS, DIAG_SESSIONS, DIAG_TASKS, BOOK_REFS, ERRATA, OBSERVATIONS, TUTOR_PROMPT,
   AREA_LABELS, CAPABILITY_LABELS, CRITERION_LABELS, TYPE_LABELS
@@ -61,7 +65,15 @@ async function getSettings() {
   await put("settings", fresh);
   return fresh;
 }
-async function saveSettings(s) { await put("settings", s); }
+async function saveSettings(s) {
+  // I vecchi pannelli possono avere una copia precedente delle impostazioni:
+  // non devono sovrascrivere lo Studio aggiornato durante un autosalvataggio.
+  const latest=await get("settings","main");
+  if(latest?.learning)s.learning=latest.learning;
+  if(latest?.ai_endpoint)s.ai_endpoint=latest.ai_endpoint;
+  else delete s.ai_endpoint;
+  await put("settings", s);
+}
 
 const MODE_LABELS = {
   DIAG_ITEMS: "Frasi per la verifica finale", DIAG_EVAL: "Profilo diagnostico", GRAMMAR: "Esercizi di grammatica",
@@ -78,6 +90,7 @@ const TOOL_STATUS = { open: "Verifica aperta", transferred: "Trasferimento confe
 /* ================================================================== */
 
 const view = document.getElementById("view");
+const studio=createStudio({view,getSettings,put,all,toast,legacyRequest:createRequest});
 const $ = (sel, root = view) => root.querySelector(sel);
 const $$ = (sel, root = view) => [...root.querySelectorAll(sel)];
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -127,7 +140,7 @@ async function updateBadge() {
 }
 
 const sheetAttrs = `autocorrect="off" autocapitalize="sentences" spellcheck="false" autocomplete="off"`;
-const tutorNote = () => `<p class="small muted">Questo passaggio richiede il Tutor, quindi una connessione. Puoi preparare la richiesta anche offline: resta in attesa nella sezione Tutor.</p>`;
+const tutorNote = () => `<p class="small muted">Con il <a href="#/connect">Tutor automatico</a> configurato, invio e correzione avvengono nell'app. Offline la richiesta resta salvata. Il copia-incolla è solo un percorso alternativo.</p>`;
 
 /* ================================================================== */
 /* Stato del percorso                                                  */
@@ -236,9 +249,27 @@ async function createRequest(mode, data, context) {
   const existing = (await all("requests")).find((r) => r.status === "pending" && r.context?.key === context.key);
   if (existing) { location.hash = `#/req/${existing.id}`; return; }
   const id = core.makeRequestId();
-  await put("requests", { id, request_id: id, mode, date: core.todayISO(), created_at: new Date().toISOString(), status: "pending", data, context });
+  const req={ id, request_id: id, mode, date: core.todayISO(), created_at: new Date().toISOString(), status: "pending", data, context };
+  await put("requests", req);
   await updateBadge();
   location.hash = `#/req/${id}`;
+  const settings=await getSettings();
+  if(settings.ai_endpoint&&appToken()&&online())sendLegacy(req).catch(e=>toast(e.message));
+}
+
+const sendingLegacy=new Set();
+async function sendLegacy(req){
+  if(sendingLegacy.has(req.id))return;sendingLegacy.add(req.id);
+  const route=location.hash;
+  try{
+    toast("Richiesta salvata. Il tutor sta lavorando…");
+    const settings=await getSettings();
+    const payload=await askAI(settings.ai_endpoint,"TUTOR",{request:req},{request_id:req.id});
+    const envelope={schema:"jflt-coach/v2",mode:req.mode,request_id:req.id,date:req.date,payload,card_candidates:[],questions:[]};
+    const checked=core.validateResponse(envelope,req);if(!checked.ok)throw new Error(`Risposta scartata: ${checked.errors.slice(0,3).join(" ")}`);
+    const target=await applyResponse(envelope,req);toast("Risposta del tutor salvata.");
+    if(location.hash===route||location.hash===`#/req/${req.id}`)location.hash=target;
+  }finally{sendingLegacy.delete(req.id);}
 }
 
 async function buildDiagEval() {
@@ -353,6 +384,11 @@ function previewResponse(obj) {
 
 async function screenHome() {
   const s = await loadState();
+  const learning = {...freshLearning(), ...(s.settings.learning || {})};
+  const lesson = suggestedLesson(learning, s.settings.plan?.focus_tool);
+  const due = learning.reviews.filter(r => Date.parse(r.due) <= Date.now()).length;
+  const unfinished = learning.writers.find(w => w.stage < 6);
+  const completed = learning.attempts.filter(a => a.submitted).length;
   const n = nextStep(s);
   const pending = s.requests.filter((r) => r.status === "pending");
   const plan = s.settings.plan;
@@ -362,18 +398,34 @@ async function screenHome() {
   const week = core.WEEK_TEMPLATE;
   const kindLabel = { grammar: "Grammatica", write_plan: "Scrittura: pianificazione", write_draft: "Scrittura: stesura", grammar_review: "Grammatica: ripasso e verifiche", write_revise: "Scrittura: revisione", rest: "Riposo o recupero" };
   view.innerHTML = `
-    <h2>Oggi</h2>
-    <section class="panel next" aria-labelledby="next-t">
+    <span class="eyebrow">Un passo alla volta</span><h2>Oggi</h2>
+    <p class="muted page-intro">Capire la grammatica. Usarla nelle tue parole.</p>
+    <div class="home-grid">
+      <section class="panel hero" aria-labelledby="today-lesson">
+        <div class="hero-meta"><span class="tag">Sessione consigliata</span><span>20 minuti di studio</span></div>
+        <h3 id="today-lesson">${esc(lesson.title)}</h3><p>${esc(lesson.goal)}</p>
+        <div class="row"><a class="btn" href="#/lesson/${lesson.id}">Inizia la lezione <span aria-hidden="true">→</span></a><a class="btn ghost" href="#/learn">Tutto il programma</a></div>
+      </section>
+      <section class="panel resume-card"><span class="card-icon">${icon("writing")}</span><h3>${unfinished ? "Riprendi il tuo testo" : "Scrivi, passo passo"}</h3><p class="small muted">${unfinished ? esc(unfinished.topic) : "Prima le idee, poi le parole giuste. Un paragrafo alla volta."}</p><a class="btn ghost" href="#/guided/${unfinished?.id||"new"}">${unfinished ? "Continua a scrivere" : "Prepara un testo"}</a></section>
+    </div>
+    <div class="metric-grid" aria-label="Il tuo studio finora">
+      <a class="panel metric tile" href="#/review"><strong>${due}</strong><span>Carte da ripassare</span></a>
+      <a class="panel metric tile" href="#/lexicon"><strong>${learning.vocabulary.length}</strong><span>Parole dai tuoi testi</span></a>
+      <a class="panel metric tile" href="#/progress"><strong>${completed}</strong><span>Risposte valutate</span></a>
+    </div>
+    <section class="panel" aria-labelledby="next-t">
+      <span class="eyebrow">Diagnostico e percorso iniziale</span>
       <h3 id="next-t" style="margin-top:0">${esc(n.title)}</h3>
       <p>${esc(n.text)}</p>
-      <a class="btn" href="${n.href}" id="next-go">${esc(n.cta)}</a>
+      <a class="btn ghost" href="${n.href}" id="next-go">${esc(n.cta)}</a>
     </section>
     ${pending.length ? `<section class="panel warn"><p style="margin:0">${pending.length} ${pending.length === 1 ? "richiesta" : "richieste"} al Tutor in attesa di risposta. <a href="#/requests">Apri</a></p></section>` : ""}
     ${plan ? `
     <h3>La settimana</h3>
     <ul class="steps">${week.map((w, i) => `<li class="${i === dow ? "current" : ""}"><span class="dot">${i + 1}</span><span>${kindLabel[w.kind]}${w.kind.startsWith("grammar") ? ` · ${esc(AREA_LABELS[plan.focus_tool])}` : ""}</span><span class="small muted">${["lun", "mar", "mer", "gio", "ven", "sab", "dom"][i]}</span></li>`).join("")}</ul>
     <p class="small muted">Strumento in corso: ${esc(AREA_LABELS[plan.focus_tool])}. Capacità: ${plan.capability} (${esc(CAPABILITY_LABELS[plan.capability])}).</p>` : ""}
-    ${exportOld ? `<section class="panel"><p style="margin:0 0 8px">${lastExport ? `Ultimo backup: ${fmtDate(lastExport)}.` : "Non hai ancora fatto un backup."} Esporta i dati una volta a settimana su File o iCloud.</p><a class="btn ghost" href="#/more">Fai il backup</a></section>` : ""}`;
+    ${exportOld ? `<section class="panel"><p style="margin:0 0 8px">${lastExport ? `Ultimo backup: ${fmtDate(lastExport)}.` : "Non hai ancora fatto un backup."} Esporta i dati una volta a settimana su File o iCloud.</p><a class="btn ghost" href="#/more">Fai il backup</a></section>` : ""}
+    <a href="#/week">Apri il piano settimanale aggiornato</a>`;
 }
 
 async function screenDiag() {
@@ -633,7 +685,7 @@ function bindCardOffer(offer) {
     for (const c of chosen) await put("cards", { id: core.makeId("card"), ...c, created_at: new Date().toISOString(), source: offer.task_id });
     offer.decided = true; offer.kept = chosen.length;
     await put("feedback", offer);
-    toast(`${chosen.length} flashcard salvate. Il ripasso arriva nella prossima iterazione.`);
+    toast(`${chosen.length} flashcard salvate. Apri Studio → Ripasso.`);
     render();
   });
 }
@@ -732,6 +784,7 @@ async function screenWriteList() {
     ...s.tasks.map((t) => ({ id: t.id, title: `${t.capability} · ${CAPABILITY_LABELS[t.capability]}`, stage: taskStage(t, s.texts, s.feedback), href: `#/task/${t.id}` }))
   ];
   view.innerHTML = `<h2>Scritti</h2>
+    <p><a class="btn" href="#/guided/new">Laboratorio passo passo o simulazione</a></p>
     ${rows.length ? `<ul class="steps">${rows.map((r) => `<li class="${r.stage === "done" ? "done" : ""}"><span class="dot">${r.stage === "done" ? "✓" : ""}</span><a href="${r.href}">${esc(r.title)}</a><span class="small muted">${STAGE_LABELS[r.stage] || ""}</span></li>`).join("")}</ul>` : `<p class="muted">Ancora nessuno scritto. Il primo arriva con il diagnostico.</p>`}
     ${s.settings.plan ? `<a class="btn" href="#/write/new" style="margin-top:12px">Nuova consegna</a>` : ""}`;
 }
@@ -742,7 +795,7 @@ async function screenWriteNew() {
   view.innerHTML = `<h2>Nuova consegna</h2>
     <label for="cap">Capacità</label>
     <select id="cap">${core.CAPABILITIES.map((c) => `<option value="${c}" ${c === cap ? "selected" : ""}>${c} · ${esc(CAPABILITY_LABELS[c])}</option>`).join("")}</select>
-    <label for="tt">Tipo di testo (lunghezza fissata dal JFLT)</label>
+    <label for="tt">Tipo di testo (intervalli di allenamento: verifica la consegna del tuo JFLT)</label>
     <select id="tt"><option value="note">Nota o email, 50-100 parole</option><option value="report_letter" selected>Rapporto o lettera formale, 150-250 parole</option><option value="essay">Saggio, 250-500 parole (stesura in due sessioni)</option></select>
     ${tutorNote()}
     <button id="mk" class="full">Prepara la richiesta</button>`;
@@ -943,7 +996,7 @@ async function screenRequests() {
   const done = reqs.filter((r) => r.status !== "pending");
   const li = (r) => `<li class="${r.status === "pending" ? "wait" : "done"}"><span class="dot">${r.status === "pending" ? "" : "✓"}</span><a href="#/req/${r.id}">${esc(MODE_LABELS[r.mode])}</a><span class="small muted">${fmtDate(r.created_at)}</span></li>`;
   view.innerHTML = `<h2>Tutor</h2>
-    <p class="muted">Le correzioni e gli esercizi nuovi richiedono il Tutor. Ogni richiesta resta qui finché non incolli la risposta.</p>
+    <p class="muted">Le richieste del percorso precedente restano qui. Configura il collegamento automatico per inviarle e importare la correzione senza copia-incolla.</p><a class="btn" href="#/connect">Tutor automatico</a><a class="btn ghost" href="#/learn">Nuovo Studio</a>
     ${!online() ? `<div class="panel warn"><p style="margin:0">Sei offline: le richieste restano in attesa. Esercizi già importati, diagnostico e scrittura funzionano normalmente.</p></div>` : ""}
     <h3>In attesa</h3>${pend.length ? `<ul class="steps">${pend.map(li).join("")}</ul>` : `<p class="small muted">Nessuna richiesta in attesa.</p>`}
     <a class="btn ghost" href="#/import">Incolla una risposta</a>
@@ -959,6 +1012,7 @@ async function screenRequest(id) {
     <h2>${esc(MODE_LABELS[req.mode])}</h2>
     <p class="small muted">Richiesta ${esc(req.request_id)} · ${fmtDate(req.created_at)} · <span class="tag ${req.status === "pending" ? "warn" : "ok"}">${req.status === "pending" ? "in attesa" : "importata"}</span></p>
     ${req.status === "pending" ? `
+      <div class="panel"><p>Invio diretto al tutor Groq tramite il tuo Worker.</p><button id="send-ai" ${sendingLegacy.has(req.id)?"disabled":""}>${sendingLegacy.has(req.id)?"Tutor al lavoro…":"Invia e importa automaticamente"}</button><a href="#/connect">Configura collegamento</a></div>
       ${!online() ? `<div class="panel warn"><p style="margin:0">Sei offline. La richiesta è salvata: copiala e inviala quando torni in linea.</p></div>` : ""}
       <h3>1. Copia il messaggio</h3>
       <p class="small muted">${s.include_instructions ? "Contiene le istruzioni complete del Tutor: funziona anche in una chat nuova." : "Senza istruzioni: usalo in un progetto ChatGPT che le ha già."}</p>
@@ -969,6 +1023,7 @@ async function screenRequest(id) {
       <div class="row" style="margin-top:8px"><button class="ghost" id="paste">Incolla dagli appunti</button><button id="check">Controlla la risposta</button></div>
       <div id="out"></div>` : `<div class="panel ok"><p style="margin:0">Importata il ${fmtDate(req.answered_at)}.</p></div><details><summary>Messaggio inviato</summary><textarea class="code" readonly>${esc(msg)}</textarea></details>`}`;
   if (req.status !== "pending") return;
+  $("#send-ai").onclick=async()=>{const b=$("#send-ai");b.disabled=true;try{await sendLegacy(req);}catch(e){toast(e.message);}finally{if(b.isConnected)b.disabled=false;}};
   $("#copy").onclick = async () => toast((await copyText(msg)) ? "Messaggio copiato." : "Copia non riuscita: seleziona il testo a mano.");
   $("#paste").onclick = async () => {
     try { $("#resp").value = await navigator.clipboard.readText(); } catch { toast("Lettura degli appunti non consentita: incolla a mano."); }
@@ -1008,6 +1063,7 @@ async function screenImport() {
 
 /* ---------- Altro: backup, impostazioni, libri, laboratorio ---------- */
 async function exportData() {
+  await studio.flush();
   const stores = {};
   for (const s of core.STORES) stores[s] = await all(s);
   const backup = { format: core.BACKUP_FORMAT, exported_at: new Date().toISOString(), app_version: core.APP_VERSION, stores };
@@ -1030,6 +1086,7 @@ async function exportData() {
 // Ripristino atomico: una sola transazione su tutti gli archivi. Se un record non
 // può essere scritto la transazione viene annullata e i dati precedenti restano intatti.
 async function restoreData(obj) {
+  await studio.flush();
   const v = core.validateBackup(obj);
   if (!v.ok) throw new Error(`backup non valido: ${v.errors.join("; ")}`);
   if (memory) {
@@ -1061,11 +1118,12 @@ async function screenMore() {
   const tools = [...new Set(s.checks.map((c) => c.tool))];
   const cards = await all("cards");
   view.innerHTML = `<h2>Altro</h2>
+    <div class="row"><a class="btn" href="#/connect">Tutor automatico</a><a class="btn ghost" href="#/learn">Studio</a><a class="btn ghost" href="#/diag">Diagnostico</a></div>
     <h3>Backup</h3>
     <p class="small muted">${s.settings.last_export ? `Ultimo backup: ${fmtDate(s.settings.last_export)}.` : "Nessun backup finora."} Il file contiene tutti i dati dell'app; salvalo su File o iCloud.</p>
     <div class="row"><button id="exp">Esporta i dati</button><label class="btn ghost" for="imp" style="margin:0">Ripristina da file</label><input type="file" id="imp" accept="application/json,.json" hidden></div>
     <div id="restore"></div>
-    <h3>Tutor</h3>
+    <h3>Tutor</h3><p><a href="#/requests">Richieste e risposte del percorso precedente</a></p>
     <label for="slp">Profilo SLP attuale (resta solo su questo telefono)</label>
     <input type="text" id="slp" placeholder="es. 2-2-2-2" value="${esc(s.settings.student_slp || "")}" autocomplete="off">
     <label class="checkline"><input type="checkbox" id="instr" ${s.settings.include_instructions ? "checked" : ""}> Includi le istruzioni complete in ogni messaggio</label>
@@ -1080,7 +1138,7 @@ async function screenMore() {
       <tr><td>Backup e ripristino</td><td><span class="tag ok">offline</span></td></tr>
     </tbody></table>
     ${tools.length ? `<h3>Trasferimento</h3><table><tbody>${tools.map((t) => `<tr><td>${esc(AREA_LABELS[t])}</td><td>${TOOL_STATUS[toolStatus(s.checks, t)]}</td></tr>`).join("")}</tbody></table>` : ""}
-    <p class="small muted">Flashcard salvate: ${cards.length}. Il ripasso con ripetizione dilazionata arriva nella prossima iterazione.</p>
+    <p class="small muted">Flashcard del percorso precedente: ${cards.length}. <a href="#/review">Apri il ripasso distribuito</a>.</p>
     <h3>Altre sezioni</h3>
     <div class="row"><a class="btn ghost" href="#/books">Libri ed errata</a><a class="btn ghost" href="#/lab">Laboratorio dispositivo</a></div>
     <p class="small muted" style="margin-top:16px">JFLT Coach ${core.APP_VERSION}</p>`;
@@ -1163,13 +1221,16 @@ async function screenLab() {
 /* ================================================================== */
 
 async function render() {
+  await studio.flush();
   clearTimers();
   const hash = location.hash.replace(/^#\/?/, "") || "home";
   const [a, b] = hash.split("/");
-  const tab = { home: "home", diag: "diag", task: "write", write: "write", grammar: "home", requests: "requests", req: "requests", import: "requests", more: "more", books: "more", lab: "more" }[a] || "home";
+  view.dataset.screen = a;
+  const tab = { home: "home", diag: "learn", learn:"learn", lesson:"learn", practice:"learn", lexicon:"lexicon", review:"learn", progress:"learn", week:"learn",articles:"learn",guided:"write",connect:"more",task: "write", write: "write", grammar: "home", requests: "more", req: "more", import: "more", more: "more", books: "more", lab: "more" }[a] || "home";
   document.querySelectorAll("nav.tabs a").forEach((x) => (x.dataset.tab === tab ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current")));
   try {
-    if (a === "home") await screenHome();
+    if (await studio.render(hash)) {}
+    else if (a === "home") await screenHome();
     else if (a === "diag" && !b) await screenDiag();
     else if (a === "diag" && (b === "D1" || b === "D2")) await screenDiagItems(b);
     else if (a === "diag" && (b === "D3" || b === "D4")) await screenDiagText(b);
@@ -1209,7 +1270,9 @@ async function boot() {
   await updateBadge();
   await render();
   if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
+    let ready=false;
+    navigator.serviceWorker.addEventListener("controllerchange",()=>{if(ready)toast("Aggiornamento pronto. Riapri l'app dopo aver salvato il lavoro.");ready=true;});
+    navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{});
   }
 }
 

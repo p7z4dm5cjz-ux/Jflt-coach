@@ -1,7 +1,8 @@
 // JFLT Coach — logica pura, senza DOM né IndexedDB (testabile in Node).
 import { SCHEMA, AREAS, CAPABILITIES } from "./schema.js";
+import { validateLearningState } from "./learning.js";
 
-export const APP_VERSION = "0.1.2";
+export const APP_VERSION = "0.2.1";
 export const BACKUP_FORMAT = "jflt-coach-backup/v1";
 
 /* ------------------------------------------------------------------ */
@@ -696,6 +697,9 @@ export function validateBackup(obj) {
   const main = Array.isArray(obj.stores.settings) && obj.stores.settings.find((r) => r && r.id === "main");
   if (!main) errors.push("settings: manca il record principale (main): backup incompleto");
   else if (typeof main.first_run !== "string" || typeof main.diag !== "object" || main.diag === null) errors.push("settings.main: campi first_run o diag mancanti");
+  if(main?.learning)errors.push(...validateLearningState(main.learning,validateAgainst));
+  if(main?.ai_endpoint){try{const u=new URL(main.ai_endpoint);if(u.protocol!=="https:"||!u.hostname.endsWith(".workers.dev")||u.username||u.password||u.search||u.hash)errors.push("Indirizzo del tutor non valido.");}catch{errors.push("Indirizzo del tutor non valido.");}}
+  if(main&&(Object.hasOwn(main,"groq_api_key")||Object.hasOwn(main,"app_token")))errors.push("Il backup non deve contenere chiavi o codici segreti.");
   if (!errors.length) checkBackupLinks(obj.stores, errors);
   return { ok: errors.length === 0, errors };
 }

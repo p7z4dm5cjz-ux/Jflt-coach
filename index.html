@@ -6,177 +6,28 @@
 <title>JFLT Coach</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="description" content="Grammatica e scrittura in inglese per la preparazione al JFLT, 20 minuti al giorno.">
-<meta name="theme-color" content="#13233F" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0F1A2B" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F5F4EF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101E23" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="JFLT Coach">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
-<style>
-:root {
-  --paper: #F4F7FB;
-  --card: #FFFFFF;
-  --ink: #13233F;
-  --muted: #586880;
-  --rule: #D3DDEA;
-  --line: #E3E9F2;
-  --accent: #1F4E8C;
-  --red: #B3261E;
-  --red-soft: #FBEAE8;
-  --green: #2F6B4F;
-  --green-soft: #E6F2EC;
-  --amber: #7A5200;
-  --amber-soft: #FBF1DC;
-  --serif: "Charter", "Iowan Old Style", "Palatino", Georgia, serif;
-  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
-  --radius-s: 6px;
-  --radius-m: 12px;
-  color-scheme: light;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #0F1A2B; --card: #16243A; --ink: #E6ECF5; --muted: #9AA9BD;
-    --rule: #2A3B57; --line: #22324B; --accent: #8FB4E8;
-    --red: #F2867D; --red-soft: #3A1F24; --green: #7CC6A1; --green-soft: #17322A;
-    --amber: #E6B65C; --amber-soft: #352A14;
-    color-scheme: dark;
-  }
-}
-* { box-sizing: border-box; }
-html, body { margin: 0; background: var(--paper); color: var(--ink); }
-body {
-  font: 17px/1.5 var(--sans);
-  -webkit-text-size-adjust: 100%;
-  padding-bottom: calc(72px + env(safe-area-inset-bottom));
-}
-header.top {
-  position: sticky; top: 0; z-index: 5;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
-  background: var(--paper); border-bottom: 1px solid var(--line);
-}
-header.top h1 { font: 600 17px/1.2 var(--serif); margin: 0; letter-spacing: .01em; }
-.net { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
-.net::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
-.net.off::before { background: var(--amber); }
-main { max-width: 680px; margin: 0 auto; padding: 16px; }
-h2 { font: 600 26px/1.2 var(--serif); margin: 8px 0 12px; }
-h3 { font: 600 19px/1.3 var(--serif); margin: 24px 0 8px; }
-p { margin: 0 0 12px; }
-.muted { color: var(--muted); }
-.small { font-size: 14px; }
-a { color: var(--accent); }
-
-.panel { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-m); padding: 16px; margin: 0 0 12px; }
-.panel.next { border-left: 4px solid var(--accent); }
-.panel.warn { background: var(--amber-soft); border-color: transparent; }
-.panel.err { background: var(--red-soft); border-color: transparent; }
-.panel.ok { background: var(--green-soft); border-color: transparent; }
-
-.steps { list-style: none; padding: 0; margin: 0; }
-.steps li { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
-.steps li:last-child { border-bottom: 0; }
-.steps .dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--rule); display: grid; place-items: center; font-size: 12px; }
-.steps .done .dot { background: var(--green); border-color: var(--green); color: var(--card); }
-.steps .current .dot { border-color: var(--accent); }
-.steps .wait .dot { border-color: var(--amber); }
-
-button, .btn {
-  font: 600 16px/1.2 var(--sans); border-radius: var(--radius-s); border: 1px solid var(--accent);
-  background: var(--accent); color: var(--card); padding: 12px 16px; min-height: 46px; cursor: pointer;
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none;
-}
-@media (prefers-color-scheme: dark) { button, .btn { color: #0F1A2B; } }
-button.ghost, .btn.ghost { background: transparent; color: var(--accent); }
-button.danger { background: var(--red); border-color: var(--red); }
-button:disabled { opacity: .45; cursor: default; }
-button:focus-visible, a:focus-visible, textarea:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.row > .grow { flex: 1; }
-.full { width: 100%; }
-
-label { display: block; font-size: 14px; color: var(--muted); margin: 12px 0 4px; }
-input[type=text], select, textarea {
-  width: 100%; font: 17px/1.5 var(--sans); color: var(--ink); background: var(--card);
-  border: 1px solid var(--rule); border-radius: var(--radius-s); padding: 10px 12px;
-}
-textarea.answer { min-height: 76px; resize: vertical; }
-textarea.sheet {
-  font: 18px/1.75em var(--serif); min-height: 340px; padding: 0 12px; resize: vertical;
-  background-color: var(--card);
-  background-image: linear-gradient(to bottom, transparent calc(1.75em - 1px), var(--rule) calc(1.75em - 1px));
-  background-size: 100% 1.75em; background-attachment: local;
-}
-textarea.code { font: 13px/1.4 ui-monospace, Menlo, monospace; min-height: 180px; }
-.checkline { display: flex; gap: 10px; align-items: center; margin: 10px 0; font-size: 16px; color: var(--ink); }
-.checkline input { width: 22px; height: 22px; }
-
-.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: var(--radius-s); overflow: hidden; }
-.seg button { background: transparent; color: var(--ink); border: 0; border-radius: 0; min-height: 40px; font-weight: 500; }
-.seg button[aria-pressed=true] { background: var(--accent); color: var(--card); }
-
-.stem { font: 20px/1.45 var(--serif); margin: 8px 0 12px; }
-.task { font: 18px/1.55 var(--serif); }
-.timer { font: 600 20px/1 var(--sans); font-variant-numeric: tabular-nums; }
-.timer.low { color: var(--red); }
-.wc { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.wc.out { color: var(--amber); }
-.progress { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; margin: 8px 0 16px; }
-.progress > i { display: block; height: 100%; background: var(--accent); }
-
-.tag { display: inline-block; font-size: 13px; padding: 2px 8px; border-radius: 999px; background: var(--line); color: var(--ink); white-space: nowrap; }
-.tag.ok { background: var(--green-soft); color: var(--green); }
-.tag.warn { background: var(--amber-soft); color: var(--amber); }
-.tag.err { background: var(--red-soft); color: var(--red); }
-
-/* Correzioni: la matita rossa dell'esaminatore */
-.fix { padding: 12px 0; border-bottom: 1px solid var(--line); }
-.fix:last-child { border-bottom: 0; }
-.fix .was { font: 18px/1.5 var(--serif); text-decoration: line-through; text-decoration-color: var(--red); text-decoration-thickness: 2px; color: var(--muted); }
-.fix .now { font: italic 19px/1.5 var(--serif); color: var(--red); display: block; margin-top: 2px; }
-.fix .why { font-size: 15px; margin-top: 4px; }
-.alt .now { color: var(--accent); }
-.mark-good { color: var(--green); font-weight: 600; }
-.mark-bad { color: var(--red); font-weight: 600; }
-
-table { width: 100%; border-collapse: collapse; font-size: 15px; }
-th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
-th { color: var(--muted); font-weight: 500; }
-td.num { text-align: right; font-variant-numeric: tabular-nums; }
-.bar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; min-width: 60px; }
-.bar > i { display: block; height: 100%; background: var(--accent); }
-
-.errors { color: var(--red); font-size: 15px; padding-left: 18px; }
-.model { font: 18px/1.6 var(--serif); white-space: pre-wrap; }
-
-nav.tabs {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
-  display: grid; grid-template-columns: repeat(5, 1fr);
-  background: var(--card); border-top: 1px solid var(--line);
-  padding-bottom: env(safe-area-inset-bottom);
-}
-nav.tabs a { text-decoration: none; color: var(--muted); font-size: 12px; text-align: center; padding: 10px 2px 8px; position: relative; }
-nav.tabs a svg { display: block; margin: 0 auto 2px; width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.8; }
-nav.tabs a[aria-current=page] { color: var(--accent); }
-nav.tabs .badge { position: absolute; top: 4px; left: calc(50% + 6px); background: var(--amber); color: var(--card); font-size: 11px; border-radius: 999px; padding: 0 6px; min-width: 18px; }
-.toast { position: fixed; left: 16px; right: 16px; bottom: calc(84px + env(safe-area-inset-bottom)); background: var(--ink); color: var(--paper); padding: 12px 16px; border-radius: var(--radius-s); z-index: 9; max-width: 640px; margin: 0 auto; }
-@media (prefers-reduced-motion: no-preference) { .toast { animation: rise .2s ease-out; } @keyframes rise { from { transform: translateY(8px); opacity: 0; } } }
-</style>
+<link rel="stylesheet" href="theme.css">
 </head>
 <body>
 <header class="top">
-  <h1>JFLT Coach</h1>
+  <div class="brand"><span class="brand-mark" aria-hidden="true">J</span><div><h1>JFLT Coach</h1><small>GRAMMATICA · SCRITTURA</small></div></div>
   <span class="net" id="net" role="status">online</span>
 </header>
 <main id="view" aria-live="polite"><p class="muted">Caricamento…</p></main>
 <nav class="tabs" aria-label="Sezioni">
-  <a href="#/home" data-tab="home"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg>Oggi</a>
-  <a href="#/diag" data-tab="diag"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>Diagnostico</a>
-  <a href="#/write" data-tab="write"><svg viewBox="0 0 24 24"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg>Scritti</a>
-  <a href="#/requests" data-tab="requests"><svg viewBox="0 0 24 24"><path d="M4 6h16v10H8l-4 4z"/></svg>Tutor<span class="badge" id="badge" hidden></span></a>
-  <a href="#/more" data-tab="more"><svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/></svg>Altro</a>
+  <a href="#/home" data-tab="home"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg>Oggi</a>
+  <a href="#/learn" data-tab="learn"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 4h14v16H5z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>Studio</a>
+  <a href="#/guided/new" data-tab="write"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg>Scritti</a>
+  <a href="#/lexicon" data-tab="lexicon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 4h14v16H5zM8 8h8M8 12h3M8 16h5"/></svg>Lessico</a>
+  <a href="#/more" data-tab="more"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/></svg>Altro<span class="badge" id="badge" hidden></span></a>
 </nav>
 <script type="module" src="app.js"></script>
 </body>

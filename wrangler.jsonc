@@ -1,0 +1,13 @@
+{
+  "name": "jflt-coach-tutor",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-10-07",
+  "workers_dev": true,
+  "vars": {
+    "ALLOWED_ORIGIN": "https://p7z4dm5cjz-ux.github.io",
+    "MODEL": "openai/gpt-oss-120b"
+  },
+  "durable_objects": {"bindings": [{"name": "BUDGET", "class_name": "Budget"}]},
+  "migrations": [{"tag": "v1", "new_sqlite_classes": ["Budget"]}],
+  "observability": {"enabled": false}
+}
