@@ -404,7 +404,7 @@ async function screenHome() {
       <section class="panel hero" aria-labelledby="today-lesson">
         <div class="hero-meta"><span class="tag">Sessione consigliata</span><span>20 minuti di studio</span></div>
         <h3 id="today-lesson">${esc(lesson.title)}</h3><p>${esc(lesson.goal)}</p>
-        <div class="row"><a class="btn" href="#/lesson/${lesson.id}">Inizia la lezione <span aria-hidden="true">→</span></a><a class="btn ghost" href="#/learn">Tutto il programma</a></div>
+        <div class="row"><a class="btn" href="#/lesson/${lesson.id}">Inizia la lezione <span aria-hidden="true">→</span></a><a class="btn ghost" href="#/tenses">Tempi verbali</a><a class="btn ghost" href="#/learn">Tutto il programma</a></div>
       </section>
       <section class="panel resume-card"><span class="card-icon">${icon("writing")}</span><h3>${unfinished ? "Riprendi il tuo testo" : "Scrivi, passo passo"}</h3><p class="small muted">${unfinished ? esc(unfinished.topic) : "Prima le idee, poi le parole giuste. Un paragrafo alla volta."}</p><a class="btn ghost" href="#/guided/${unfinished?.id||"new"}">${unfinished ? "Continua a scrivere" : "Prepara un testo"}</a></section>
     </div>
@@ -1226,7 +1226,7 @@ async function render() {
   const hash = location.hash.replace(/^#\/?/, "") || "home";
   const [a, b] = hash.split("/");
   view.dataset.screen = a;
-  const tab = { home: "home", diag: "learn", learn:"learn", lesson:"learn", practice:"learn", lexicon:"lexicon", review:"learn", progress:"learn", week:"learn",articles:"learn",guided:"write",connect:"more",task: "write", write: "write", grammar: "home", requests: "more", req: "more", import: "more", more: "more", books: "more", lab: "more" }[a] || "home";
+  const tab = { home: "home", diag: "learn", learn:"learn", tenses:"learn", lesson:"learn", practice:"learn", lexicon:"lexicon", review:"learn", progress:"learn", week:"learn",articles:"learn",guided:"write",connect:"more",task: "write", write: "write", grammar: "home", requests: "more", req: "more", import: "more", more: "more", books: "more", lab: "more" }[a] || "home";
   document.querySelectorAll("nav.tabs a").forEach((x) => (x.dataset.tab === tab ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current")));
   try {
     if (await studio.render(hash)) {}

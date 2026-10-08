@@ -6,6 +6,20 @@ const list = (items,maxItems=10,minItems=0)=>({type:"array",items,maxItems,minIt
 const choice = values=>({type:"string",enum:values});
 export const SKILLS = ["recognise","choose","form","write"];
 export const KINDS = ["meaning","choice","completion","transformation","error_correction","context_switch","production"];
+export function exerciseBlueprint(nItems=6){
+  if(!Number.isInteger(nItems)||nItems<4||nItems>10)throw new Error("Il blocco richiede da 4 a 10 esercizi.");
+  const tasks={
+    meaning:["recognise","Fai scegliere il significato di una forma nel contesto. Mostra le opzioni nello stem, senza indicare quella corretta."],
+    completion:["form","Inserisci nello stem una lacuna ___ e il verbo base o gli elementi da completare. Lo studente deve costruire la forma, non copiare una frase già completa."],
+    error_correction:["form","Scrivi nello stem una frase con un errore reale relativo alla lezione. Chiedi di correggerlo; non mostrare già la versione corretta."],
+    transformation:["form","Chiedi di trasformare la frase in negativa o interrogativa, o nella struttura richiesta dalla lezione, mantenendo il riferimento temporale indicato."],
+    context_switch:["choose","Presenta due situazioni con riferimenti diversi. Chiedi di scegliere o modificare la forma e di motivare il cambiamento di significato."],
+    production:["write","Fornisci una situazione concreta e fai scrivere 2-3 frasi proprie che mettano in pratica la lezione. Non fornire le frasi da copiare."],
+    choice:["choose","Presenta nello stem alternative grammaticali e un contesto che permetta di scegliere. Chiedi anche una motivazione, senza svelare la soluzione."]
+  };
+  const kinds=nItems<6?[...(nItems===5?["meaning"]:[]),"completion","transformation","context_switch","production"]:["meaning","completion","error_correction","transformation","context_switch","production","choice","completion","transformation","choice"].slice(0,nItems);
+  return kinds.map(kind=>({kind,skill:tasks[kind][0],task_it:tasks[kind][1]}));
+}
 const gloss = obj({term:short,meaning_it:short,context_it:short,example_en:short});
 const correction = obj({quote:short,fix:short,reason_it:short,kind:choice(["error","style"])});
 export const PAYLOADS = {
@@ -50,6 +64,11 @@ export function validateLearningReply(mode,payload,data,validate){
     if(new Set(payload.items.map(i=>i.kind)).size<3)errors.push("Servono almeno tre tipi di esercizio.");
     if(!payload.items.some(i=>i.kind==="production"))errors.push("Manca la produzione personale.");
     if(!payload.items.some(i=>i.kind==="context_switch"))errors.push("Manca il confronto tra contesti.");
+    if(Array.isArray(data.exercise_plan)){
+      const expected=new Map();for(const step of data.exercise_plan)expected.set(step.kind,(expected.get(step.kind)||0)+1);
+      for(const [kind,count] of expected)if(payload.items.filter(it=>it.kind===kind).length<count)errors.push(`Il blocco non rispetta il tipo di esercizi richiesto: ${kind}.`);
+      for(const it of payload.items)if(it.kind==="completion"&&!it.stem.includes("___"))errors.push("Un completamento deve avere una lacuna ___, non una frase già svolta.");
+    }
     if(terms.size>(data.vocabulary_limit||3))errors.push("Troppi termini nuovi per questa fase.");
     if(data.vocabulary?.length&&!payload.items.some(it=>data.vocabulary.some(v=>glossParts(it.stem,[{term:v.expression}]).some(p=>p.gloss))))errors.push("Manca il recupero del lessico selezionato.");
   }

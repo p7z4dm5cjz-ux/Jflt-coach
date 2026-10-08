@@ -2,7 +2,7 @@
 import { SCHEMA, AREAS, CAPABILITIES } from "./schema.js";
 import { validateLearningState } from "./learning.js";
 
-export const APP_VERSION = "0.2.1";
+export const APP_VERSION = "0.2.3";
 export const BACKUP_FORMAT = "jflt-coach-backup/v1";
 
 /* ------------------------------------------------------------------ */
