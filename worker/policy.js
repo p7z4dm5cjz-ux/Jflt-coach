@@ -3,6 +3,7 @@ import { BASIC_WORDS, LESSONS } from "../catalog.js";
 import { SCHEMA, MODES } from "../schema.js";
 import { validateAgainst, validateResponse } from "../core.js";
 import { TUTOR_PROMPT } from "../data.js";
+import {bookContext} from "../bookshelf.js";
 export const FREE_MODELS=["openai/gpt-oss-120b","openai/gpt-oss-20b"];
 function inlineSchema(value){
   if(Array.isArray(value))return value.map(inlineSchema);
@@ -30,6 +31,10 @@ export function providerRequest(input){
     data={...data,lesson,exercise_plan};
     prompt+=" DATA.lesson è l'argomento obbligatorio, non un suggerimento: tutte le richieste devono esercitarlo. Rispetta i tipi e le consegne di DATA.exercise_plan. Il lessico operativo serve come contesto e non sostituisce l'esercizio grammaticale. Per una lezione di tempo verbale fai costruire forme affermative, negative e interrogative, includendo accordo e ausiliari; spiega la relazione temporale e il motivo della scelta. Le altre forme si usano solo per confronti motivati. Non trasformare un completamento o una correzione in un esempio già risolto. La soluzione di riferimento deve rispettare il contesto e comparire anche in alternatives.";
   }
+  if(input.mode!=="TUTOR"){
+    data={...data,book_context:bookContext(data.lesson?.id,input.mode,data.writing_type||data.type||"report")};
+    prompt+=" DATA.book_context contiene sintesi originali dei passaggi dei libri forniti e le errata pertinenti: usale per scegliere regole, contrasti e contesti. Le errata prevalgono sulle formulazioni difettose. Non inventare pagine o citazioni, non copiare esercizi dei libri, non affermare una lettura integrale. I rimandi further non sono estratti né regole verificate.";
+  }
   return {schema,prompt,data};
 }
 export function validateProviderPayload(input,payload){
@@ -54,6 +59,7 @@ export function prepareProviderPayload(input,payload){
   }
   const prepared=mode==="EXERCISES"?{...payload,items:payload.items.map(it=>({...it,glosses:keepGlosses(it.stem,it.glosses)}))}:{...payload,terms:keepGlosses(data.text,payload.terms)};
   const warnings=omitted?["Alcune spiegazioni di vocaboli sono state omesse perché non corrispondevano al testo, erano ripetute o superavano il carico di parole nuove. Puoi usare gli esercizi e le spiegazioni rimaste."]:[];
+  if(mode==="EXERCISES"&&data.vocabulary?.length&&!prepared.items.some(it=>data.vocabulary.some(v=>glossParts(it.stem,[{term:v.expression}]).some(p=>p.gloss))))warnings.push("Gli esercizi sono disponibili. Il tutor non ha ripreso il lessico selezionato: i termini restano da ripassare e saranno proposti nei blocchi successivi.");
   return {payload:prepared,warnings};
 }
 export function budgetDecision(record,now=Date.now()){
