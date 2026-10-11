@@ -1,0 +1,114 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import Ajv from "ajv";
+import {TASKS,SHAPES,REPLY_SCHEMAS,validateReply} from "../contract.js";
+import {handle} from "../worker/index.js";
+import {callTutor,saveToken} from "../tutor.js";
+
+const token="request-format-token-longer-than-24";
+const env={APP_TOKEN:token,GROQ_API_KEY:"private-test-provider-key",ALLOWED_ORIGIN:"https://example.test",MODEL:"openai/gpt-oss-120b",BUDGET:{idFromName:()=>1,get:()=>({fetch:async()=>Response.json({ok:true})})}};
+const inputs={
+  exercises:{lesson_id:"present-perfect-simple",terms:[{expression:"carry out",meaning_it:"eseguire"}],recent_errors:[{stem:"Completa: She ___ the report. (write, present perfect)",answer:"has wrote"}]},
+  writing_review:{type:"report",topic:"Fictional gate check",text:"The officers has checked the gate.",mode:"practice"},
+  writing_compare:{type:"report",topic:"Fictional gate check",text:"The officers has checked the gate.",rewrite:"The officers have checked the gate.",issues:[]},
+  reading_review:{text:"The officers have checked the gate.",translation:"Gli agenti hanno controllato il cancello."},
+  clarify:{term:"carry out",context:"The team will carry out a routine inspection."}
+};
+const request=(task,path="/tutor")=>new Request("https://worker.test"+path,{method:"POST",headers:{Authorization:"Bearer "+token,Origin:env.ALLOWED_ORIGIN,"Content-Type":"application/json"},body:JSON.stringify({api_version:1,request_id:"req-format",task,data:inputs[task]})});
+const provider=result=>Response.json({choices:[{finish_reason:"stop",message:{content:JSON.stringify(result)}}]});
+const ajv=new Ajv({strict:true,allErrors:true});
+
+test("Ogni richiesta manda lo schema del suo compito e conserva i dati dello studente",async()=>{
+  for(const task of TASKS){
+    let calls=0;
+    const response=await handle(request(task),env,async(_url,options)=>{
+      calls++;
+      const body=JSON.parse(options.body);
+      assert.deepEqual(body.response_format,{type:"json_schema",json_schema:{name:"jflt_"+task,strict:true,schema:REPLY_SCHEMAS[task]}});
+      assert.deepEqual(JSON.parse(body.messages[1].content),inputs[task]);
+      assert.equal(body.messages[0].role,"system");assert.equal(body.messages[1].role,"user");
+      assert.ok(body.messages[0].content.includes("Il compito di questa richiesta è "+task));
+      for(const other of TASKS.filter(x=>x!==task))assert.ok(!body.messages[0].content.includes(other),other+" non deve mescolarsi a "+task);
+      assert.ok(!body.messages[0].content.includes(env.GROQ_API_KEY));
+      return provider(SHAPES[task]);
+    });
+    assert.equal(response.status,200,task);assert.equal(calls,1);
+    const body=await response.json();assert.deepEqual(body.result,SHAPES[task]);assert.equal(body.prompt_revision,"groq-schema-v2");
+  }
+});
+
+test("Gli esempi completi soddisfano sia lo schema sia i controlli dell'app",()=>{
+  for(const task of TASKS){const valid=ajv.compile(REPLY_SCHEMAS[task]);assert.equal(valid(SHAPES[task]),true,JSON.stringify(valid.errors));assert.equal(validateReply(task,SHAPES[task]),SHAPES[task]);}
+  assert.equal(SHAPES.exercises.items.length,6);
+  assert.ok(SHAPES.exercises.items.some(i=>i.kind==="choice"));
+  assert.ok(SHAPES.exercises.items.some(i=>i.kind==="transformation"));
+  assert.equal(SHAPES.writing_compare.transfer.length,3);
+});
+
+test("Gli esempi rispettano la richiesta di includere la soluzione nelle risposte accettate",()=>{
+  for(const exercise of [...SHAPES.exercises.items,...SHAPES.writing_compare.transfer]){
+    assert.ok(exercise.accept.includes(exercise.answer),exercise.stem);
+  }
+});
+
+test("Gli schemi usano solo il subset documentato e rendono obbligatorio ogni campo",()=>{
+  const allowed=new Set(["type","properties","required","additionalProperties","items","enum","description"]);
+  const walk=schema=>{
+    for(const key of Object.keys(schema))assert.ok(allowed.has(key),key);
+    if(schema.type==="object"){
+      assert.equal(schema.additionalProperties,false);
+      assert.deepEqual([...schema.required].sort(),Object.keys(schema.properties).sort());
+      for(const property of Object.values(schema.properties))walk(property);
+    }
+    if(schema.type==="array")walk(schema.items);
+  };
+  for(const schema of Object.values(REPLY_SCHEMAS))walk(schema);
+});
+
+test("Campi mancanti e tipi sbagliati vengono esclusi dallo schema di ogni compito",()=>{
+  const mutations={
+    exercises:[p=>delete p.items[3].options,p=>delete p.items[0].accept,p=>p.items[0].kind="multiple choice"],
+    writing_review:[p=>delete p.issues,p=>p.rubric.grammar=7,p=>p.issues[0].kind="suggestion"],
+    writing_compare:[p=>delete p.transfer[1].accept,p=>p.remaining="none"],
+    reading_review:[p=>delete p.terms,p=>p.segments[0].quote=null],
+    clarify:[p=>delete p.example,p=>p.explanation=[]]
+  };
+  for(const task of TASKS){const valid=ajv.compile(REPLY_SCHEMAS[task]);for(const mutate of mutations[task]){const bad=structuredClone(SHAPES[task]);mutate(bad);assert.equal(valid(bad),false,task);}}
+});
+
+test("Il Worker conserva i controlli sui conteggi e sulla soluzione anche con schema rigoroso",async()=>{
+  const wrongAnswer=structuredClone(SHAPES.exercises);wrongAnswer.items[0].answer="B";
+  const wrongCount=structuredClone(SHAPES.exercises);wrongCount.items.pop();
+  // The documented subset cannot impose these relationships: the contract must.
+  const valid=ajv.compile(REPLY_SCHEMAS.exercises);
+  for(const [bad,path] of [[wrongAnswer,"items[0].answer"],[wrongCount,"items"]]){
+    assert.equal(valid(bad),true);
+    let calls=0;const response=await handle(request("exercises"),env,async()=>{calls++;return provider(bad);});
+    assert.equal(response.status,502);assert.equal(calls,1);
+    assert.equal((await response.json()).diagnostics.issue.path,path);
+  }
+});
+
+test("Verifica Groq prova lo stesso modo rigoroso; un rifiuto non genera retry o fallback",async()=>{
+  for(const model of ["openai/gpt-oss-120b","openai/gpt-oss-20b"]){
+    let calls=0;const response=await handle(request(null,"/check"),{...env,MODEL:model},async(_url,options)=>{
+      calls++;const body=JSON.parse(options.body);assert.equal(body.model,model);assert.equal(body.max_completion_tokens,250);
+      assert.equal(body.response_format.type,"json_schema");assert.equal(body.response_format.json_schema.strict,true);
+      const valid=ajv.compile(body.response_format.json_schema.schema);assert.equal(valid({ok:true}),true);assert.equal(valid({ok:false}),false);
+      return provider({ok:true});
+    });
+    assert.equal(response.status,200);assert.equal(calls,1);
+  }
+  let calls=0;const response=await handle(request("exercises"),env,async()=>{calls++;return Response.json({error:{code:"invalid_request_error",param:"response_format",message:"private-test-provider-key"}},{status:400});});
+  assert.equal(calls,1);assert.equal(response.status,502);const text=await response.text();assert.ok(text.includes("response_format"));assert.ok(!text.includes(env.GROQ_API_KEY));
+});
+
+test("Il client 1.0.0 attraversa health e tutor e accetta le nuove risposte",async()=>{
+  saveToken(token);
+  let workerCalls=0,groqCalls=0;
+  const result=await callTutor({endpoint:"https://test.workers.dev"},"/tutor","exercises",inputs.exercises,async(url,options)=>{
+    workerCalls++;
+    return handle(new Request(url,options),env,async()=>{groqCalls++;return provider(SHAPES.exercises);});
+  });
+  assert.deepEqual(result,SHAPES.exercises);assert.equal(workerCalls,2);assert.equal(groqCalls,1);
+});

@@ -2,16 +2,18 @@
 
 Riscrittura completa dell'app e del tutor. L'app continua a usare GitHub Pages, il Worker Cloudflare **jflt-coach** e Groq. Il pacchetto contiene già il Worker aggiornato, la sua configurazione e i test.
 
+**Pacchetto completo aggiornato il 10 ottobre 2026, revisione Groq `groq-schema-v2`.** Contiene l'intero progetto con la richiesta corretta e la diagnostica già integrate. Non richiede di applicare lo ZIP diagnostico separatamente. App e Worker mantengono il numero 1.0.0 per compatibilità; la revisione della richiesta è identificata separatamente.
+
 ## Pubblicazione sul tuo progetto esistente
 
 1. Nell'app attuale esporta un backup dei progressi, poi estrai questo ZIP sul computer.
 2. Apri [il repository Jflt-coach](https://github.com/p7z4dm5cjz-ux/Jflt-coach), scegli **Add file → Upload files** e carica nella radice i file estratti, comprese le cartelle **worker**, **legacy** e **scripts**. Conferma il commit su **main**. **index.html**, **package.json** e **wrangler.jsonc** devono essere direttamente nella radice del repository.
 3. Attendi la pubblicazione GitHub Pages e la build Cloudflare collegata a **quel commit**. La build Cloudflare deve usare la radice del repository e il comando già configurato **npx wrangler deploy**.
-4. Chiudi e riapri [JFLT Coach](https://p7z4dm5cjz-ux.github.io/Jflt-coach/). Apri **Impostazioni → Verifica collegamento Worker**: app e Worker devono entrambi mostrare **1.0.0**. Poi premi **Verifica Groq** per provare una richiesta reale.
+4. Chiudi e riapri [JFLT Coach](https://p7z4dm5cjz-ux.github.io/Jflt-coach/). Apri **Impostazioni → Verifica collegamento Worker**: app e Worker devono entrambi mostrare **1.0.0**. Poi premi **Verifica Groq** e genera un blocco nella lezione che falliva: la prima prova usa un oggetto minimo, la seconda verifica il compito completo.
 
 Il Worker usa ancora [lo stesso indirizzo](https://jflt-coach.crl-r90.workers.dev). I secret **GROQ_API_KEY** e **APP_TOKEN** già configurati restano nel servizio Cloudflare esistente. Il codice personale del tutor può essere recuperato dallo stesso dispositivo; se manca, va inserito in Impostazioni.
 
-Una build riferita a un commit precedente non dimostra l'esito del nuovo aggiornamento. Verifica il commit della build e le due versioni nell'app.
+Una build riferita a un commit precedente non dimostra l'esito del nuovo aggiornamento. Verifica il commit della build. La risposta autenticata `/health` deve contenere `prompt_revision: "groq-schema-v2"` e `response_mode: "json_schema"`; il solo numero 1.0.0 non identifica questa revisione.
 
 ## Cosa cambia
 
@@ -35,7 +37,9 @@ Le sintesi si riferiscono a **Oxford Complete English Grammar**, **CAMPAIGN**, *
 
 ## Groq e funzionamento offline
 
-Il backend invia una sola richiesta Groq per operazione, con **response_format: json_object**, modello esplicito e contratto validato anche nell'app. Non cambia automaticamente modello o provider e non usa fallback a pagamento. Sono supportati **openai/gpt-oss-120b** e **openai/gpt-oss-20b**; il modello configurato è il primo.
+Il backend invia una sola richiesta Groq per operazione, con **response_format: json_schema e strict: true**, modello esplicito e contratto validato anche nell'app. Ogni compito riceve istruzioni separate e uno schema con campi obbligatori. L'esempio degli esercizi contiene sei elementi; quello del confronto contiene tre esercizi e include la soluzione fra le risposte accettate. Non cambia automaticamente modello o provider e non usa fallback a pagamento. Sono supportati **openai/gpt-oss-120b** e **openai/gpt-oss-20b**; il modello configurato è il primo.
+
+Lo schema vincola campi, tipi ed enumerazioni. Conteggi, lunghezze e corrispondenza fra soluzione e opzioni restano espliciti nel prompt e controllati dal Worker. Gli errori includono la fase diagnostica e, quando pertinente, il campo rifiutato. Il formato corretto non garantisce da solo la correttezza dell'inglese.
 
 Il limite personale resta 10 richieste al minuto e 80 al giorno. I limiti del tuo account Groq possono essere più bassi. Il controllo del Worker non usa Groq; il pulsante **Verifica Groq** usa una richiesta. Nessuna richiesta AI viene inviata automaticamente alla riconnessione.
 
@@ -66,6 +70,8 @@ npx wrangler deploy --dry-run --outdir worker-build
 
 I test coprono flussi DOM, tutte le 45 domande, esercizi, recupero lessicale, scrittura e trasferimento, migrazione IndexedDB, backup, cache offline, autenticazione, CORS, quota, contratto Groq ed errori del provider.
 
-La build di prova non verifica la tua chiave Groq né il deploy sul tuo account. Il test finale reale è **Impostazioni → Verifica Groq** dopo che app e Worker mostrano 1.0.0. Le verifiche UI automatiche usano JSDOM; la resa su browser e dispositivi reali resta da controllare.
+Questo pacchetto contiene il codice verificato con **52 test su 52 superati**, controllo di configurazione e sincronizzazione riuscito e dry-run del Worker riuscito (138.11 KiB). Le prove del provider sono simulate; nessuna chiamata autenticata a Groq o pubblicazione sul tuo account è stata eseguita da questa sessione.
+
+La build di prova non verifica la tua chiave Groq né il deploy sul tuo account. Il controllo reale dopo il deploy è **Impostazioni → Verifica Groq**, seguito dalla generazione degli esercizi e dalla prova del compito che falliva. Le verifiche UI automatiche usano JSDOM; la resa su browser e dispositivi reali resta da controllare.
 
 Documentazione tecnica di riferimento: [API Groq](https://console.groq.com/docs/api-reference), [GPT-OSS 120B](https://console.groq.com/docs/model/openai/gpt-oss-120b), [configurazione Wrangler](https://developers.cloudflare.com/workers/wrangler/configuration/).
