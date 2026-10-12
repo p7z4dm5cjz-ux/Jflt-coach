@@ -1,0 +1,22 @@
+{
+  "master": "icon-master.svg",
+  "sha256": "9cde787ac0a172ac9c3f3b0ed8ee93d98197c7d8b0bc09c781e72a8d87e9c14a",
+  "renderer": "sharp",
+  "exports": [
+    {
+      "file": "icon-180.png",
+      "size": 180,
+      "sha256": "331e0a9e55314a1a4259ffefb07a113edd3e37c326bf9e22f9369d19b8c4d22b"
+    },
+    {
+      "file": "icon-192.png",
+      "size": 192,
+      "sha256": "37ebbe0a6886d363b1eb8c1b0c143e99e98824b0c30ed8e42de9ec15a09a17d7"
+    },
+    {
+      "file": "icon-512.png",
+      "size": 512,
+      "sha256": "522fbdb0c9bfb0259f9a79295bc56b1a9be828bf5ca888f7ab3bcd72658ec990"
+    }
+  ]
+}

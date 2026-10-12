@@ -1,6 +1,6 @@
 import {LESSONS, VOCABULARY, PHRASALS} from "./catalog.js";
 import {placementProfile, validPlacement, newPlacement} from "./placement.js";
-export const VERSION = "1.0.0";
+export const VERSION = "1.1.0";
 export const API_VERSION = 1;
 export const LEGACY_STORES = ["settings","diag_responses","diag_texts","profile","requests","grammar_sets","grammar_answers","tasks","texts","feedback","error_log","cards","transfer_checks","device_tests","to_verify"];
 export const now = () => new Date().toISOString();
@@ -20,7 +20,7 @@ export function endpoint(value) {
   return u.origin;
 }
 export function freshState() {
-  return {id:"main",version:2,release:VERSION,created_at:now(),updated_at:now(),settings:{endpoint:"https://jflt-coach.crl-r90.workers.dev",daily_minutes:20},placement:null,attempts:[],sessions:[],writings:[],readings:[],vocabulary:[],legacy:null};
+  return {id:"main",version:2,release:VERSION,created_at:now(),updated_at:now(),settings:{endpoint:"https://jflt-coach.crl-r90.workers.dev",daily_minutes:20,theme:"auto"},placement:null,attempts:[],sessions:[],writings:[],readings:[],vocabulary:[],daily_plans:[],legacy:null};
 }
 export function migrate(stores) {
   const s=freshState(), old=stores?.settings?.find(v=>v.id==="main"), l=old?.learning||{};
@@ -57,6 +57,27 @@ export function recommendation(state) {
     return {...l,status,score,index,accuracy:recent,attempts:a.length};
   });
   return scored.sort((a,b)=>b.score-a.score||a.index-b.index);
+}
+export function localDay(timestamp=Date.now()) {
+  const d=new Date(timestamp);
+  return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
+}
+export function dailyPlan(state,timestamp=Date.now()) {
+  const day=localDay(timestamp),saved=state.daily_plans?.find(p=>p.day===day);
+  const minutes=saved?.minutes||([10,20,30].includes(state.settings.daily_minutes)?state.settings.daily_minutes:20);
+  const lesson=LESSONS.find(l=>l.id===saved?.lesson_id)||recommendation(state)[0];
+  const termIds=saved?.term_ids||state.vocabulary.filter(v=>Date.parse(v.due)<=timestamp).sort((a,b)=>a.due.localeCompare(b.due)).slice(0,minutes===10?2:minutes===30?5:3).map(v=>v.id);
+  const terms=termIds.map(id=>state.vocabulary.find(v=>v.id===id)).filter(Boolean);
+  const practice=state.sessions.find(s=>s.id===saved?.practice_id),writing=state.writings.find(w=>w.id===saved?.writing_id);
+  const minimumWords=minutes===10?35:minutes===30?90:60,writingWords=countWords(writing?.draft||"");
+  return {day,minutes,lesson_id:lesson.id,lesson,term_ids:terms.map(t=>t.id),terms,minimum_words:minimumWords,
+    id:saved?.id||null,practice_id:practice?.id||null,writing_id:writing?.id||null,
+    practice_complete:!!practice?.completed_at,writing_words:writingWords,writing_complete:writingWords>=minimumWords,
+    completed_steps:Number(!!practice?.completed_at)+Number(writingWords>=minimumWords)};
+}
+export function dailyWritingTopic(plan) {
+  return "Allenamento breve: scrivi almeno "+plan.minimum_words+" parole in inglese su un controllo di servizio fittizio. Usa «"+plan.lesson.title+"» dove il contesto lo richiede e mantieni coerente la cronologia. "+
+    (plan.terms.length?"Prova a usare, se pertinenti, queste espressioni: "+plan.terms.map(t=>t.expression).join(", ")+". ":"")+"Non inserire dati reali o informazioni riservate. La lunghezza misura il lavoro svolto, non la correttezza del testo.";
 }
 export function addTerm(state, term, context="") {
   const existing=state.vocabulary.find(v=>normal(v.expression)===normal(term.expression));

@@ -1,10 +1,10 @@
 import {LESSONS,PHRASALS,VOCABULARY,PATTERNS} from "./catalog.js";
 import {bookContext} from "./bookshelf.js";
 import {QUESTIONS,orderedQuestions,orderedOptions,AREAS,PHRASAL_TARGETS} from "./placement.js";
-import {VERSION,now,uid,countWords,normal,correct,endpoint,newPlacement,placementProfile,recommendation,addTerm,recordReview,recoveryItems,phrasalItems,writingReady,sanitizeFeedback,GENRES} from "./engine.js";
+import {VERSION,now,uid,countWords,normal,correct,endpoint,newPlacement,placementProfile,recommendation,addTerm,recordReview,recoveryItems,phrasalItems,writingReady,sanitizeFeedback,GENRES,dailyPlan,dailyWritingTopic} from "./engine.js";
 import {grammarItems} from "./practice-bank.js";
 import {openRepository,parseBackup} from "./storage.js";
-import {callTutor,getToken,saveToken} from "./tutor.js";
+import {callTutor,getToken,saveToken,invalidateHealth} from "./tutor.js";
 
 export function h(tag,attrs={},...children) {
   const el=document.createElement(tag);
@@ -42,6 +42,18 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     finally{busy=false;root.removeAttribute("aria-busy");if(button?.isConnected)button.disabled=false;saveStatus.textContent="Salvato sul dispositivo";}
   }
   const button=(text,fn,cls="")=>h("button",{type:"button",class:cls,onclick:e=>run(fn,e.currentTarget)},text);
+  const themeNames={auto:"Automatico",light:"Chiaro",dark:"Scuro"};
+  function applyTheme() {
+    const theme=Object.hasOwn(themeNames,state.settings.theme)?state.settings.theme:"auto";
+    document.documentElement.dataset.theme=theme;
+    try{localStorage.setItem("jflt-coach-theme",theme);}catch{}
+    const toggle=document.getElementById("theme-toggle");
+    if(toggle){toggle.textContent="Tema: "+themeNames[theme];toggle.setAttribute("aria-label","Tema "+themeNames[theme]+". Cambia tema");}
+    const dark=theme==="dark"||theme==="auto"&&window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content",dark?"#101c1d":"#f5f4ef");
+  }
+  document.getElementById("theme-toggle")?.addEventListener("click",e=>run(async()=>{const themes=["auto","light","dark"],current=themes.includes(state.settings.theme)?state.settings.theme:"auto";await change(s=>s.settings.theme=themes[(themes.indexOf(current)+1)%themes.length]);applyTheme();if(location.hash==="#/settings")await refresh();},e.currentTarget));
+  window.matchMedia?.("(prefers-color-scheme: dark)").addEventListener?.("change",()=>applyTheme());
   function autosave(fn) {
     saveStatus.textContent="Salvataggio…";
     return change(fn).then(()=>{saveStatus.textContent="Salvato sul dispositivo";}).catch(e=>{saveStatus.textContent="Salvataggio non riuscito";notify("Non ho potuto salvare: "+e.message+". Esporta il lavoro appena possibile.",true);});
@@ -55,10 +67,36 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     else location.hash="#/"+path;
   }
   async function refresh(){await render();}
-  async function makeSession(lessonId,items,source="local",extra={}) {
+  function sessionRecord(lessonId,items,source="local",extra={}) {
     const id=uid("session");
-    await change(s=>s.sessions.push({id,lesson_id:lessonId,items:items.map((it,i)=>({...it,id:it.id||id+"-"+i,accept:[it.answer,...(it.accept||[])],options:shuffled(it.options||[])})),answers:{},assisted:false,completed_at:null,source,created_at:now(),...extra}));
-    await goto("practice/"+id);return id;
+    return {id,lesson_id:lessonId,items:items.map((it,i)=>({...it,id:it.id||id+"-"+i,accept:[it.answer,...(it.accept||[])],options:shuffled(it.options||[])})),answers:{},assisted:false,completed_at:null,source,created_at:now(),...extra};
+  }
+  async function makeSession(lessonId,items,source="local",extra={}) {
+    const set=sessionRecord(lessonId,items,source,extra);
+    await change(s=>s.sessions.push(set));
+    await goto("practice/"+set.id);return set.id;
+  }
+  async function startDaily() {
+    let planId,sessionId;
+    await change(s=>{
+      const plan=dailyPlan(s);s.daily_plans??=[];
+      let saved=s.daily_plans.find(x=>x.day===plan.day);
+      if(!saved){saved={id:uid("daily"),day:plan.day,minutes:plan.minutes,lesson_id:plan.lesson_id,term_ids:plan.term_ids,practice_id:null,writing_id:null,created_at:now()};s.daily_plans.push(saved);}
+      if(!saved.practice_id){const set=sessionRecord(plan.lesson_id,[...grammarItems(plan.lesson_id,s.sessions.length),...recoveryItems(plan.terms)],"local",{daily_plan_id:saved.id});s.sessions.push(set);saved.practice_id=set.id;}
+      planId=saved.id;sessionId=saved.practice_id;
+    });
+    if(state.sessions.find(x=>x.id===sessionId)?.completed_at)await startDailyWriting(planId);
+    else await goto("practice/"+sessionId);
+  }
+  async function startDailyWriting(planId) {
+    let writingId;
+    await change(s=>{
+      const saved=s.daily_plans?.find(x=>x.id===planId);
+      if(!saved)throw new Error("Piano non trovato. Torna alla pagina Oggi.");
+      if(!saved.writing_id){const plan=dailyPlan(s,new Date(saved.day+"T12:00:00").getTime()),w={id:uid("writing"),type:"report",topic:dailyWritingTopic(plan),mode:"guided",ideas:"",outline:"",draft:"",rewrite:"",feedback:null,comparison:null,transfer:[],created_at:now(),daily_plan_id:saved.id};s.writings.push(w);saved.writing_id=w.id;}
+      writingId=saved.writing_id;
+    });
+    await goto("writing/"+writingId);
   }
   function dueTerms() {return state.vocabulary.filter(v=>Date.parse(v.due)<=Date.now()).sort((a,b)=>a.due.localeCompare(b.due));}
   function sourceNotes(id,mode,type) {
@@ -66,11 +104,12 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     return h("details",{class:"sources"},h("summary",{},"Riferimenti nei tuoi libri"),ctx.notes.map(n=>h("div",{},h("strong",{},n.book+" · "+(n.units?"unità "+n.units+" · ":"")+"p. "+n.pages),p(n.note_it))),ctx.further.map(n=>p(n.book+" · "+n.pages+" · "+n.purpose_it)),ctx.errata.map(e=>p("Correzione del manuale "+e.book+", p. "+e.pages+": "+e.correction_it,"warning")),p("Sintesi ed esercizi originali. I PDF restano nei tuoi materiali.","muted"));
   }
   function home() {
-    const next=recommendation(state)[0],profile=placementProfile(state.placement),due=dueTerms(),active=state.writings.findLast(w=>!w.comparison);
+    const plan=dailyPlan(state),next=plan.lesson,profile=placementProfile(state.placement),due=dueTerms(),active=state.writings.findLast(w=>!w.comparison);
     const attempts=state.attempts.filter(a=>!a.assisted&&a.source!=="legacy"),score=attempts.length?Math.round(attempts.filter(a=>a.correct).length/attempts.length*100):null;
     return [
       title("IL TUO PERCORSO","Un passo avanti, ogni giorno.","Grammatica mirata, parole da usare e scrittura da migliorare."),
-      h("section",{class:"hero"},h("div",{},p("PROSSIMA SESSIONE · CIRCA 20 MINUTI","eyebrow"),h("h2",{},next.title),p(profile?"La proposta tiene conto del pretest e dei tuoi tentativi senza aiuti.":"Partiamo dai punti più utili: tempi, negazioni e costruzioni. Il pretest renderà la scelta personale."),link("Inizia la sessione","lesson/"+next.id)),h("span",{class:"hero-mark","aria-hidden":"true"},"Aa")),
+      h("section",{class:"hero"},h("div",{},p("IL PIANO DI OGGI · CIRCA "+plan.minutes+" MINUTI","eyebrow"),h("h2",{},next.title),p(profile?"La proposta tiene conto del pretest e dei tuoi tentativi senza aiuti.":"Partiamo dai punti più utili: tempi, negazioni e costruzioni. Il pretest renderà la scelta personale."),button(plan.completed_steps===2?"Rivedi la breve scrittura":plan.id?"Riprendi il piano di oggi":"Inizia il piano di oggi",startDaily)),h("span",{class:"hero-mark","aria-hidden":"true"},"Aa")),
+      h("section",{class:"card daily-card","aria-labelledby":"daily-heading"},h("h2",{id:"daily-heading"},"Un obiettivo concreto"),h("progress",{max:2,value:plan.completed_steps,"aria-label":"Attività quotidiane svolte"}),p(plan.completed_steps+" di 2 attività svolte","small muted"),h("ol",{class:"daily-steps"},h("li",{},h("strong",{},"Forma e recupero"),p((plan.practice_complete?"Verifica svolta. ":"")+"Esercizi su «"+next.title+"»"+(plan.terms.length?" e recupero di "+plan.terms.length+" termini in scadenza.":". Nessun nuovo termine obbligatorio."))),h("li",{},h("strong",{},"Usa la struttura in una bozza"),p(plan.writing_words+" / "+plan.minimum_words+" parole indicative. "+(plan.writing_complete?"Bozza scritta: puoi chiedere la revisione.":"Un breve rapporto con dati fittizi, poi revisione e riscrittura quando vuoi.")))),p("Le attività svolte non certificano la padronanza. La correttezza si verifica separatamente. Il piano parte offline e non invia richieste Groq.","small muted"),link("Consulta la lezione", "lesson/"+next.id,"text-link")),
       h("div",{class:"stats"},card(p("Verifiche senza aiuti","muted"),h("strong",{class:"big"},score===null?"—":score+"%"),p(attempts.length+" risposte valutate","small")),card(p("Parole da recuperare","muted"),h("strong",{class:"big"},due.length),link("Apri Ripasso","review","text-link")),card(p("I tuoi scritti","muted"),h("strong",{class:"big"},state.writings.length),link(active?"Riprendi la bozza":"Prepara un testo",active?"writing/"+active.id:"writing","text-link"))),
       !profile?card(h("h2",{},state.placement?"Riprendi il pretest":"Salta ciò che sai già"),p("45 domande: 14 sui tempi, 8 su negazioni e domande, 8 sui phrasal verbs e 15 sulle altre strutture. Puoi interromperti e riprendere. Le soluzioni arrivano alla consegna."),link(state.placement?"Continua il pretest":"Fai il pretest","placement")):card(h("h2",{},"Il tuo punto di partenza"),p(profile.correct+"/45 risposte corrette. Una risposta data con dubbio resta da confermare."),link("Vedi risultati e priorità","placement","text-link")),
       h("div",{class:"two-columns"},card(h("h2",{},"Phrasal verbs nel contesto"),p("Significato, particelle, ordine dei pronomi e registro. Una parola segnata come nota resta distinta da una risposta verificata."),link("Apri il laboratorio","phrasals")),card(h("h2",{},"Leggi e ricostruisci il senso"),p("Traduci un passaggio, confronta le scelte e recupera le parole utili."),link("Apri Lettura","reading"))),
@@ -96,11 +135,13 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     const set=state.sessions.find(s=>s.id===id);if(!set)return [title("ESERCIZI","Sessione non trovata."),link("Apri Studio","studio")];
     const l=LESSONS.find(l=>l.id===set.lesson_id),done=!!set.completed_at;
     const form=h("form",{id:"practice-form"});
+    const progressLabel=p("","small muted"),progressBar=h("progress",{max:set.items.length,value:0,"aria-label":"Risposte compilate"});
+    function updateProgress(){const filled=[...form.querySelectorAll(".exercise")].filter(block=>block.querySelector('input[type="radio"]:checked')||[...block.querySelectorAll('input:not([type="radio"])')].some(input=>input.value.trim())).length;progressLabel.textContent=filled+" di "+set.items.length+" risposte compilate";progressBar.value=filled;}
     for(const [i,item] of set.items.entries()) {
       const value=set.answers[item.id]||"",result=state.attempts.find(a=>a.session_id===id&&a.item_id===item.id);
       const block=h("fieldset",{class:"exercise"},h("legend",{},(i+1)+". "+(item.kind==="retrieval"?"Recupero lessicale":item.skill==="recognise"?"Significato":"Uso della forma")),p(item.stem,"stem"));
-      if(item.options?.length)for(const [j,opt] of item.options.entries())block.append(h("label",{class:"option",for:item.id+"-"+j},h("input",{id:item.id+"-"+j,type:"radio",name:item.id,value:opt,checked:value===opt,disabled:done,onchange:e=>autosave(s=>{s.sessions.find(x=>x.id===id).answers[item.id]=e.target.value;})}),h("span",{lang:"en"},opt)));
-      else block.append(h("label",{class:"sr-only",for:item.id},"Risposta "+(i+1)),h("input",{id:item.id,value,disabled:done,autocomplete:"off",maxlength:600,oninput:e=>{const v=e.target.value;autosave(s=>{s.sessions.find(x=>x.id===id).answers[item.id]=v;});}}));
+      if(item.options?.length)for(const [j,opt] of item.options.entries())block.append(h("label",{class:"option",for:item.id+"-"+j},h("input",{id:item.id+"-"+j,type:"radio",name:item.id,value:opt,checked:value===opt,disabled:done,onchange:e=>{autosave(s=>{s.sessions.find(x=>x.id===id).answers[item.id]=e.target.value;});updateProgress();}}),h("span",{lang:"en"},opt)));
+      else block.append(h("label",{class:"sr-only",for:item.id},"Risposta "+(i+1)),h("input",{id:item.id,value,disabled:done,autocomplete:"off",maxlength:600,oninput:e=>{const v=e.target.value;autosave(s=>{s.sessions.find(x=>x.id===id).answers[item.id]=v;});updateProgress();}}));
       if(result)block.append(p(result.correct?"Risposta corretta":"Da rivedere",result.correct?"good":"warning"),p(item.why),!result.correct&&p("Risposta di riferimento: "+item.answer,"formula"));
       form.append(block);
     }
@@ -122,9 +163,11 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
       });await refresh();
     });});
     if(!done)form.append(h("button",{type:"submit"},"Verifica le risposte"));
+    updateProgress();
     const results=state.attempts.filter(a=>a.session_id===id);
     return [link("← "+(l?.title||"Ripasso"),set.writing_id?"writing/"+set.writing_id:l?"lesson/"+set.lesson_id:"review","back"),title(set.source==="groq"?"ESERCIZI · GROQ":"ESERCIZI · OFFLINE",set.writing_id?"Verifica in un nuovo contesto":l?.title||"Recupero del lessico"),
-      done?card(h("h2",{},results.filter(r=>r.correct).length+"/"+results.length+" corrette"),p(set.assisted?"Sessione con suggerimenti: esclusa dai risultati autonomi.":"Sessione senza suggerimenti, salvata nei tuoi progressi."),link("Continua",set.writing_id?"writing/"+set.writing_id:"home")):h("div",{class:"actions"},p("Risposte salvate mentre scrivi. Le soluzioni compaiono solo dopo la verifica.","muted"),button("Mostra un suggerimento",async()=>{await change(s=>{s.sessions.find(x=>x.id===id).assisted=true;});notify(l?.forms||l?.pitfall||"Pensa al significato e alla costruzione. La sessione ora risulta svolta con un aiuto.");},"quiet")),
+      h("section",{class:"session-progress"},progressLabel,progressBar),
+      done?card(h("h2",{},results.filter(r=>r.correct).length+"/"+results.length+" corrette"),p(set.assisted?"Sessione con suggerimenti: esclusa dai risultati autonomi.":"Sessione senza suggerimenti, salvata nei tuoi progressi."),set.daily_plan_id?button("Passa alla breve scrittura",()=>startDailyWriting(set.daily_plan_id)):link("Continua",set.writing_id?"writing/"+set.writing_id:"home")):h("div",{class:"actions"},p("Risposte salvate mentre scrivi. Le soluzioni compaiono solo dopo la verifica.","muted"),button("Mostra un suggerimento",async()=>{await change(s=>{s.sessions.find(x=>x.id===id).assisted=true;});notify(l?.forms||l?.pitfall||"Pensa al significato e alla costruzione. La sessione ora risulta svolta con un aiuto.");},"quiet")),
       form];
   }
   function placement() {
@@ -184,13 +227,15 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     }
     const w=state.writings.find(x=>x.id===id);if(!w)return [title("SCRITTURA","Testo non trovato."),link("Apri i tuoi testi","writing")];
     const bind=(key,value)=>autosave(s=>{s.writings.find(x=>x.id===id)[key]=value;});
-    const draftCount=p(countWords(w.draft)+" parole · obiettivo indicativo "+GENRES[w.type].range,"muted");
-    const draft=field("La tua bozza","draft",w.draft,value=>{draftCount.textContent=countWords(value)+" parole · obiettivo indicativo "+GENRES[w.type].range;bind("draft",value);},{area:true,placeholder:"Scrivi qui il testo in inglese…"});
+    const savedPlan=state.daily_plans?.find(x=>x.writing_id===w.id),daily=savedPlan?dailyPlan(state,new Date(savedPlan.day+"T12:00:00").getTime()):null;
+    const target=daily?daily.minimum_words+" parole per l'allenamento breve":GENRES[w.type].range;
+    const draftCount=p(countWords(w.draft)+" parole · obiettivo indicativo "+target,"muted");
+    const draft=field("La tua bozza","draft",w.draft,value=>{draftCount.textContent=countWords(value)+" parole · obiettivo indicativo "+target;bind("draft",value);},{area:true,placeholder:"Scrivi qui il testo in inglese…"});
     draft.querySelector("textarea").setAttribute("lang","en");
     const rewriteCount=p(countWords(w.rewrite)+" parole","muted"),rewrite=field("La tua riscrittura","rewrite",w.rewrite,value=>{rewriteCount.textContent=countWords(value)+" parole";bind("rewrite",value);},{area:true,placeholder:"Riscrivi tenendo conto delle priorità…"});
     rewrite.querySelector("textarea").setAttribute("lang","en");
     const comparison=w.comparison;
-    return [link("← I tuoi testi","writing","back"),title(w.mode==="exam"?"SCRITTURA · SIMULAZIONE":"SCRITTURA · ALLENAMENTO",GENRES[w.type].label),card(p(w.topic)),
+    return [link("← I tuoi testi","writing","back"),title(w.mode==="exam"?"SCRITTURA · SIMULAZIONE":"SCRITTURA · ALLENAMENTO",GENRES[w.type].label),card(p(w.topic)),daily&&link("← Piano di oggi","home","text-link"),
       w.mode!=="exam"&&h("details",{class:"card"},h("summary",{},"Prima di scrivere: idee e scaletta"),p(w.type==="report"?"Ordina i fatti nel tempo e attribuisci le dichiarazioni.":"Definisci destinatario, scopo e un punto per paragrafo."),field("Appunti","ideas",w.ideas,value=>bind("ideas",value),{area:true,max:2000}),field("Scaletta","outline",w.outline,value=>bind("outline",value),{area:true,max:2000})),
       card(h("h2",{},"1. Stesura"),draft,draftCount,button(w.feedback?"Revisiona la bozza attuale":"Chiedi la revisione",async()=>{const current=repo.get().writings.find(x=>x.id===id);writingReady(current,"review");const result=await tutor(state.settings,"/tutor","writing_review",{type:current.type,topic:current.topic,text:current.draft,mode:current.mode});await change(s=>{const x=s.writings.find(x=>x.id===id);x.feedback=sanitizeFeedback(result,current.draft);x.feedback_source=current.draft;x.comparison=null;});await refresh();},"secondary"),p("La revisione invia consegna e bozza a Groq. Usa dati fittizi nei tuoi esercizi.","small muted")),
       feedbackPanel(w),
@@ -221,18 +266,24 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
   }
   async function checkHealth(){try{health=await tutor(state.settings,"/health");healthError="";}catch(e){health=null;healthError=e.message;}return health;}
   function settings() {
+    const theme=h("select",{id:"theme-preference"},Object.entries(themeNames).map(([value,label])=>h("option",{value,selected:value===(state.settings.theme||"auto")},label)));
+    theme.onchange=()=>run(async()=>{await change(s=>s.settings.theme=theme.value);applyTheme();});
+    const minutes=h("select",{id:"daily-minutes"},[10,20,30].map(value=>h("option",{value,selected:value===(state.settings.daily_minutes||20)},value+" minuti")));
+    minutes.onchange=()=>run(async()=>{await change(s=>s.settings.daily_minutes=Number(minutes.value));});
     const address=h("input",{id:"endpoint",type:"url",value:state.settings.endpoint,maxlength:200}),token=h("input",{id:"token",type:"password",autocomplete:"off",placeholder:getToken()?"Codice già presente sul dispositivo":"Codice personale APP_TOKEN",maxlength:300}),remember=h("input",{type:"checkbox",id:"remember"});
     const statusBox=card(h("h2",{},"Stato del tutor"),h("dl",{},h("dt",{},"App"),h("dd",{},VERSION),h("dt",{},"Worker"),h("dd",{},health?health.version:"Da verificare"),h("dt",{},"Groq"),h("dd",{},groq?"Risposta verificata il "+new Date(groq).toLocaleTimeString("it-IT"):health?.groq_configured?"Chiave configurata; risposta non ancora verificata":"Da verificare")),healthError&&p(healthError,"warning"),h("div",{class:"actions"},button("Verifica collegamento Worker",async()=>{await checkHealth();await refresh();},"secondary"),button("Verifica Groq",async()=>{const result=await tutor(state.settings,"/check");if(result.provider_checked){groq=now();await checkHealth();}await refresh();})),p("Il collegamento al Worker non consuma una chiamata Groq. Il test Groq ne usa una.","small muted"));
     const file=h("input",{type:"file",id:"backup-file",accept:".json,application/json"});
     const preview=h("div",{});let candidate=null;
     file.onchange=()=>run(async()=>{candidate=null;preview.replaceChildren();if(!file.files[0])return;const parsed=parseBackup(await file.files[0].text());candidate=parsed;preview.replaceChildren(p("Backup valido: "+parsed.writings.length+" scritti, "+parsed.attempts.length+" tentativi, "+parsed.vocabulary.length+" termini."),button("Importa questo backup",async()=>{if(!candidate)return;await repo.replace(candidate);state=repo.get();candidate=null;notify("Backup importato. Il token del tutor resta sul dispositivo.");await refresh();},"secondary"),p("L'importazione sostituisce i dati della nuova app. Esporta prima una copia dei progressi attuali.","warning"));});
     return [title("IMPOSTAZIONI","Una connessione, uno stato chiaro.","I progressi restano sul dispositivo. Il tutor usa il tuo Worker Cloudflare e Groq."),
-      card(h("h2",{},"Collega il tutor"),h("label",{for:"endpoint"},"Indirizzo Worker"),address,h("label",{for:"token"},"Codice personale del tutor"),token,h("label",{class:"inline-check"},remember,"Ricorda il codice su questo dispositivo"),button("Salva collegamento",async()=>{const value=endpoint(address.value);await change(s=>s.settings.endpoint=value);if(token.value.trim())saveToken(token.value,remember.checked);health=null;groq=null;await checkHealth();await refresh();}),button("Rimuovi il codice dal dispositivo",async()=>{saveToken("");health=null;groq=null;await refresh();},"quiet"),p("La chiave Groq va nei secret Cloudflare. Qui si inserisce solo il codice personale APP_TOKEN; non viene incluso nei backup.","small muted")),
+      card(h("h2",{},"Il tuo ritmo"),h("label",{for:"theme-preference"},"Aspetto"),theme,h("label",{for:"daily-minutes"},"Tempo indicativo del piano quotidiano"),minutes,p("Automatico segue il tema del dispositivo. Un piano già iniziato mantiene obiettivo e contenuti fino a fine giornata.","small muted")),
+      card(h("h2",{},"Collega il tutor"),h("label",{for:"endpoint"},"Indirizzo Worker"),address,h("label",{for:"token"},"Codice personale del tutor"),token,h("label",{class:"inline-check"},remember,"Ricorda il codice su questo dispositivo"),button("Salva collegamento",async()=>{const value=endpoint(address.value);invalidateHealth();await change(s=>s.settings.endpoint=value);if(token.value.trim())saveToken(token.value,remember.checked);health=null;groq=null;await checkHealth();await refresh();}),button("Rimuovi il codice dal dispositivo",async()=>{saveToken("");health=null;groq=null;await refresh();},"quiet"),p("La chiave Groq va nei secret Cloudflare. Qui si inserisce solo il codice personale APP_TOKEN; non viene incluso nei backup.","small muted")),
       statusBox,card(h("h2",{},"Proteggi i tuoi progressi"),button("Esporta backup JSON",async()=>{const text=await repo.backup(),blob=new Blob([text],{type:"application/json"}),url=URL.createObjectURL(blob),a=h("a",{href:url,download:"jflt-progressi-"+now().slice(0,10)+".json"});document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);notify("Backup preparato. Conserva il file scaricato.");},"secondary"),h("label",{for:"backup-file"},"Importa un backup 0.2.x o 1.0.0"),file,preview,p("L'aggiornamento sulla stessa origine recupera automaticamente il vecchio archivio. Il backup serve anche per cambiare dispositivo.","muted")),
       card(h("h2",{},"Studio senza connessione"),p("Lezioni, pretest, esercizi originali, lessico e bozze funzionano offline dopo il primo caricamento. Le richieste Groq partono solo quando premi un comando del tutor."),button("Cerca aggiornamenti",async()=>{const reg=await navigator.serviceWorker?.getRegistration();if(!reg)throw new Error("Aggiornamenti disponibili dopo la pubblicazione HTTPS dell'app.");await reg.update();notify("Controllo avviato. Se arriva una nuova versione comparirà un avviso.");},"quiet")),link("Vedi i progressi","progress","text-link")];
   }
   async function render() {
     const turn=++renderId;await repo.flush();if(turn!==renderId)return;
+    state=repo.get();applyTheme();
     state=repo.get();const [route="home",id]=location.hash.replace(/^#\/?/,"").split("/");
     const paths={learn:"studio",guided:"writing",articles:"reading",connect:"settings",lexicon:"phrasals",write:"writing",tenses:"studio"};
     const page=paths[route]||route;

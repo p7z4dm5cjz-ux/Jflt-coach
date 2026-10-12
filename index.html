@@ -6,14 +6,19 @@
   <meta name="theme-color" content="#f5f4ef">
   <meta name="description" content="Il tuo percorso di inglese: grammatica mirata, phrasal verbs e scrittura.">
   <meta name="robots" content="noindex,nofollow">
-  <meta name="app-version" content="1.0.0">
+  <meta name="app-version" content="1.1.0">
+  <meta name="color-scheme" content="light dark">
+  <script>try{const theme=localStorage.getItem("jflt-coach-theme");document.documentElement.dataset.theme=["light","dark"].includes(theme)?theme:"auto";}catch{document.documentElement.dataset.theme="auto";}</script>
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="JFLT Coach">
   <title>JFLT Coach</title>
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="apple-touch-icon" href="./icon-180.png">
-  <link rel="icon" href="./icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="icon" type="image/svg+xml" href="./icon-master.svg">
   <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./appearance.css">
   <script type="module" src="./boot.js"></script>
 </head>
 <body>
@@ -27,15 +32,15 @@
       <a href="#/review" data-section="review"><span aria-hidden="true">↻</span><span>Ripasso</span></a>
       <a href="#/settings" data-section="settings"><span aria-hidden="true">⚙</span><span>Impostazioni</span></a>
     </nav>
-    <div class="sidebar-note">Un po’ di pratica.<br>Una nuova capacità.<small>Release 1.0.0</small></div>
+    <div class="sidebar-note">Un po’ di pratica.<br>Una nuova capacità.<small>Release 1.1.0</small></div>
   </aside>
   <div class="workspace">
-    <header class="topbar"><span>IL TUO SPAZIO DI STUDIO</span><div><span id="connection">Online</span><span id="saved" role="status">Salvato sul dispositivo</span></div></header>
+    <header class="topbar"><span>IL TUO SPAZIO DI STUDIO</span><div><span id="connection">Online</span><span id="saved" role="status">Salvato sul dispositivo</span><button type="button" id="theme-toggle" class="theme-toggle" aria-label="Cambia tema">Tema: Automatico</button></div></header>
     <div id="update" class="update-banner" hidden><span>Aggiornamento pronto. Salva e passa alla nuova versione.</span><button type="button">Aggiorna l’app</button></div>
     <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
     <main id="view" tabindex="-1"><p>Preparazione del tuo percorso…</p></main>
     <noscript>Per usare JFLT Coach devi abilitare JavaScript nel browser.</noscript>
-    <footer>JFLT Coach · Materiali originali basati sui tuoi libri · 1.0.0</footer>
+    <footer>JFLT Coach · Materiali originali basati sui tuoi libri · 1.1.0</footer>
   </div>
 </body>
 </html>

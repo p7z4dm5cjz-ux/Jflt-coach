@@ -1,12 +1,18 @@
 import {freshState,migrate,LEGACY_STORES,VERSION,endpoint,validPlacement} from "./engine.js";
 import {validateBackup} from "./legacy/core.js";
 import {validateReply} from "./contract.js";
+import {LESSONS} from "./catalog.js";
 const STORE="app_v2";
 export function validateState(s) {
   if(!s||s.version!==2||s.id!=="main"||!s.settings||!Array.isArray(s.attempts)||!Array.isArray(s.sessions)||!Array.isArray(s.writings)||!Array.isArray(s.readings)||!Array.isArray(s.vocabulary))throw new Error("Backup incompleto o formato non riconosciuto.");
   endpoint(s.settings.endpoint);
   if(s.placement!==null&&!validPlacement(s.placement))throw new Error("Pretest non valido nel backup.");
   const validDate=v=>typeof v==="string"&&Number.isFinite(Date.parse(v));
+  if(s.daily_plans!==undefined) {
+    if(!Array.isArray(s.daily_plans))throw new Error("Piani quotidiani non validi nel backup.");
+    for(const plan of s.daily_plans)if(typeof plan.id!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(plan.day)||!validDate(plan.day)||![10,20,30].includes(plan.minutes)||!LESSONS.some(l=>l.id===plan.lesson_id)||!Array.isArray(plan.term_ids)||plan.term_ids.some(v=>typeof v!=="string")||!validDate(plan.created_at)||![plan.practice_id,plan.writing_id].every(id=>id===null||typeof id==="string"))throw new Error("Un piano quotidiano nel backup non è valido.");
+    if(new Set(s.daily_plans.map(x=>x.id)).size!==s.daily_plans.length||new Set(s.daily_plans.map(x=>x.day)).size!==s.daily_plans.length)throw new Error("Il backup contiene piani quotidiani ripetuti.");
+  }
   for(const w of s.writings) {
     if(typeof w.id!=="string"||typeof w.topic!=="string"||typeof w.ideas!=="string"||typeof w.outline!=="string"||typeof w.draft!=="string"||typeof w.rewrite!=="string"||!Array.isArray(w.transfer)||!validDate(w.created_at)||!["report","email","argument"].includes(w.type)||!["guided","exam"].includes(w.mode))throw new Error("Uno scritto nel backup non è valido.");
     if(w.feedback){validateReply("writing_review",w.feedback);if(typeof w.feedback_source!=="string")throw new Error("Manca la bozza revisionata.");}

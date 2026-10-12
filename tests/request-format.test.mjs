@@ -103,7 +103,7 @@ test("Verifica Groq prova lo stesso modo rigoroso; un rifiuto non genera retry o
   assert.equal(calls,1);assert.equal(response.status,502);const text=await response.text();assert.ok(text.includes("response_format"));assert.ok(!text.includes(env.GROQ_API_KEY));
 });
 
-test("Il client 1.0.0 attraversa health e tutor e accetta le nuove risposte",async()=>{
+test("Il client attraversa health e tutor e accetta le nuove risposte",async()=>{
   saveToken(token);
   let workerCalls=0,groqCalls=0;
   const result=await callTutor({endpoint:"https://test.workers.dev"},"/tutor","exercises",inputs.exercises,async(url,options)=>{

@@ -1,77 +1,84 @@
-# JFLT Coach 1.0.0
+# JFLT Coach 1.1.0
 
-Riscrittura completa dell'app e del tutor. L'app continua a usare GitHub Pages, il Worker Cloudflare **jflt-coach** e Groq. Il pacchetto contiene già il Worker aggiornato, la sua configurazione e i test.
+Pacchetto completo, 12 ottobre 2026. Aggiornamento del progetto funzionante pubblicato con il commit `4b4e084`: GitHub Pages, Worker Cloudflare `jflt-coach` e Groq restano gli stessi. Non cancellare il repository, il Worker o le credenziali.
 
-**Pacchetto completo aggiornato il 10 ottobre 2026, revisione Groq `groq-schema-v2`.** Contiene l'intero progetto con la richiesta corretta e la diagnostica già integrate. Non richiede di applicare lo ZIP diagnostico separatamente. App e Worker mantengono il numero 1.0.0 per compatibilità; la revisione della richiesta è identificata separatamente.
+## Le modifiche di questa release
 
-## Pubblicazione sul tuo progetto esistente
+- **Aggiornamenti coerenti:** ogni shell ha una cache distinta, identificata dalla release e dall'impronta dei file. Il service worker verifica anche il contenuto scaricato, non soltanto lo stato HTTP. Una risorsa essenziale assente o di un'altra revisione fa fallire l'installazione nuova senza modificare la cache precedente. Le icone e il manifest sono opzionali: un loro errore non blocca la shell. La nuova versione attende la conferma dell'utente prima di attivarsi.
+- **Piano quotidiano:** priorità grammaticale e termini effettivamente in scadenza, in una sessione offline; poi una breve bozza per usare la struttura. Durata indicativa di 10, 20 o 30 minuti, selezionabile nelle Impostazioni. Il piano viene salvato quando lo inizi e resta stabile per la giornata; puoi riprendere sessione e bozza senza duplicarle. La bozza breve resta distinta dalle simulazioni complete.
+- **Tema Automatico / Chiaro / Scuro**, con preferenza salvata, selettore nelle Impostazioni e pulsante rapido nella barra superiore. Automatico segue il dispositivo.
+- **Avanzamento degli esercizi:** contatore live e barra persistente durante lo scorrimento, calcolati sul numero reale di domande, inclusi i recuperi lessicali. Non indica correttezza prima della consegna.
+- **Cache di `/health` per 60 secondi**, limitata alla stessa pagina, indirizzo e codice personale. Richieste contemporanee condividono il controllo in corso. Cambio codice/indirizzo, errori di autenticazione, 503 e incompatibilità invalidano la cache. Il pulsante di verifica manuale effettua sempre un controllo nuovo.
+- Esempi inglesi delle lezioni evidenziati rispetto alle spiegazioni italiane.
+- **Icone JF navy uniformate:** `icon-master.svg` è il master vettoriale unico; le PNG 180/192/512 sono esportazioni dello stesso disegno, senza font esterni. Il collegamento iPhone dichiara esplicitamente `180x180`, e la barra di stato usa `default`. Il favicon SVG mantiene una PNG di compatibilità. Non è aggiunta una schermata d'avvio limitata a un solo modello di iPhone.
 
-1. Nell'app attuale esporta un backup dei progressi, poi estrai questo ZIP sul computer.
-2. Apri [il repository Jflt-coach](https://github.com/p7z4dm5cjz-ux/Jflt-coach), scegli **Add file → Upload files** e carica nella radice i file estratti, comprese le cartelle **worker**, **legacy** e **scripts**. Conferma il commit su **main**. **index.html**, **package.json** e **wrangler.jsonc** devono essere direttamente nella radice del repository.
-3. Attendi la pubblicazione GitHub Pages e la build Cloudflare collegata a **quel commit**. La build Cloudflare deve usare la radice del repository e il comando già configurato **npx wrangler deploy**.
-4. Chiudi e riapri [JFLT Coach](https://p7z4dm5cjz-ux.github.io/Jflt-coach/). Apri **Impostazioni → Verifica collegamento Worker**: app e Worker devono entrambi mostrare **1.0.0**. Poi premi **Verifica Groq** e genera un blocco nella lezione che falliva: la prima prova usa un oggetto minimo, la seconda verifica il compito completo.
+**Nessuna modifica alla richiesta Groq:** `worker/runtime.js` e `contract.js` sono identici alla revisione funzionante `groq-schema-v2`. Stessi prompt, schemi, modelli, parametri, limiti e una sola chiamata provider per operazione. Nessun retry automatico, cambio modello o fallback a pagamento. Nel Worker generato cambia soltanto il numero della release.
 
-Il Worker usa ancora [lo stesso indirizzo](https://jflt-coach.crl-r90.workers.dev). I secret **GROQ_API_KEY** e **APP_TOKEN** già configurati restano nel servizio Cloudflare esistente. Il codice personale del tutor può essere recuperato dallo stesso dispositivo; se manca, va inserito in Impostazioni.
+## Cosa viene conservato
 
-Una build riferita a un commit precedente non dimostra l'esito del nuovo aggiornamento. Verifica il commit della build. La risposta autenticata `/health` deve contenere `prompt_revision: "groq-schema-v2"` e `response_mode: "json_schema"`; il solo numero 1.0.0 non identifica questa revisione.
+Pretest di 45 domande, 59 lezioni, 161 phrasal verbs, scrittura con revisione/riscrittura/trasferimento, lettura, lessico personale e ripasso distribuito. Le priorità continuano a usare il pretest e i tentativi senza aiuti.
 
-## Cosa cambia
+Database IndexedDB `jflt-coach`, versione 2: non viene cancellato né ricreato. I vecchi backup v2 senza piano o preferenza del tema e i backup v1 delle versioni 0.2.x restano importabili. Il backup nuovo include piani e preferenze, ma non il codice personale né la chiave Groq.
 
-- **Pretest di 45 domande**, interrompibile e riprendibile. Tempi, negazioni e phrasal verbs hanno più peso. Le risposte corrette ma incerte restano da confermare; le basi già controllate vengono lasciate fuori dalle priorità.
-- **59 lezioni**, incluse le forme verbali singole, i confronti tra tempi e una lezione specifica sulle negazioni. Ogni lezione ha esercizi originali offline; Groq può generare blocchi misti nuovi.
-- **Scrittura in un editor unico**: appunti e scaletta facoltativi, bozza, revisione ancorata a citazioni reali, riscrittura, confronto e tre esercizi in contesti nuovi. La simulazione separa la stesura autonoma dagli aiuti.
-- **161 phrasal verbs ed espressioni multiword**: significato contestuale, particelle, posizione del pronome e registro. Gli esercizi riguardano il significato selezionato nella scheda.
-- **Recupero del lessico separato**: se l'AI omette un termine selezionato, gli esercizi validi rimangono utilizzabili e l'app aggiunge una domanda locale per ogni parola da recuperare. Una semplice menzione non dimostra apprendimento.
-- **Lettura e traduzione**, lessico personale, ripasso distribuito, risultati senza suggerimenti e backup.
-- **Tutor verificabile**: collegamento Worker, versione del codice e risposta Groq hanno stati separati. Gli errori indicano se il problema riguarda codice personale, secret, modello, quota, risposta incompleta o connessione.
+Le attività quotidiane completate non dimostrano padronanza. La lunghezza di una bozza non è un voto: risultati autonomi, revisione e trasferimento restano separati. Non sono ancora introdotti scenari narrativi nuovi, varianti parametrizzate offline o mini-rivalutazioni: sono interventi successivi.
 
-## Progressi e materiali
+## Aggiornamento dall'iPhone con Codespaces
 
-Sulla stessa origine web, l'app aggiorna l'archivio IndexedDB **jflt-coach** creando una nuova tabella. Conserva le tabelle precedenti, recupera scritti, letture, pretest e lessico e mantiene una copia dei record originali nei backup nuovi.
+1. Nell'app funzionante esporta un backup dei progressi.
+2. Carica **lo ZIP**, non i singoli file, nella radice del [repository esistente](https://github.com/p7z4dm5cjz-ux/Jflt-coach) con **Upload files**, sul ramo `main`.
+3. Torna al terminale del Codespace già usato. Esegui il blocco seguente. Si ferma se ci sono modifiche ai file tracciati, un backup con quel nome esiste già o un controllo fallisce. Non forza né cancella modifiche locali.
 
-I backup **jflt-coach-backup/v1** delle versioni 0.2.x e quelli nuovi **v2** sono importabili. L'importazione viene validata prima della sostituzione dei dati della nuova app. Esporta prima il lavoro attuale. Il codice del tutor e la chiave Groq sono esclusi dai backup.
+```bash
+git pull --ff-only &&
+git diff --quiet &&
+git diff --cached --quiet &&
+git branch backup-prima-1.1.0 &&
+unzip -t jflt-coach-completo-1.1.0.zip &&
+unzip -o jflt-coach-completo-1.1.0.zip &&
+npm run check &&
+npm test
+```
 
-Le vecchie parole segnate come conosciute sono conservate, ma restano da verificare con recupero attivo. Il nuovo percorso non trasforma auto-valutazioni o vecchi tentativi non valutati in prove di padronanza.
+4. Dopo i controlli riusciti, prepara e pubblica i soli file modificati, compresa la rimozione dello ZIP temporaneo:
 
-Le sintesi si riferiscono a **Oxford Complete English Grammar**, **CAMPAIGN**, **MISSION** e **TARGET**, con rimandi e correzioni dei passaggi difettosi già individuati. Le spiegazioni e gli esercizi sono originali; i PDF dei libri non sono ridistribuiti. Alcuni rimandi sono indicazioni di consultazione, esplicitamente distinti dalle sintesi.
+```bash
+git rm -- jflt-coach-completo-1.1.0.zip &&
+git add -- README.md LEGGIMI-DIAGNOSI.md app.js engine.js storage.js tutor.js theme.css appearance.css index.html sw.js icon-master.svg icon-180.png icon-192.png icon-512.png package.json package-lock.json scripts/build-sw.mjs scripts/service-worker.js scripts/build-icons.mjs scripts/icon-assets.json scripts/check.mjs tests/client.test.mjs tests/daily.test.mjs tests/health-cache.test.mjs tests/offline.test.mjs tests/request-format.test.mjs tests/ui.test.mjs tests/worker.test.mjs worker/index.js &&
+git commit -m "Piano quotidiano, tema scuro e aggiornamenti sicuri 1.1.0" &&
+git push origin main
+```
 
-## Groq e funzionamento offline
+Se si ferma, leggi o condividi l'errore prima di proseguire. Il branch di backup conserva il commit precedente nel Codespace e il repository conserva la sua cronologia. Lo ZIP rimosso resta nel commit del caricamento e nella tua copia scaricata.
 
-Il backend invia una sola richiesta Groq per operazione, con **response_format: json_schema e strict: true**, modello esplicito e contratto validato anche nell'app. Ogni compito riceve istruzioni separate e uno schema con campi obbligatori. L'esempio degli esercizi contiene sei elementi; quello del confronto contiene tre esercizi e include la soluzione fra le risposte accettate. Non cambia automaticamente modello o provider e non usa fallback a pagamento. Sono supportati **openai/gpt-oss-120b** e **openai/gpt-oss-20b**; il modello configurato è il primo.
+5. Attendi **GitHub Pages e Cloudflare** sul nuovo commit. Il comando Cloudflare resta **npx wrangler deploy**, dalla radice del progetto. Non cambiare secret, binding o migrazioni. Un push riuscito non conferma da solo il deploy.
+6. Riapri [l'app](https://p7z4dm5cjz-ux.github.io/Jflt-coach/). Quando appare **Aggiornamento pronto**, premi **Aggiorna l'app**: il pulsante attende i salvataggi prima di ricaricare. Chiudi eventuali altre schede della vecchia versione. In Impostazioni app e Worker devono mostrare **1.1.0**. Poi prova Verifica Groq e una generazione completa.
 
-Lo schema vincola campi, tipi ed enumerazioni. Conteggi, lunghezze e corrispondenza fra soluzione e opzioni restano espliciti nel prompt e controllati dal Worker. Gli errori includono la fase diagnostica e, quando pertinente, il campo rifiutato. Il formato corretto non garantisce da solo la correttezza dell'inglese.
+La cache 1.1.0 viene installata solo quando tutti i file essenziali corrispondono alla revisione generata. Se Pages sta ancora pubblicando, la versione precedente continua a funzionare: riprova **Cerca aggiornamenti** dopo la pubblicazione. La compatibilità della risposta Worker resta controllata a ogni operazione.
 
-Il limite personale resta 10 richieste al minuto e 80 al giorno. I limiti del tuo account Groq possono essere più bassi. Il controllo del Worker non usa Groq; il pulsante **Verifica Groq** usa una richiesta. Nessuna richiesta AI viene inviata automaticamente alla riconnessione.
+## Sviluppo e controlli
 
-Dopo il primo caricamento completo, lezioni, pretest, esercizi originali, schede e bozze sono disponibili offline. Le correzioni AI richiedono la connessione. La lettura usa un passaggio incollato dall'utente, con fonte facoltativa.
+Node 24 dalla versione 24.15.0. Le dipendenze sono le stesse della release precedente.
 
-Gli aggiornamenti successivi vengono proposti con un pulsante che attende il salvataggio prima del ricaricamento. Il passaggio dalle vecchie versioni 0.2.x attiva la nuova cache senza ricaricare a forza una bozza aperta; chiudi e riapri l'app per entrare nella nuova versione.
-
-## Verifica e manutenzione del codice
-
-Requisito per i test: Node 24 LTS, dalla versione 24.15.0. Il deploy Cloudflare già configurato usa Node 24.18.0.
-
-~~~sh
+```bash
 npm ci
-npm run build:worker
+npm run build
 npm run check
 npm test
-~~~
-
-**worker/index.js** è il file autonomo distribuito a Cloudflare. **worker/runtime.js**, **contract.js** e le sintesi dei libri sono i sorgenti usati dal comando **build:worker**. Dopo una modifica a questi sorgenti, rigenera il file e includilo nel commit.
-
-La configurazione mantiene il binding **BUDGET**, la classe **Budget** e la migrazione SQLite **v1** esistenti. Il nome del servizio è **jflt-coach**.
-
-Per verificare localmente la compilazione del Worker senza pubblicare:
-
-~~~sh
 npx wrangler deploy --dry-run --outdir worker-build
-~~~
+```
 
-I test coprono flussi DOM, tutte le 45 domande, esercizi, recupero lessicale, scrittura e trasferimento, migrazione IndexedDB, backup, cache offline, autenticazione, CORS, quota, contratto Groq ed errori del provider.
+`npm run build` rigenera sia **worker/index.js** sia **sw.js**. Qualsiasi modifica a un file della shell richiede **build:sw**: `check` rifiuta una cache manifest non sincronizzata. `engine.js` resta la fonte del numero di release. La configurazione conserva il binding **BUDGET**, la classe **Budget** e la migrazione SQLite **v1**.
 
-Questo pacchetto contiene il codice verificato con **52 test su 52 superati**, controllo di configurazione e sincronizzazione riuscito e dry-run del Worker riuscito (138.11 KiB). Le prove del provider sono simulate; nessuna chiamata autenticata a Groq o pubblicazione sul tuo account è stata eseguita da questa sessione.
+Per modificare il logo, edita soltanto `icon-master.svg`, poi esegui **npm run build:icons** e **npm run build:sw**. L'esportazione usa ImageMagick se disponibile oppure il modulo Node `sharp`; questi strumenti servono solo a chi rigenera le immagini. Il pacchetto include già le PNG pronte e non aggiunge dipendenze all'app o al deploy. `check` controlla master, impronte e dimensioni delle tre esportazioni per impedire aggiornamenti parziali delle icone.
 
-La build di prova non verifica la tua chiave Groq né il deploy sul tuo account. Il controllo reale dopo il deploy è **Impostazioni → Verifica Groq**, seguito dalla generazione degli esercizi e dalla prova del compito che falliva. Le verifiche UI automatiche usano JSDOM; la resa su browser e dispositivi reali resta da controllare.
+Test: **75 su 75 superati**. Coprono contratti Groq, errori provider, autenticazione, quota, migrazione e backup, flussi DOM, piano riprendibile, preferenze, avanzamento live, TTL/invalidation del controllo e installazioni offline incomplete/incoerenti.
 
-Documentazione tecnica di riferimento: [API Groq](https://console.groq.com/docs/api-reference), [GPT-OSS 120B](https://console.groq.com/docs/model/openai/gpt-oss-120b), [configurazione Wrangler](https://developers.cloudflare.com/workers/wrangler/configuration/).
+Le prove DOM usano JSDOM e quelle del service worker un ambiente simulato con impronte reali dei file. **Non sono prove di rendering su Safari.** Non è stato possibile avviare il browser reale in questo ambiente; la verifica visuale e del passaggio da una versione installata su iPhone resta da fare dopo il deploy. Questa sessione non ha pubblicato sul tuo account e non ha fatto chiamate reali a Groq. Il flusso 1.0.0 precedente è stato confermato funzionante dall'utente.
+
+## Materiali e limiti
+
+Sintesi originali basate su Oxford Complete English Grammar, CAMPAIGN, MISSION e TARGET; i PDF non sono ridistribuiti. I rimandi e le errata restano nelle lezioni. Usa sempre dati fittizi negli scritti inviati al tutor.
+
+Modelli supportati: **openai/gpt-oss-120b** e **openai/gpt-oss-20b**. La configurazione usa il primo; lo schema è `json_schema`, `strict: true`, revisione `groq-schema-v2`. Formato corretto non significa necessariamente inglese corretto. Limite personale: 10 richieste al minuto e 80 al giorno; `/health` non consuma quota Groq o contatore personale. Verifica Groq usa una chiamata. Nessuna chiamata AI parte automaticamente alla riconnessione.
+
+`LEGGIMI-DIAGNOSI.md` conserva la descrizione storica della revisione Groq; per release, aggiornamenti e test correnti fa fede questo README.

@@ -3,9 +3,10 @@ import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
 import {JSDOM} from "jsdom";
 import {IDBFactory} from "fake-indexeddb";
-import {openRepository} from "../storage.js";
+import {openRepository,parseBackup} from "../storage.js";
 import {PHRASALS} from "../catalog.js";
 import {QUESTIONS,orderedQuestions} from "../placement.js";
+import {VERSION} from "../engine.js";
 const html=await readFile(new URL("../index.html",import.meta.url),"utf8");
 const dom=new JSDOM(html,{url:"https://p7z4dm5cjz-ux.github.io/Jflt-coach/",pretendToBeVisual:true});
 for(const [key,value] of Object.entries({window:dom.window,document:dom.window.document,location:dom.window.location,Node:dom.window.Node,navigator:dom.window.navigator,sessionStorage:dom.window.sessionStorage,localStorage:dom.window.localStorage}))Object.defineProperty(globalThis,key,{value,configurable:true});
@@ -13,7 +14,7 @@ dom.window.scrollTo=()=>{};
 const {mountApp}=await import("../app.js"),repo=await openRepository(new IDBFactory());let calls=[];
 const tutor=async(settings,path,task,data)=>{
   calls.push({path,task,data});
-  if(path==="/health")return {version:"1.0.0",groq_configured:true,capabilities:[]};
+  if(path==="/health")return {version:VERSION,groq_configured:true,capabilities:[]};
   if(path==="/check")return {provider_checked:true};
   if(task==="writing_review")return {summary:"La cronologia è chiara.",priorities:["Controlla il passato.","<img src=x onerror=alert(1)>"],rubric:{grammar:"Un punto da correggere.",content:"Fatti completi.",cohesion:"Chiara.",register:"Adatto."},issues:[{quote:"Yesterday",correction:"Yesterday",explanation:"Controlla il tempo.",kind:"style",category:"past-simple"},{quote:"Not in source",correction:"Invented",explanation:"Da omettere",kind:"error",category:"tenses"}]};
   if(task==="writing_compare")return {summary:"Riscrittura più chiara.",resolved:["Cronologia chiarita."],remaining:[],transfer:Array.from({length:3},(_,i)=>({stem:"Completa la negativa: She ___ go yesterday. "+i,answer:"did not",accept:["didn't"],why:"Did richiede la forma base."}))};
@@ -43,4 +44,13 @@ test("Pretest 45 risposte salvate, nessuna soluzione prima della consegna",async
 });
 test("Lettura conserva traduzione e filtra citazioni inventate",async()=>{await visit("reading");click("Nuova lettura");await until(()=>!!document.querySelector("#reading-text"));input("#reading-text","The team carried out a routine inspection of the equipment before the next shift.");input("#translation","Il gruppo ha effettuato un controllo ordinario dell'attrezzatura prima del turno successivo.");click("Confronta la traduzione con Groq");await until(()=>document.getElementById("view").textContent.includes("Confronto ragionato"));assert.equal(repo.get().readings.at(-1).feedback.segments.length,1);});
 test("Verifica Groq sempre presente, versioni separate",async()=>{await visit("settings");assert.ok([...document.querySelectorAll("button")].some(b=>b.textContent==="Verifica Groq"));click("Verifica collegamento Worker");await until(()=>document.getElementById("view").textContent.includes("risposta non ancora verificata"));click("Verifica Groq");await until(()=>document.getElementById("view").textContent.includes("Risposta verificata"));});
+test("Tema scuro e tempo quotidiano sono persistiti senza cancellare bozze",async()=>{await visit("settings");const saved=repo.get().writings[0].draft;const theme=document.querySelector("#theme-preference");theme.value="dark";theme.dispatchEvent(new window.Event("change",{bubbles:true}));await until(()=>repo.get().settings.theme==="dark");assert.equal(document.documentElement.dataset.theme,"dark");await visit("home");assert.equal(document.documentElement.dataset.theme,"dark");assert.equal(repo.get().writings[0].draft,saved);await visit("settings");const minutes=document.querySelector("#daily-minutes");minutes.value="10";minutes.dispatchEvent(new window.Event("change",{bubbles:true}));await until(()=>repo.get().settings.daily_minutes===10);});
+test("Piano quotidiano riprendibile e progresso live senza richieste AI",async()=>{
+  await repo.change(s=>{s.placement=null;s.daily_plans=[];s.attempts=[];s.vocabulary.forEach(v=>v.due=new Date(0).toISOString());});
+  await visit("home");const before=calls.length;click("Inizia il piano di oggi");await until(()=>!!document.querySelector("#practice-form"));const set=repo.get().sessions.at(-1),plan=repo.get().daily_plans[0];assert.equal(set.items.filter(i=>i.kind==="retrieval").length,2);assert.ok(document.querySelector(".session-progress").textContent.includes("0 di "+set.items.length));
+  input("#"+set.items[0].id,set.items[0].answer);assert.ok(document.querySelector(".session-progress").textContent.includes("1 di "+set.items.length));input("#"+set.items[0].id,"");assert.ok(document.querySelector(".session-progress").textContent.includes("0 di "+set.items.length));
+  await visit("home");click("Riprendi il piano di oggi");await until(()=>!!document.querySelector("#practice-form"));assert.equal(repo.get().daily_plans.length,1);assert.equal(repo.get().daily_plans[0].practice_id,set.id);
+  for(const item of set.items)input("#"+item.id,item.answer);await app.flush();document.querySelector("#practice-form").dispatchEvent(new window.Event("submit",{bubbles:true,cancelable:true}));await until(()=>!!repo.get().sessions.find(s=>s.id===set.id).completed_at);click("Passa alla breve scrittura");await until(()=>!!document.querySelector("#draft"));const writingId=repo.get().daily_plans[0].writing_id;assert.ok(document.getElementById("view").textContent.includes("35 parole"));input("#draft","word ".repeat(35));await visit("home");assert.ok(document.querySelector(".daily-card").textContent.includes("2 di 2 attività svolte"));click("Rivedi la breve scrittura");await until(()=>!!document.querySelector("#draft"));assert.equal(repo.get().daily_plans[0].writing_id,writingId);assert.equal(repo.get().daily_plans[0].id,plan.id);assert.equal(calls.length,before);
+});
+test("Piano e preferenze sopravvivono al backup e al ripristino",async()=>{const backup=parseBackup(await repo.backup());assert.equal(backup.settings.theme,"dark");assert.equal(backup.daily_plans.length,1);await repo.replace(backup);await visit("home");assert.ok(document.querySelector(".daily-card").textContent.includes("2 di 2"));assert.equal(document.documentElement.dataset.theme,"dark");});
 test.after(()=>repo.close());
