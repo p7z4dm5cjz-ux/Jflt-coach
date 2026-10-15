@@ -1,5 +1,5 @@
 import { LESSONS, VOCABULARY, BASIC_WORDS } from "./catalog.js";
-import {placementProfile,validPlacement} from "./placement.js";
+import {placementProfile,validPlacement} from "../placement.js";
 const text = {type:"string",maxLength:12000};
 const short = {type:"string",minLength:1,maxLength:1800};
 const obj = properties=>({type:"object",additionalProperties:false,required:Object.keys(properties),properties});

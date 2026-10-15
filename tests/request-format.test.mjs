@@ -8,6 +8,8 @@ import {callTutor,saveToken} from "../tutor.js";
 const token="request-format-token-longer-than-24";
 const env={APP_TOKEN:token,GROQ_API_KEY:"private-test-provider-key",ALLOWED_ORIGIN:"https://example.test",MODEL:"openai/gpt-oss-120b",BUDGET:{idFromName:()=>1,get:()=>({fetch:async()=>Response.json({ok:true})})}};
 const inputs={
+  grammar_explain:{lesson_id:"present-perfect-simple",question:"Quando scelgo il past simple?"},
+  writing_coach:{unit_id:"email-request",type:"email",stage:1,round:0,mode:"review",topic:"Scrivi una richiesta cortese",text:"I am writing to ask about the course.\nFour colleagues are available on Monday.\nCould you confirm the date and equipment?",question:""},
   exercises:{lesson_id:"present-perfect-simple",terms:[{expression:"carry out",meaning_it:"eseguire"}],recent_errors:[{stem:"Completa: She ___ the report. (write, present perfect)",answer:"has wrote"}]},
   writing_review:{type:"report",topic:"Fictional gate check",text:"The officers has checked the gate.",mode:"practice"},
   writing_compare:{type:"report",topic:"Fictional gate check",text:"The officers has checked the gate.",rewrite:"The officers have checked the gate.",issues:[]},
@@ -33,7 +35,7 @@ test("Ogni richiesta manda lo schema del suo compito e conserva i dati dello stu
       return provider(SHAPES[task]);
     });
     assert.equal(response.status,200,task);assert.equal(calls,1);
-    const body=await response.json();assert.deepEqual(body.result,SHAPES[task]);assert.equal(body.prompt_revision,"groq-schema-v2");
+    const body=await response.json();assert.deepEqual(body.result,SHAPES[task]);assert.equal(body.prompt_revision,"groq-path-v6");
   }
 });
 
@@ -67,6 +69,8 @@ test("Gli schemi usano solo il subset documentato e rendono obbligatorio ogni ca
 
 test("Campi mancanti e tipi sbagliati vengono esclusi dallo schema di ogni compito",()=>{
   const mutations={
+    grammar_explain:[p=>delete p.form,p=>p.examples[0].why=null],
+    writing_coach:[p=>delete p.focus,p=>p.ready="yes",p=>p.issues=[{kind:"suggestion"}]],
     exercises:[p=>delete p.items[3].options,p=>delete p.items[0].accept,p=>p.items[0].kind="multiple choice"],
     writing_review:[p=>delete p.issues,p=>p.rubric.grammar=7,p=>p.issues[0].kind="suggestion"],
     writing_compare:[p=>delete p.transfer[1].accept,p=>p.remaining="none"],

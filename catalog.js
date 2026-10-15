@@ -1,5 +1,7 @@
 // Contenuti originali di orientamento: non copie dei manuali dell'utente.
 // I livelli sono tappe del percorso interno, non equivalenze ufficiali STANAG/CEFR.
+import {GRAMMAR_EXTENSION} from "./grammar-extension.js";
+import {EXTRA_PHRASALS} from "./phrasal-extension.js";
 export const STAGES = ["Fondamenta", "Controllo della frase", "Frasi complesse", "Argomentazione e registro"];
 export const SOURCES = [
   ["British Council — grammatica", "https://learnenglish.britishcouncil.org/grammar"],
@@ -113,8 +115,21 @@ export const TENSE_COMPARISONS = ["present","past","perfect-simple","perfect-con
 export const LESSONS = [
   {id:"negatives",stage:1,tool:"tenses",title:"Negazioni senza cambiare il significato",goal:"Scegliere l'ausiliare e mantenere la forma corretta del verbo.",when:"Present e past simple usano do/does/did + not + forma base. Be, have ausiliare e modali ricevono not direttamente. Have come verbo lessicale può usare do: I don't have a car.",forms:"She doesn't work. They didn't leave. He isn't waiting. We haven't finished. You mustn't enter. You don't have to enter.",examples:["She didn't send the file.","She hasn't sent the file yet."],contrast:"Mustn't vieta; don't have to indica che un'azione non è necessaria. Nobody/no/none negano già: nello standard non aggiungere un secondo not con lo stesso significato.",pitfall:"Dopo doesn't e didn't torna alla forma base: doesn't know, didn't go. La negazione deve mantenere il tempo e il significato della frase."},
   ...rows.map(([id,stage,tool,title,goal,when,a,b,contrast,pitfall])=>({id,stage,tool,title,goal,when,forms:forms[id]||"",examples:[a,b],contrast,pitfall})),
-  ...tenseRows.map(([id,stage,title,goal,when,forms,a,b,contrast,pitfall])=>({id,stage,tool:"tenses",title,goal,when,forms,examples:[a,b],contrast,pitfall,exercise_focus:true}))
+  ...tenseRows.map(([id,stage,title,goal,when,forms,a,b,contrast,pitfall])=>({id,stage,tool:"tenses",title,goal,when,forms,examples:[a,b],contrast,pitfall,exercise_focus:true})),
+  ...GRAMMAR_EXTENSION
 ].sort((a,b)=>a.stage-b.stage);
+// Le vecchie lezioni restano disponibili con gli stessi id; gli approfondimenti
+// si raggiungono anche da lì, senza invalidare backup e collegamenti esistenti.
+for (const detail of GRAMMAR_EXTENSION) for (const id of detail.related) {
+  const base=LESSONS.find(l=>l.id===id);
+  if(base&&!base.extension) base.related=[...new Set([...(base.related||[]),detail.id])];
+}
+const negatives=LESSONS.find(l=>l.id==="negatives");
+negatives.sections=[
+  {title:"No longer, any longer e anymore",text:"No longer esprime cessazione e non richiede una seconda negazione: She no longer works here. Con do/does/did not usa any longer oppure any more/anymore in fondo: She doesn't work here any longer. Con be: She is no longer here / She isn't here anymore. Mantieni tempo, soggetto e significato nella trasformazione."},
+  {title:"Portata della negazione",text:"Not all significa non tutti, non nessuno. No/none/nobody/never negano già nel modello standard: non aggiungere not per lo stesso senso. Not to leave nega l'azione dell'infinito; didn't decide to leave nega la decisione. Gli esercizi dichiarano quale significato mantenere."},
+  {title:"Nello scritto",text:"Descrivi una procedura che non si usa più, un'azione non ancora completata e un comportamento vietato. Mantieni distinta assenza di obbligo e proibizione. Dopo le frasi, collega un breve paragrafo con riferimenti temporali chiari."}
+];
 // Schema: espressione | significato selezionato | costruzione S/U/I | registro | tema | alternativa | esempio originale.
 // La raccolta include anche prepositional e phrasal-prepositional verbs, dichiarati nell'interfaccia.
 const lexicon = `
@@ -354,5 +369,6 @@ ensure|assicurare che una condizione sia soddisfatta|The checklist helps ensure 
 acknowledge|riconoscere un fatto, limite o messaggio|The report acknowledges the limits of the available data.|argomentazione
 `.trim();
 export const TERMS = terms.split("\n").map((line,i)=>{const [expression,meaning_it,example,topic]=line.split("|"); return {id:`lex-${i+1}`,expression,meaning_it,example,topic,register:"neutro",pattern:"",alternative:"",difficulty:"intermedio"};});
+PHRASALS.push(...EXTRA_PHRASALS);
 export const VOCABULARY = [...PHRASALS,...TERMS];
 export const BASIC_WORDS = new Set("apple pen pencil dog cat book table chair red blue green mother father water food good bad big small one two three four five yes no hello goodbye car house school day night man woman boy girl i you he she it we they a an the is am are was were be have has do does did in on at to for of and but or not very".split(" "));

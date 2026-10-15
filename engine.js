@@ -1,26 +1,22 @@
 import {LESSONS, VOCABULARY, PHRASALS} from "./catalog.js";
 import {placementProfile, validPlacement, newPlacement} from "./placement.js";
-export const VERSION = "1.1.0";
+import {PARTICLE_ALTERNATIVES,BASE_MEANING_DISTRACTORS} from "./phrasal-extension.js";
+import {normal,correct} from "./answer-normal.js";
+import {lessonEvidence} from "./grammar-checks.js";
+export {normal,correct} from "./answer-normal.js";
+export const VERSION = "1.5.0";
 export const API_VERSION = 1;
 export const LEGACY_STORES = ["settings","diag_responses","diag_texts","profile","requests","grammar_sets","grammar_answers","tasks","texts","feedback","error_log","cards","transfer_checks","device_tests","to_verify"];
 export const now = () => new Date().toISOString();
 export const uid = prefix => prefix + "-" + crypto.randomUUID();
 export const countWords = text => (String(text).match(/\b[\p{L}\p{N}]+(?:['’-][\p{L}\p{N}]+)*\b/gu)||[]).length;
-export function normal(value) {
-  return String(value).normalize("NFKC").toLowerCase().replace(/[‘’]/g,"'").replace(/\bwon't\b/g,"will not").replace(/\bcan't\b/g,"cannot").replace(/\b([a-z]+)n't\b/g,"$1 not").replace(/\bi'm\b/g,"i am").replace(/\b(i|you|we|they)'ve\b/g,"$1 have").replace(/\b(i|you|we|they|he|she|it)'ll\b/g,"$1 will").replace(/\b(you|we|they)'re\b/g,"$1 are").replace(/[.,!?;:]+$/g,"").replace(/\s+/g," ").trim();
-}
-export const correct = (item, answer) => {
-  const variants=value=>[value,value.replace(/\b(he|she|it|that|there)'s\b/gi,"$1 is"),value.replace(/\b(he|she|it|that|there)'s\b/gi,"$1 has"),value.replace(/\b(i|you|we|they|he|she|it)'d\b/gi,"$1 had"),value.replace(/\b(i|you|we|they|he|she|it)'d\b/gi,"$1 would")].map(normal);
-  const candidates=variants(String(answer));
-  return [item.answer,...(item.accept||[])].some(v=>variants(String(v)).some(value=>candidates.includes(value)));
-};
 export function endpoint(value) {
   const u = new URL(value);
   if(u.protocol!=="https:" || !u.hostname.endsWith(".workers.dev") || u.username || u.password || u.port || u.search || u.hash || !["","/"].includes(u.pathname)) throw new Error("Inserisci l'indirizzo HTTPS del Worker, senza percorsi aggiuntivi.");
   return u.origin;
 }
 export function freshState() {
-  return {id:"main",version:2,release:VERSION,created_at:now(),updated_at:now(),settings:{endpoint:"https://jflt-coach.crl-r90.workers.dev",daily_minutes:20,theme:"auto"},placement:null,attempts:[],sessions:[],writings:[],readings:[],vocabulary:[],daily_plans:[],legacy:null};
+  return {id:"main",version:2,release:VERSION,created_at:now(),updated_at:now(),settings:{endpoint:"https://jflt-coach.crl-r90.workers.dev",daily_minutes:20,theme:"auto"},placement:null,attempts:[],sessions:[],writings:[],writing_courses:[],lesson_studies:[],readings:[],vocabulary:[],daily_plans:[],legacy:null};
 }
 export function migrate(stores) {
   const s=freshState(), old=stores?.settings?.find(v=>v.id==="main"), l=old?.learning||{};
@@ -41,19 +37,25 @@ export function migrate(stores) {
 }
 export function recommendation(state) {
   const profile=placementProfile(state.placement);
-  const defaults=["negatives","present-perfect-simple","past-simple","phrasal-basics","present-perfect-continuous","past-perfect-simple","verb-patterns"];
-  const writingErrors=state.writings.slice(-3).flatMap(w=>w.feedback_source===w.draft?(w.feedback?.issues||[]).filter(i=>i.kind==="error"):[]);
+  const defaults=["present-simple","past-simple","present-perfect-simple","negatives","phrasal-basics","present-perfect-continuous","past-perfect-simple","verb-patterns"];
+  const courseErrors=(state.writing_courses||[]).slice(-3).flatMap(c=>c.reviews.findLast(r=>r.stage===c.stage&&r.round===c.rounds[c.stage]&&r.mode==="review"&&r.text===c.drafts[c.stage])?.result.issues.filter(i=>i.kind==="error")||[]);
+  const writingErrors=[...state.writings.slice(-3).flatMap(w=>w.feedback_source===w.draft?(w.feedback?.issues||[]).filter(i=>i.kind==="error"):[]),...courseErrors];
   const mapCategory={tenses:["past-simple","present-perfect-simple"],negation:["negatives"],phrasals:["phrasal-basics"],word_order:["sentence"],verb_patterns:["verb-patterns"]};
   const scored=LESSONS.map((l,index)=>{
-    const a=state.attempts.filter(a=>a.lesson_id===l.id&&!a.assisted&&a.source!=="legacy").slice(-12);
+    const a=state.attempts.filter(a=>a.lesson_id===l.id&&!a.assisted&&!a.disputed&&a.source!=="legacy").slice(-12);
     const errors=a.filter(a=>!a.correct).length, recent=a.length?a.filter(a=>a.correct).length/a.length:null;
     const distinct=new Set(a.map(a=>a.session_id)).size;
     let status=profile?.lessonStatus[l.id]||"new";
-    if(distinct>=2&&new Set(a.map(a=>a.stem)).size>=4&&a.length>=8&&recent>=0.85)status="maintain";
+    if(distinct>=2&&new Set(a.filter(x=>x.correct).map(a=>a.context_id||a.stem)).size>=8&&a.length>=8&&recent>=0.85)status="maintain";
     else if(errors)status="review";
-    const base=defaults.includes(l.id)?15-defaults.indexOf(l.id):0;
+    const evidence=lessonEvidence(state,l.id);
+    if(evidence.errors)status="review";
+    const base=!profile&&defaults.includes(l.id)?15-defaults.indexOf(l.id):0;
     const writingWeight=writingErrors.filter(i=>i.category===l.id||(mapCategory[i.category]||[]).includes(l.id)).length*8;
-    const score=errors*6+writingWeight+(status==="review"?20:0)+(profile?.priorityIds.includes(l.id)?30-profile.priorityIds.indexOf(l.id):0)+base-(["skip","maintain"].includes(status)?100:0);
+    // Un pretest di base non dimostra la padronanza degli approfondimenti.
+    // Gli errori nei prerequisiti li rendono pertinenti, senza precedere il recupero.
+    const bridge=l.extension&&profile?(l.prerequisites||[]).some(id=>profile.lessonStatus[id]==="review")?5:0:0;
+    const score=errors*6+writingWeight+evidence.errors*12+(evidence.due_now?120:0)+(status==="review"?20:0)+(profile?.priorityIds.includes(l.id)?30-profile.priorityIds.indexOf(l.id):0)+base+bridge-(l.extension?l.stage+1:0)-(["skip","maintain"].includes(status)?100:0)-(evidence.passed&&!evidence.due_now?35:0);
     return {...l,status,score,index,accuracy:recent,attempts:a.length};
   });
   return scored.sort((a,b)=>b.score-a.score||a.index-b.index);
@@ -80,7 +82,7 @@ export function dailyWritingTopic(plan) {
     (plan.terms.length?"Prova a usare, se pertinenti, queste espressioni: "+plan.terms.map(t=>t.expression).join(", ")+". ":"")+"Non inserire dati reali o informazioni riservate. La lunghezza misura il lavoro svolto, non la correttezza del testo.";
 }
 export function addTerm(state, term, context="") {
-  const existing=state.vocabulary.find(v=>normal(v.expression)===normal(term.expression));
+  const existing=state.vocabulary.find(v=>v.id===term.id||normal(v.expression)===normal(term.expression)&&normal(v.meaning_it)===normal(term.meaning_it));
   if(existing)return existing;
   const v={...term,id:term.id||uid("word"),context,added_at:now(),due:now(),streak:0,seen:0,last_correct:null};
   state.vocabulary.push(v);return v;
@@ -92,17 +94,20 @@ export function recordReview(term, isCorrect, assisted=false, timestamp=Date.now
   term.due=new Date(timestamp+(days?days*86400000:600000)).toISOString();
 }
 export function recoveryItems(terms) {
-  return terms.map(v=>({id:"recover-"+v.id,term_id:v.id,kind:"retrieval",skill:"form",stem:"Scrivi l'espressione inglese che significa «"+v.meaning_it+"». Indizio: "+v.expression[0]+"… ("+v.expression.split(/\s+/).length+" parole).",answer:v.expression,accept:[v.expression],options:[],why:"Espressione: "+v.expression+". Esempio: "+v.example,origin:"local"}));
+  return terms.map(v=>({id:"recover-"+v.id,term_id:v.id,kind:"retrieval",skill:"form",stem:"Richiama l'espressione inglese della scheda studiata: «"+v.meaning_it+"». Indizio: "+v.expression[0]+"… ("+v.expression.split(/\s+/).length+" parole).",answer:v.expression,accept:[v.expression],options:[],why:"Espressione della scheda: "+v.expression+". Esempio: "+v.example,origin:"local"}));
 }
 export function phrasalItems(term, variation=0) {
-  const other=PHRASALS.filter(v=>v.id!==term.id&&v.meaning_it!==term.meaning_it);
+  const other=[...new Map(PHRASALS.filter(v=>v.id!==term.id&&v.meaning_it!==term.meaning_it&&v.alternative!==term.alternative).map(v=>[v.meaning_it,v])).values()];
+  const distractors=term.meaning_distractors||BASE_MEANING_DISTRACTORS[term.id]||[other[variation%other.length].meaning_it,other[(variation+17)%other.length].meaning_it];
   const words=term.expression.split(" ");
-  const correctForm=term.pattern==="S"?words[0]+" it "+words.slice(1).join(" "):term.expression+" it";
-  const misplaced=term.pattern==="S"?term.expression+" it":words[0]+" it "+words.slice(1).join(" ");
+  const particles=words.slice(1).join(" "),alternatives=PARTICLE_ALTERNATIVES[term.id]||[];
+  const pronoun=term.object_pronoun||"it";
+  const correctForm=term.pattern==="S"?words[0]+" "+pronoun+" "+words.slice(1).join(" "):term.expression+" "+pronoun;
+  const misplaced=term.pattern==="S"?term.expression+" "+pronoun:words[0]+" "+pronoun+" "+words.slice(1).join(" ");
   return [
-    {id:term.id+"-meaning",term_id:term.id,kind:"choice",skill:"recognise",stem:term.example+"\nChe cosa significa "+term.expression+" in questo esempio?",answer:term.meaning_it,options:[term.meaning_it,other[variation%other.length].meaning_it,other[(variation+17)%other.length].meaning_it],why:"Nel contesto significa: "+term.meaning_it+"."},
-    {id:term.id+"-particles",term_id:term.id,kind:"completion",skill:"form",stem:"Ricostruisci l'espressione nella forma base: "+words[0]+" ___\nSignificato: "+term.meaning_it+". Scrivi tutte le parole mancanti.",answer:words.slice(1).join(" "),options:[],why:"L'espressione completa è "+term.expression+"."},
-    term.pattern==="I"?{id:term.id+"-pattern",term_id:term.id,kind:"choice",skill:"choose",stem:"Nell'uso mostrato («"+term.example+"»), "+term.expression+" richiede un oggetto diretto?",answer:"No: in questo uso è intransitivo.",options:["No: in questo uso è intransitivo.","Sì: va sempre inserito it tra verbo e particella.","Sì: l'oggetto diretto è obbligatorio dopo l'espressione."],why:"La costruzione del significato qui studiato è intransitiva. Altri significati possono avere costruzioni diverse."}:{id:term.id+"-pronoun",term_id:term.id,kind:"choice",skill:"choose",stem:"Per il significato «"+term.meaning_it+"», quale ordine è corretto con il pronome oggetto it? Scegli il gruppo di parole.",answer:correctForm,options:[correctForm,misplaced,"it "+term.expression],why:term.pattern==="S"?"In questo uso separabile, it va tra il verbo e la particella.":"In questo uso inseparabile, il pronome segue l'intera espressione."}
+    {id:term.id+"-meaning",term_id:term.id,kind:"choice",skill:"recognise",stem:term.example+"\nChe cosa significa "+term.expression+" in questo esempio?",answer:term.meaning_it,options:[term.meaning_it,...distractors],why:"Nel contesto significa: "+term.meaning_it+"."},
+    {id:term.id+"-particles",term_id:term.id,kind:"completion",skill:"form",stem:"Completa nella forma base: "+words[0]+" ___\nSignificato: "+term.meaning_it+". Scrivi tutte le parole mancanti.",answer:particles,accept:[particles,...alternatives],options:[],why:"La scheda insegna "+term.expression+"."+(alternatives.length?" Per il significato richiesto sono valide anche: "+alternatives.map(a=>words[0]+" "+a).join(", ")+".":"")},
+    term.pattern==="I"?{id:term.id+"-pattern",term_id:term.id,kind:"choice",skill:"choose",stem:"Nell'uso mostrato («"+term.example+"»), "+term.expression+" richiede un oggetto diretto?",answer:"No: in questo uso è intransitivo.",options:["No: in questo uso è intransitivo.","Sì: va sempre inserito it tra verbo e particella.","Sì: l'oggetto diretto è obbligatorio dopo l'espressione."],why:"La costruzione del significato qui studiato è intransitiva. Altri significati possono avere costruzioni diverse."}:{id:term.id+"-pronoun",term_id:term.id,kind:"choice",skill:"choose",stem:"Per il significato «"+term.meaning_it+"», quale ordine è corretto con il pronome "+pronoun+"? Scegli il gruppo di parole.",answer:correctForm,options:[correctForm,misplaced,pronoun+" "+term.expression],why:term.pattern==="S"?"In questo uso separabile, "+pronoun+" va tra il verbo e la particella.":"In questo uso inseparabile, il pronome segue l'intera espressione."}
   ];
 }
 export function writingReady(w, step) {

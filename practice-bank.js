@@ -1,8 +1,11 @@
 import {LESSONS} from "./catalog.js";
+import {coreItems} from "./core-practice.js";
+import {negativeItems} from "./negative-bank.js";
+import {EXTENSION_DRILLS,extensionItems} from "./grammar-drills.js";
 // Esercizi originali; nessuna domanda copiata dal pretest o dai manuali.
 const rows = {
 sentence:[["Riordina: checked / the guard / the list","The guard checked the list"],["Completa il verbo: The guards ___ the lists daily. (check)","check"]],
-nouns:[["Completa: We need two ___ of information. (piece)","pieces"],["Correggi: She gave me an advice.","She gave me some advice","She gave me a piece of advice"]],
+nouns:[["Completa: We need two ___ of information. (piece)","pieces"],["Correggi senza cambiare il tempo: She gave me an advice.","She gave me advice","She gave me some advice","She gave me a piece of advice","She gave me a bit of advice"]],
 articles:[["Completa: She is ___ experienced investigator.","an"],["Completa: We travelled by ___ train. Scrivi — se non serve un articolo.","—","-","nessun articolo"]],
 pronouns:[["Completa: I asked Anna to send ___ the file. (a me)","me"],["Completa: This is their office. The office is ___.","theirs"]],
 "some-any":[["Completa con some o any: There aren't ___ seats left.","any"],["Completa: Would you like ___ coffee? (offerta)","some"]],
@@ -25,7 +28,6 @@ future:[["Decisione immediata: 'I'm tired.' 'I ___ you home.' (drive; will)","wi
 ability:[["Completa senza to: She can ___ the form. (translate)","translate"],["Completa al futuro: After training, they ___ to operate the device. (be able)","will be able"]],
 "may-might":[["Completa la possibilità con might: The schedule ___ next week. (change)","might change"],["Correggi: He may to arrive later.","He may arrive later"]],
 obligation:[["Esprimi assenza di obbligo: You ___ wear a tie; it is optional. (have to; negativo)","do not have to","don't have to"],["Esprimi un divieto con must: Visitors ___ touch the equipment.","must not","mustn't"]],
-negatives:[["Completa la negativa: She ___ the instructions. (understand; presente abituale)","does not understand","doesn't understand"],["Correggi: We didn't received a reply.","We did not receive a reply","We didn't receive a reply"],["Completa: They ___ waiting anymore. (be; presente negativo)","are not","aren't"]],
 "verb-patterns":[["Completa: He avoided ___ about the incident. (talk)","talking"],["Completa: She agreed ___ us. (help)","to help"]],
 "phrasal-basics":[["Sostituisci the lights con them: Please switch off the lights.","Please switch them off"],["Sostituisci the request con it: We will look into the request.","We will look into it"]],
 "present-perfect-simple":[["Completa: The technician ___ the radio, so it works now. (repair; present perfect)","has repaired"],["Completa la negativa: We ___ the answer yet. (receive; present perfect)","have not received","haven't received"]],
@@ -40,7 +42,7 @@ deduction:[["Deduzione forte sul passato: She ___ the message; she replied to it
 "conditionals-real":[["Completa: If it rains tomorrow, we ___ indoors. (stay; will)","will stay"],["Correggi: If the temperature will fall, we will close the road.","If the temperature falls, we will close the road"]],
 "conditionals-unreal":[["Completa l'ipotesi irreale presente: If I had more time, I ___ another course. (take)","would take"],["Completa l'ipotesi irreale passata: If they had asked, we ___ them. (help)","would have helped"]],
 wish:[["Completa il rimpianto passato: I wish I ___ the number. (save)","had saved"],["Completa il desiderio presente irreale: I wish I ___ more time. (have)","had"]],
-passive:[["Trasforma al passivo: They repaired the camera.","The camera was repaired","The camera was repaired by them"],["Completa il passivo modale: The form must ___ before noon. (sign)","be signed"]],
+passive:[["Trasforma al passivo: They repaired the camera.","The camera was repaired","The camera was repaired by them","The camera got repaired","The camera got repaired by them"],["Completa il passivo modale: The form must ___ before noon. (sign)","be signed"]],
 reported:[["Riporta dal punto di vista di ieri: She said, 'I am busy.' → She said that she ___ busy.","was"],["Completa: He told me ___ outside. (wait)","to wait"]],
 "indirect-questions":[["Riordina: Could you tell me / where / the office / is","Could you tell me where the office is?"],["Correggi: Do you know when does the class start?","Do you know when the class starts?"]],
 relatives:[["Completa il pronome relativo: The person ___ called is waiting outside.","who","that"],["Completa: This is the building ___ we met.","where"]],
@@ -51,19 +53,23 @@ linkers:[["Completa con although o despite: ___ the noise, she continued working
 "future-perfect-continuous":[["Completa: By August, he ___ here for three years. (work; future perfect continuous)","will have been working"],["Correggi: By noon, we will have been wait for two hours.","By noon, we will have been waiting for two hours"]],
 "future-in-past":[["Piano visto dal passato: They ___ us, but the phone failed. (call; going to)","were going to call"],["Futuro nel passato: He said he ___ the next day. (return; would)","would return"]],
 "reporting-passive":[["Completa: She is believed ___ abroad now. (be)","to be"],["Completa: He is believed ___ the country last week. (leave)","to have left"]],
-participles:[["Completa: ___ the report, she sent it to the office. (finish; azione conclusa prima)","Having finished"],["Completa: The documents ___ yesterday are on the desk. (receive)","received"]],
-inversion:[["Completa: Never ___ I seen such a queue.","have"],["Correggi: Only then I understood the problem.","Only then did I understand the problem"]],
+participles:[["Completa: ___ the report, she sent it to the office. (finish; azione conclusa prima)","Having finished","After finishing"],["Completa: The documents ___ yesterday are on the desk. (receive)","received"]],
+inversion:[["Completa al present perfect: Never ___ I seen such a queue.","have"],["Correggi l'ordine, mantenendo il past simple: Only then I understood the problem.","Only then did I understand the problem"]],
 clefts:[["Completa: It was Anna ___ found the error.","who","that"],["Completa: What we need ___ more time.","is"]],
 nominalisation:[["Completa il nome: The ___ of the route took two hours. (inspect)","inspection"],["Completa il nome: Their ___ was unexpected. (refuse)","refusal"]],
-hedging:[["Completa con may per una possibilità prudente: This change ___ improve response times.","may"],["Correggi la struttura: The evidence appears suggesting a link.","The evidence appears to suggest a link"]],
+hedging:[["Completa con may per una possibilità prudente: This change ___ improve response times.","may"],["Correggi la struttura: The evidence appears suggesting a link.","The evidence appears to suggest a link","The evidence appears to be suggesting a link"]],
 subjunctive:[["Completa la costruzione formale: They recommended that he ___ present. (be; subjunctive)","be"],["Completa: It is essential that she ___ informed. (be; subjunctive)","be"]],
 cohesion:[["Scegli il connettivo di conseguenza (therefore/however): The road was blocked. ___, we used another route.","Therefore"],["Scegli il connettivo di contrasto (therefore/however): The plan was useful. ___, it was too expensive.","However"]],
 argument:[["Completa il nesso concessivo: ___ training is expensive, it reduces mistakes. (Although/Therefore)","Although"],["Completa la conclusione logica: Costs are lower and performance is better. ___, this option is preferable. (Therefore/Although)","Therefore"]],
-mixed:[["Correggi: If we had left earlier, we would arrived on time.","If we had left earlier, we would have arrived on time"],["Correggi: She asked me where did I work.","She asked me where I worked"]]
+mixed:[["Correggi la conseguenza dell'ipotesi sul passato: If we had left earlier, we would arrived on time.","If we had left earlier, we would have arrived on time"],["Correggi l'ordine della domanda indiretta mantenendo il past simple: She asked me where did I work.","She asked me where I worked"]]
 };
 export function grammarItems(lessonId, variation=0) {
+  const core=coreItems(lessonId,variation);if(core)return core;
+  if(lessonId==="negatives")return negativeItems(variation);
+  const extended=extensionItems(lessonId,variation);
+  if(extended)return extended;
   const bank=rows[lessonId];
   if(!bank)throw new Error("Lezione non disponibile.");
   return bank.map((row,i)=>({id:lessonId+"-offline-"+i,kind:row[0].startsWith("Correggi")?"error_correction":"completion",skill:"form",stem:row[0],answer:row[1],accept:row.slice(1),options:[],why:"Soluzione: "+row[1]+". "+(LESSONS.find(l=>l.id===lessonId)?.pitfall||""),origin:"local"})).sort((a,b)=>variation%2?a.id.localeCompare(b.id):b.id.localeCompare(a.id));
 }
-export const COVERED_LESSONS=Object.keys(rows);
+export const COVERED_LESSONS=[...Object.keys(rows),...Object.keys(EXTENSION_DRILLS),"negatives"];

@@ -1,14 +1,31 @@
 // Incorporato con contratto e libri in worker/index.js, autonomo al deploy.
 const MODELS=["openai/gpt-oss-120b","openai/gpt-oss-20b"];
 const DIAGNOSTICS_REVISION="groq-reply-v1";
-const PROMPT_REVISION="groq-schema-v2";
+const PROMPT_REVISION="groq-path-v6";
 const TASK_INSTRUCTIONS={
+  grammar_explain:[
+    "Insegna la lezione selezionata prima della pratica. Rispondi alla domanda facoltativa senza cambiare argomento. Usa summary, form, when, examples, contrast, pitfalls: tutti obbligatori. Summary spiega la scelta di significato, form la costruzione, when da 1 a 4 usi concreti. Adatta form all'argomento: per articoli o nomi non inventare un paradigma verbale.",
+    "Examples contiene due o tre esempi ORIGINALI con en (frase inglese), it (traduzione italiana), why (perché quella forma in quel contesto). Contrast confronta con la struttura più facilmente confusa e chiarisce quando entrambe sono possibili. Pitfalls contiene da 1 a 3 errori pertinenti. Per i verbi tratta affermativa, negativa e domanda quando utili, con eccezioni come be. Non presentare segnali temporali come regole assolute.",
+    "Usa scheda della lezione e riferimenti dei libri ricevuti. Non copiare testi da siti o manuali e non inventare numeri di pagina. Limiti: summary, form, ogni when, contrast e ogni pitfall 1600 caratteri; en/it 400, why 1200. Italiano chiaro, esempi inglesi corretti."
+  ],
+  writing_coach:[
+    "Per i percorsi basati sui libri segui course.references, course.requirements e course.length_guidance: MISSION per saggio e rapporto; TARGET per tesi, pertinenza, argomentazione; CAMPAIGN per cronologia. Non sostituirli con una richiesta di informazioni o un racconto personale. Non trasformare consigli stilistici del manuale in divieti grammaticali: modali e prima persona possono essere appropriati. Se è presente focus.lesson, spiega quella regola quando pertinente senza imporla dove non serve.",
+    "Guida un SOLO passo del percorso di scrittura. La consegna e i requisiti autorevoli sono in course; topic è solo una copia per l'interfaccia. Il testo text è il tentativo dello studente. Stage 0: comprensione del modello; 1: tre frasi con le funzioni indicate; 2: un paragrafo; 3: testo guidato completo; 4: testo autonomo su nuovi fatti; 5: conferma su altri fatti. Non chiedere una lettera completa nelle tappe 0, 1 o 2.",
+    "Mode hint: rispondi alla domanda o suggerisci il prossimo piccolo passo, senza scrivere la consegna al posto dello studente. Ready SEMPRE false. Mode review: valuta quel tentativo secondo i requisiti del passo, non solo la grammatica. Ready true solo se le funzioni e i fatti necessari sono presenti e non ci sono errori prioritari; non bloccare per una preferenza di stile o un numero indicativo di parole.",
+    "Usa SEMPRE summary, focus, issues, next_step e ready. Summary in italiano descrive il risultato e gli eventuali fatti mancanti. Focus contiene da 1 a 3 spiegazioni con form, meaning_it, why, example_en: forma, significato, motivo contestuale ed esempio originale in una situazione DIVERSA dalla consegna. Non fornire una lettera completa né una riscrittura sostitutiva in nessun campo.",
+    "Issues contiene da 0 a 2 osservazioni prioritarie con quote, correction, explanation, kind, category. Quote è una citazione letterale continua di text, senza modificarla. Correction è la correzione minima del frammento, explanation spiega forma e perché. Kind error solo per un errore linguistico, style per un suggerimento facoltativo. Se manca un contenuto, dillo in summary e next_step: non inventare una citazione. Se manca il testo, issues è [].",
+    "Next_step chiede allo studente un'azione concreta o una riscrittura propria. Non certificare livelli. Category, quando pertinente, coincide con l'id della lezione ricevuta nel catalogo o con negatives, verb-patterns, past-simple, present-simple, present-perfect-simple, other. Limiti: summary 1600, focus form/meaning_it 300, why 1200, example_en 400; quote 300, correction 400, explanation 1200, category 100, next_step 800."
+  ],
   exercises:[
+    "Segui il fine didattico di block_goal ricevuto nei riferimenti server, conservando sei esercizi e almeno tre tipi. Ogni blocco ha un obiettivo dominante, non un unico formato. Il blocco misto varia il contesto e non ripropone frasi già viste.",
     "Genera esattamente 6 esercizi originali sulla lezione selezionata, con almeno 3 tipi diversi fra choice, completion, transformation, error_correction. Almeno 2 devono richiedere di costruire una forma.",
     "Ogni esercizio deve avere SEMPRE kind, stem, options, answer, accept e why. Non omettere campi. stem è la consegna italiana con la frase inglese; answer è la soluzione inglese; why spiega in italiano la regola applicata. kind è uno dei quattro valori indicati, senza sinonimi.",
     "Choice: options contiene 3 o 4 testi diversi; answer è copiato identico da una delle opzioni, mai una lettera come A/B/C/D o un indice. Per tutti gli altri tipi options è SEMPRE []. accept è SEMPRE un elenco di stringhe, include la soluzione e le varianti standard valide, massimo 8. Non scrivere null o un testo al posto di un elenco.",
     "Rendi il contesto sufficiente a risolvere l'esercizio. Se chiedi un tempo o una costruzione specifici, dichiarali nella consegna; se più forme sono valide, includile in accept. Non mostrare la soluzione nello stem; negli error_correction mostra solo la frase da correggere. Trasformazioni: precisa quale parte cambiare e quale mantenere.",
     "Concentrati sul goal, when, forms, contrast e pitfall della scheda. Usa recent_errors per variare il contesto e colpire la regola debole; non ripetere le frasi. Termini selezionati facoltativi nel contesto: il recupero lessicale è gestito separatamente dall'app.",
+    "DATA.practice descrive un blocco della sessione: produci sempre e soltanto 6 esercizi, non tutti quelli di total. Non ripetere consegne o frasi presenti in already_seen. Per una riprova conserva le regole deboli di recent_errors ma cambia verbo, situazione e contenuto, non solo un nome. Aumenta gradualmente il contrasto tra forme nei blocchi successivi.",
+    "Why deve insegnare: indica la forma o l'ordine dei componenti, spiega perché è la scelta giusta in QUEL contesto e cita l'errore tipico pertinente. Non riciclare la stessa spiegazione per sei regole diverse e non trattare una variante di stile come errore. Controlla che la frase da correggere abbia davvero un errore.",
+    "Se la lezione contiene practice_focus/sections, distribuisci i nuclei della scheda fra i cinque blocchi: forma di base, significato, contrasto, eccezioni/varianti, trasferimento in frasi nuove. Non interpretare il numero della tappa come certificazione CEFR. Le varianti dichiarate standard nella scheda devono restare accettabili. Le consegne di scrittura in sections sono obiettivi di trasferimento, non esercizi aperti da correggere per coincidenza testuale.",
     "Limiti per ogni elemento: stem e why massimo 1600 caratteri; answer, ogni option e ogni variante in accept massimo 600. Testi non vuoti. Controlla internamente soluzione, varianti e spiegazione prima di rispondere."
   ],
   writing_review:[
@@ -16,6 +33,7 @@ const TASK_INSTRUCTIONS={
     "rubric contiene SEMPRE grammar, content, cohesion e register: ciascuno è una valutazione italiana non vuota, non un voto numerico. Non assegnare certificazioni CEFR/STANAG.",
     "Ogni issue contiene SEMPRE quote, correction, explanation, kind e category. quote è una citazione letterale e continua presente in text, senza normalizzare parole, maiuscole o punteggiatura. correction è minima; explanation spiega regola e motivo in italiano. kind è solo error per un errore linguistico, style per un miglioramento facoltativo. Non trasformare preferenze stilistiche in errori.",
     "category usa una categoria pertinente fra present-simple, present-continuous, past-simple, past-continuous, present-perfect-simple, present-perfect-continuous, past-perfect-simple, future-will, negatives, phrasal-basics, verb-patterns, articles, prepositions, clauses, cohesion, other. Non fornire un testo completo sostitutivo.",
+    "Se i riferimenti includono focus.lesson, usa il suo id come category solo per un errore pertinente a quella regola; le altre categorie restano disponibili. Valuta il testo realmente ricevuto: le nuove costruzioni non sono obbligatorie se il contesto non le richiede. Mantieni accettabili le varianti standard e separa registro da errore.",
     "Limiti: summary, ogni priority, ogni voce rubric ed explanation massimo 1600 caratteri; quote 500, correction 800, category 100. Testi non vuoti; elenchi sempre presenti anche se vuoti."
   ],
   writing_compare:[
@@ -107,10 +125,24 @@ export async function handle(request,env,fetcher=fetch) {
   }catch(e){return reply({message:e.message||"JSON non valido.",code:"input",request_id:requestId},400);}
   let context={};
   if(path==="/tutor") {
-    if(input.task==="exercises"){context=LESSON_CONTEXT[input.data.lesson_id];if(!context)return reply({message:"Lezione non riconosciuta.",code:"lesson",request_id:requestId},400);}
-    else if(input.task.startsWith("writing"))context=WRITING_CONTEXT[input.data.type];
+    if(["exercises","grammar_explain"].includes(input.task)){context=LESSON_CONTEXT[input.data.lesson_id];if(!context)return reply({message:"Lezione non riconosciuta.",code:"lesson",request_id:requestId},400);}
+    else if(input.task==="writing_coach") {
+      const unit=WRITING_COURSE_CONTEXT[input.data.unit_id],stage=unit?.stages[input.data.stage];
+      if(!stage||unit.type!==input.data.type||input.data.stage===0&&input.data.mode==="review")return reply({message:"Percorso o passo non riconosciuto.",code:"course",request_id:requestId},400);
+      context={course:stage[input.data.round%stage.length],books:WRITING_CONTEXT[unit.type]};
+      if(input.data.lesson_id){const focus=LESSON_CONTEXT[input.data.lesson_id];if(!focus)return reply({message:"Lezione non riconosciuta.",code:"lesson",request_id:requestId},400);context={...context,focus};}
+    }
+    else if(input.task.startsWith("writing")){
+      context=WRITING_CONTEXT[input.data.type];
+      if(input.task==="writing_review"&&input.data.lesson_id){
+        const focus=LESSON_CONTEXT[input.data.lesson_id];
+        if(!focus)return reply({message:"Lezione dello scritto non riconosciuta.",code:"lesson",request_id:requestId},400);
+        context={...context,focus};
+      }
+    }
     else context=READING_CONTEXT;
   }
+  if(path==="/tutor"&&input.task==="exercises"){const block=input.data.practice?.block??1;if(!Number.isInteger(block)||block<1||block>5)return reply({message:"Blocco non valido.",code:"input",request_id:requestId},400);context={...context,block_goal:BLOCK_GOALS[block-1]};}
   let budget;
   try{budget=await env.BUDGET.get(env.BUDGET.idFromName("personal")).fetch(new Request("https://budget/consume",{method:"POST"})).then(r=>r.json());}
   catch{return reply({message:"Contatore richieste non disponibile. Riprova più tardi.",code:"budget",request_id:requestId},503);}
@@ -137,6 +169,7 @@ export async function handle(request,env,fetcher=fetch) {
     diagnostics.stage="schema_validation";
     try{if(path==="/check"){if(result?.ok!==true)throw new Error("Test Groq non valido.");}else validateReply(input.task,result);diagnostics.schema_valid=true;}
     catch(e){diagnostics.schema_valid=false;return reply(diagnosticFailure(e.message||"Risposta Groq non valida.","invalid_response",requestId,diagnostics,e.replyIssue||null),502);}
+    if(input.task==="writing_coach")result=sanitizeCoach(result,input.data.text,input.data.mode);
     diagnostics.stage="accepted";
     return reply({...base,request_id:requestId,result,provider_checked:true,diagnostics});
   }catch(e){diagnostics.stage=e.name==="AbortError"?"timeout":"provider_network";return reply(diagnosticFailure(e.name==="AbortError"?"Groq non ha risposto entro 40 secondi.":"Connessione dal Worker a Groq non riuscita.",e.name==="AbortError"?"timeout":"provider_network",requestId,diagnostics),504);}

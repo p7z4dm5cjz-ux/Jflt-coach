@@ -55,6 +55,8 @@ export const WRITING_SOURCES = {
 export function bookContext(lessonId,mode="EXERCISES",type="report"){
   const lesson=LESSONS.find(l=>l.id===lessonId);
   let notes=packs.filter(([ids])=>ids.split(" ").includes(lessonId)).map(([,note])=>note).slice(0,4);
+  // Riferimenti già verificati alle regole di base: non nuove pagine inventate.
+  if(!notes.length&&lesson?.extension)notes=packs.filter(([ids])=>ids.split(" ").some(id=>(lesson.related||[]).includes(id))).map(([,note])=>({...note,relation_it:"Riferimento alle basi collegate; non attestazione di copertura integrale del nuovo capitolo."})).slice(0,4);
   if(mode.startsWith("WRITING"))notes=WRITING_SOURCES[type]||WRITING_SOURCES.report;
   if(mode==="ARTICLE_FEEDBACK")notes=[target("14-18","Individua proposizioni e collegamenti per ricostruire il senso; non tradurre soltanto parole isolate. Spiega ambiguità e riferimenti e riusa il lessico sconosciuto in esempi originali.")];
   const tags=[lessonId,lesson?.tool,...(mode.startsWith("WRITING")?[type==="argument"?"B2":"A4"]:[])].filter(Boolean);

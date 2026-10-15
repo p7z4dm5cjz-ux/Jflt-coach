@@ -2,7 +2,7 @@ import {readFile,writeFile} from "node:fs/promises";
 import {createHash} from "node:crypto";
 import {VERSION} from "../engine.js";
 const root=new URL("../",import.meta.url);
-const required=["index.html","boot.js","app.js","theme.css","appearance.css","engine.js","storage.js","tutor.js","contract.js","practice-bank.js","catalog.js","placement.js","bookshelf.js","data.js","legacy/core.js","legacy/schema.js","legacy/learning.js","legacy/catalog.js","legacy/placement.js"];
+const required=["answer-normal.js","core-practice.js","block-goals.js","grammar-checks.js","learning-path.js","learning-ui.js","book-writing.js","index.html","boot.js","app.js","theme.css","appearance.css","engine.js","storage.js","tutor.js","contract.js","practice-bank.js","negative-bank.js","practice-flow.js","writing-curriculum.js","writing-course.js","writing-course-ui.js","grammar-extension.js","grammar-drills.js","phrasal-extension.js","catalog.js","placement.js","bookshelf.js","data.js","legacy/core.js","legacy/schema.js","legacy/learning.js","legacy/catalog.js"];
 const optional=["manifest.webmanifest","icon-master.svg","icon-180.png","icon-192.png","icon-512.png"];
 const hash=bytes=>createHash("sha256").update(bytes).digest("hex");
 const entries=await Promise.all([...required,...optional].map(async path=>({path:"./"+path,hash:hash(await readFile(new URL(path,root))),required:required.includes(path)})));

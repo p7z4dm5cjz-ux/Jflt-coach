@@ -1,10 +1,17 @@
-import {LESSONS,PHRASALS,VOCABULARY,PATTERNS} from "./catalog.js";
+import {LESSONS,PHRASALS,VOCABULARY,PATTERNS,STAGES} from "./catalog.js";
+import {PHRASAL_SCENARIOS} from "./phrasal-extension.js";
 import {bookContext} from "./bookshelf.js";
 import {QUESTIONS,orderedQuestions,orderedOptions,AREAS,PHRASAL_TARGETS} from "./placement.js";
 import {VERSION,now,uid,countWords,normal,correct,endpoint,newPlacement,placementProfile,recommendation,addTerm,recordReview,recoveryItems,phrasalItems,writingReady,sanitizeFeedback,GENRES,dailyPlan,dailyWritingTopic} from "./engine.js";
 import {grammarItems} from "./practice-bank.js";
+import {negativeItems} from "./negative-bank.js";
+import {PRACTICE_SIZE,BLOCK_SIZE,trainingRecord,practiceBlock,freshAiItems,exerciseRequest,negativeRule} from "./practice-flow.js";
 import {openRepository,parseBackup} from "./storage.js";
 import {callTutor,getToken,saveToken,invalidateHealth} from "./tutor.js";
+import {learningUI} from "./learning-ui.js";
+import {blockGoal} from "./block-goals.js";
+import {CORE_LESSONS} from "./core-practice.js";
+import {writingCourseUI} from "./writing-course-ui.js";
 
 export function h(tag,attrs={},...children) {
   const el=document.createElement(tag);
@@ -67,14 +74,47 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     else location.hash="#/"+path;
   }
   async function refresh(){await render();}
+  const courses=writingCourseUI({h,p,title,card,list,link,field,button,change,autosave,goto,refresh,repo,tutor,notify,getState:()=>state});
+  const learning=learningUI({h,p,title,card,link,button,change,autosave,goto,refresh,getState:()=>state});
   function sessionRecord(lessonId,items,source="local",extra={}) {
     const id=uid("session");
-    return {id,lesson_id:lessonId,items:items.map((it,i)=>({...it,id:it.id||id+"-"+i,accept:[it.answer,...(it.accept||[])],options:shuffled(it.options||[])})),answers:{},assisted:false,completed_at:null,source,created_at:now(),...extra};
+    const grammarCount=items.filter(it=>it.kind!=="retrieval").length;
+    const training=grammarCount===PRACTICE_SIZE?trainingRecord(grammarCount,items.filter(it=>it.kind==="retrieval")):undefined;
+    return {id,lesson_id:lessonId,items:items.map((it,i)=>({...it,id:it.id||id+"-"+i,accept:[it.answer,...(it.accept||[])],options:shuffled(it.options||[])})),answers:{},assisted:false,completed_at:null,source,created_at:now(),...(training?{training}:{}),...extra};
   }
   async function makeSession(lessonId,items,source="local",extra={}) {
     const set=sessionRecord(lessonId,items,source,extra);
     await change(s=>s.sessions.push(set));
     await goto("practice/"+set.id);return set.id;
+  }
+  async function startAiPractice(lessonId,total=PRACTICE_SIZE,parent=null,focus=[]) {
+    const terms=parent?[]:dueTerms().slice(0,3),recovery=recoveryItems(terms);
+    const context={training:trainingRecord(total,recovery,parent?.id||null),items:[]};
+    const data=exerciseRequest(state,lessonId,{set:context,parent,focus});
+    const result=await tutor(state.settings,"/tutor","exercises",data);
+    const items=freshAiItems(parent?.items||[],result).map(it=>({...it,id:uid("ai"),origin:"groq",skill:it.kind==="choice"?"choose":"form"}));
+    if(total===BLOCK_SIZE)items.push(...recovery);
+    await makeSession(lessonId,items,"groq",{assisted:!!parent,training:context.training});
+  }
+  async function nextPracticeBlock(id) {
+    const set=repo.get().sessions.find(s=>s.id===id),block=practiceBlock(set);
+    if(!block.checked)throw new Error("Verifica questo blocco prima di proseguire.");
+    if(block.page>=block.pages-1)return;
+    const next=block.page+1,required=Math.min(set.training.grammar_target,(next+1)*BLOCK_SIZE);
+    if(set.source==="groq"&&set.items.filter(it=>it.kind!=="retrieval").length<required) {
+      const parent=state.sessions.find(s=>s.id===set.training.parent_id);
+      const result=await tutor(state.settings,"/tutor","exercises",exerciseRequest(state,set.lesson_id,{set,parent}));
+      const items=freshAiItems([...set.items,...(parent?.items||[])],result).map(it=>({...it,id:uid("ai"),origin:"groq",skill:it.kind==="choice"?"choose":"form",accept:[it.answer,...it.accept],options:shuffled(it.options)}));
+      await change(s=>{const current=s.sessions.find(x=>x.id===id);current.items.push(...items);if(current.items.filter(it=>it.kind!=="retrieval").length===current.training.grammar_target)current.items.push(...current.training.recovery);current.training.page=next;});
+    }else await change(s=>s.sessions.find(x=>x.id===id).training.page=next);
+    await refresh();
+  }
+  async function retryMistakes(set,items) {
+    if(set.source==="local"&&set.lesson_id==="negatives") {
+      const rules=[...new Set(items.map(negativeRule).filter(Boolean))];
+      const fresh=negativeItems(state.sessions.length,{count:BLOCK_SIZE,rules,exclude:set.items.map(it=>it.stem)});
+      await makeSession(set.lesson_id,fresh,"local",{assisted:true,training:trainingRecord(BLOCK_SIZE,[],set.id)});
+    }else await startAiPractice(set.lesson_id,BLOCK_SIZE,set,items);
   }
   async function startDaily() {
     let planId,sessionId;
@@ -101,74 +141,110 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
   function dueTerms() {return state.vocabulary.filter(v=>Date.parse(v.due)<=Date.now()).sort((a,b)=>a.due.localeCompare(b.due));}
   function sourceNotes(id,mode,type) {
     const ctx=bookContext(id,mode,type);
-    return h("details",{class:"sources"},h("summary",{},"Riferimenti nei tuoi libri"),ctx.notes.map(n=>h("div",{},h("strong",{},n.book+" · "+(n.units?"unità "+n.units+" · ":"")+"p. "+n.pages),p(n.note_it))),ctx.further.map(n=>p(n.book+" · "+n.pages+" · "+n.purpose_it)),ctx.errata.map(e=>p("Correzione del manuale "+e.book+", p. "+e.pages+": "+e.correction_it,"warning")),p("Sintesi ed esercizi originali. I PDF restano nei tuoi materiali.","muted"));
+    return h("details",{class:"sources"},h("summary",{},"Riferimenti didattici"),ctx.notes.map(n=>h("div",{},h("strong",{},n.book+" · "+(n.units?"unità "+n.units+" · ":"")+"p. "+n.pages),p(n.note_it),n.relation_it&&p(n.relation_it,"small muted"))),ctx.further.map(n=>p(n.book+" · "+n.pages+" · "+n.purpose_it)),(LESSONS.find(l=>l.id===id)?.references||[]).map(r=>h("a",{href:r.url,target:"_blank",rel:"noopener noreferrer",class:"text-link"},r.label)),ctx.errata.map(e=>p("Correzione del manuale "+e.book+", p. "+e.pages+": "+e.correction_it,"warning")),p("Sintesi ed esercizi originali. I rimandi non implicano lettura integrale o equivalenza con tutti gli esercizi della fonte.","muted"));
   }
   function home() {
-    const plan=dailyPlan(state),next=plan.lesson,profile=placementProfile(state.placement),due=dueTerms(),active=state.writings.findLast(w=>!w.comparison);
-    const attempts=state.attempts.filter(a=>!a.assisted&&a.source!=="legacy"),score=attempts.length?Math.round(attempts.filter(a=>a.correct).length/attempts.length*100):null;
+    const plan=dailyPlan(state),planLesson=plan.lesson,next=recommendation(state)[0],profile=placementProfile(state.placement),due=dueTerms(),active=state.writings.findLast(w=>!w.comparison),activePractice=state.sessions.findLast(set=>!set.completed_at),activeCourse=state.writing_courses?.findLast(c=>!c.completed_at);
+    const courseCard=card(h("h2",{},activeCourse?"Riprendi la scrittura passo passo":"Dal modello al saggio e al rapporto"),p("MISSION, TARGET e CAMPAIGN: comprensione, frasi, paragrafo, scaletta e nuove prove autonome."),link(activeCourse?"Riprendi · passo "+(activeCourse.stage+1)+" di 6":"Impara a scrivere",activeCourse?"course/"+activeCourse.id:"writing","secondary"));
+    const attempts=state.attempts.filter(a=>!a.assisted&&!a.disputed&&a.source!=="legacy"),score=attempts.length?Math.round(attempts.filter(a=>a.correct).length/attempts.length*100):null;
+    if(!profile)return [
+      title("IL TUO PUNTO DI PARTENZA","Prima capiamo da dove iniziare.","45 domande per scegliere gli argomenti da ripassare e le basi che puoi saltare."),
+      h("section",{class:"hero"},h("div",{},p("PRETEST · PUOI INTERROMPERE E RIPRENDERE","eyebrow"),h("h2",{},state.placement?"Riprendi il tuo pretest":"Trova le tue priorità"),p("Tempi verbali, negazioni, phrasal verbs e altre strutture. Le risposte corrette date con dubbio restano da confermare."),link(state.placement?"Riprendi il pretest":"Inizia il pretest","placement")),h("span",{class:"hero-mark","aria-hidden":"true"},"Aa")),
+      card(h("h2",{},"Un percorso basato sui risultati"),p("Dopo la consegna trovi le priorità iniziali. Le risposte successive e gli errori degli scritti aggiornano la proposta. La prima lezione non è scelta in anticipo."),p("Per ogni lezione puoi avviare 30 esercizi con Groq: cinque blocchi da sei, correzione, spiegazione e riprova in nuovi contesti."),link("Esplora le lezioni","studio","secondary")),
+      activePractice&&card(h("h2",{},"Esercizi già iniziati"),link("Riprendi la sessione","practice/"+activePractice.id)),
+      courseCard,
+      active&&card(h("h2",{},"La tua bozza"),link("Riprendi la scrittura","writing/"+active.id,"secondary"))
+    ];
     return [
-      title("IL TUO PERCORSO","Un passo avanti, ogni giorno.","Grammatica mirata, parole da usare e scrittura da migliorare."),
-      h("section",{class:"hero"},h("div",{},p("IL PIANO DI OGGI · CIRCA "+plan.minutes+" MINUTI","eyebrow"),h("h2",{},next.title),p(profile?"La proposta tiene conto del pretest e dei tuoi tentativi senza aiuti.":"Partiamo dai punti più utili: tempi, negazioni e costruzioni. Il pretest renderà la scelta personale."),button(plan.completed_steps===2?"Rivedi la breve scrittura":plan.id?"Riprendi il piano di oggi":"Inizia il piano di oggi",startDaily)),h("span",{class:"hero-mark","aria-hidden":"true"},"Aa")),
-      h("section",{class:"card daily-card","aria-labelledby":"daily-heading"},h("h2",{id:"daily-heading"},"Un obiettivo concreto"),h("progress",{max:2,value:plan.completed_steps,"aria-label":"Attività quotidiane svolte"}),p(plan.completed_steps+" di 2 attività svolte","small muted"),h("ol",{class:"daily-steps"},h("li",{},h("strong",{},"Forma e recupero"),p((plan.practice_complete?"Verifica svolta. ":"")+"Esercizi su «"+next.title+"»"+(plan.terms.length?" e recupero di "+plan.terms.length+" termini in scadenza.":". Nessun nuovo termine obbligatorio."))),h("li",{},h("strong",{},"Usa la struttura in una bozza"),p(plan.writing_words+" / "+plan.minimum_words+" parole indicative. "+(plan.writing_complete?"Bozza scritta: puoi chiedere la revisione.":"Un breve rapporto con dati fittizi, poi revisione e riscrittura quando vuoi.")))),p("Le attività svolte non certificano la padronanza. La correttezza si verifica separatamente. Il piano parte offline e non invia richieste Groq.","small muted"),link("Consulta la lezione", "lesson/"+next.id,"text-link")),
+      title("IL TUO PERCORSO","Un passo avanti, ogni giorno.","Grammatica mirata, parole da usare e scrittura da migliorare."),learning.notice(),
+      h("section",{class:"card current-priority"},h("h2",{},"Allenamento completo: 30 esercizi"),p("Priorità attuale: «"+next.title+"». Il tutor prepara cinque blocchi da sei; tra un blocco e l'altro verifichi, capisci e puoi riprovare gli errori."),button("Inizia 30 esercizi con Groq",()=>startAiPractice(next.id)),p("Puoi interrompere e riprendere. Il piano offline resta disponibile separatamente.","small muted")),
+      h("section",{class:"hero"},h("div",{},p((plan.id?"IL TUO PIANO GIÀ INIZIATO":"IL PIANO DI OGGI")+" · CIRCA "+plan.minutes+" MINUTI","eyebrow"),h("h2",{},planLesson.title),p(plan.id?"Riprendi il piano già programmato. La priorità attuale per i nuovi esercizi è mostrata sopra.":"La proposta tiene conto del pretest e dei tuoi tentativi senza aiuti."),button(plan.completed_steps===2?"Rivedi la breve scrittura":plan.id?"Riprendi il piano di oggi":"Inizia il piano di oggi",startDaily)),h("span",{class:"hero-mark","aria-hidden":"true"},"Aa")),
+      h("section",{class:"card daily-card","aria-labelledby":"daily-heading"},h("h2",{id:"daily-heading"},"Un obiettivo concreto"),h("progress",{max:2,value:plan.completed_steps,"aria-label":"Attività quotidiane svolte"}),p(plan.completed_steps+" di 2 attività svolte","small muted"),h("ol",{class:"daily-steps"},h("li",{},h("strong",{},"Forma e recupero"),p((plan.practice_complete?"Verifica svolta. ":"")+(planLesson.id==="negatives"?"30 esercizi in cinque blocchi riprendibili su «":"Verifica breve offline su «")+planLesson.title+"»"+(plan.terms.length?" e recupero di "+plan.terms.length+" termini in scadenza.":". Nessun nuovo termine obbligatorio."))),h("li",{},h("strong",{},"Usa la struttura in una bozza"),p(plan.writing_words+" / "+plan.minimum_words+" parole indicative. "+(plan.writing_complete?"Bozza scritta: puoi chiedere la revisione.":"Un breve rapporto con dati fittizi, poi revisione e riscrittura quando vuoi.")))),p("Le attività svolte non certificano la padronanza. La correttezza si verifica separatamente. Il piano parte offline e non invia richieste Groq.","small muted"),link("Consulta la lezione", "lesson/"+planLesson.id,"text-link")),
+      activePractice&&card(h("h2",{},"Riprendi gli esercizi"),p((LESSONS.find(l=>l.id===activePractice.lesson_id)?.title||"Pratica")+" · risposte e blocchi già verificati sono salvati."),link("Riprendi la sessione","practice/"+activePractice.id)),
+      courseCard,
       h("div",{class:"stats"},card(p("Verifiche senza aiuti","muted"),h("strong",{class:"big"},score===null?"—":score+"%"),p(attempts.length+" risposte valutate","small")),card(p("Parole da recuperare","muted"),h("strong",{class:"big"},due.length),link("Apri Ripasso","review","text-link")),card(p("I tuoi scritti","muted"),h("strong",{class:"big"},state.writings.length),link(active?"Riprendi la bozza":"Prepara un testo",active?"writing/"+active.id:"writing","text-link"))),
-      !profile?card(h("h2",{},state.placement?"Riprendi il pretest":"Salta ciò che sai già"),p("45 domande: 14 sui tempi, 8 su negazioni e domande, 8 sui phrasal verbs e 15 sulle altre strutture. Puoi interromperti e riprendere. Le soluzioni arrivano alla consegna."),link(state.placement?"Continua il pretest":"Fai il pretest","placement")):card(h("h2",{},"Il tuo punto di partenza"),p(profile.correct+"/45 risposte corrette. Una risposta data con dubbio resta da confermare."),link("Vedi risultati e priorità","placement","text-link")),
+      card(h("h2",{},"Il tuo punto di partenza"),p(profile.correct+"/45 risposte corrette. Una risposta data con dubbio resta da confermare."),link("Vedi risultati e priorità","placement","text-link")),
       h("div",{class:"two-columns"},card(h("h2",{},"Phrasal verbs nel contesto"),p("Significato, particelle, ordine dei pronomi e registro. Una parola segnata come nota resta distinta da una risposta verificata."),link("Apri il laboratorio","phrasals")),card(h("h2",{},"Leggi e ricostruisci il senso"),p("Traduci un passaggio, confronta le scelte e recupera le parole utili."),link("Apri Lettura","reading"))),
       link("Consulta i progressi","progress","text-link")
     ];
   }
   function studio() {
     const search=h("input",{id:"lesson-search",type:"search",placeholder:"Cerca un tempo o una costruzione…","aria-label":"Cerca una lezione"});
+    const stage=h("select",{id:"stage-filter","aria-label":"Filtra per tappa"},h("option",{value:"all"},"Tutte le tappe"),STAGES.map((title,i)=>h("option",{value:String(i)},title)));
     const rows=h("div",{class:"lesson-grid"});
-    function fill(value="") {rows.replaceChildren(...recommendation(state).filter(l=>normal(l.title+" "+l.tool).includes(normal(value))).map(l=>h("a",{class:"lesson-card",href:"#/lesson/"+l.id},h("span",{class:"pill "+l.status},statusLabels[l.status]),h("h2",{},l.title),p(l.goal,"small"),h("span",{class:"arrow","aria-hidden":"true"},"→"))));}
-    search.oninput=()=>fill(search.value);fill();
-    return [title("STUDIO","Scegli la struttura giusta.","Le priorità compaiono per prime. Le basi già controllate restano consultabili."),h("div",{class:"actions"},link("Tempi verbali","studio","button secondary"),link("Phrasal verbs","phrasals","button secondary"),link("Lettura","reading","button secondary")),search,rows];
+    function fill(value="") {rows.replaceChildren(...recommendation(state).filter(l=>(stage.value==="all"||l.stage===Number(stage.value))&&normal(l.title+" "+l.tool+" "+l.forms+" "+l.goal).includes(normal(value))).map(l=>h("a",{class:"lesson-card",href:"#/lesson/"+l.id},h("span",{class:"pill "+l.status},statusLabels[l.status]),h("h2",{},l.title),p(l.goal,"small"),h("span",{class:"arrow","aria-hidden":"true"},"→"))));}
+    search.oninput=()=>fill(search.value);stage.onchange=()=>fill(search.value);fill();
+    return [title("STUDIO","Scegli la struttura giusta.",LESSONS.length+" lezioni e ripassi. Il pretest orienta le priorità, ma non certifica gli argomenti che non ha verificato."),h("div",{class:"actions"},link("Phrasal verbs","phrasals","button secondary"),link("Lettura","reading","button secondary")),...learning.overview(),h("h2",{},"Catalogo completo: scegli liberamente"),search,stage,rows];
   }
-  function lesson(id) {
+  function lesson(id,returnCourse) {
     const l=LESSONS.find(l=>l.id===id);if(!l)return [title("STUDIO","Lezione non trovata."),link("Torna alle lezioni","studio")];
     const selected=dueTerms().slice(0,3);
-    return [link("← Tutte le lezioni","studio","back"),title("GRAMMATICA",l.title,l.goal),
+    const study=state.lesson_studies?.find(x=>x.lesson_id===id),question=h("textarea",{id:"grammar-question",maxlength:500,rows:2,value:study?.question||"",placeholder:"Es. Perché qui non uso il past simple?"});
+    return [link("← Tutte le lezioni","studio","back"),title("GRAMMATICA",l.title,l.goal),learning.lessonPanel(id,returnCourse),
       card(h("h2",{},"Quando usarla"),p(l.when),l.forms&&p(l.forms,"formula"),list(l.examples.map(t=>h("span",{lang:"en"},t))),h("h3",{},"La differenza che conta"),p(l.contrast),p(l.pitfall,"warning")),
-      h("div",{class:"two-columns"},card(h("h2",{},"Metti alla prova la forma"),p("Esercizi originali disponibili anche offline. Le risposte con suggerimenti non entrano nei risultati autonomi."),button("Esercizi offline",()=>makeSession(id,[...grammarItems(id,state.sessions.length),...recoveryItems(selected)]))),card(h("h2",{},"Cambia contesto con il tutor"),p("Sei esercizi nuovi: scelte, completamenti e trasformazioni. Recupero lessicale separato per le parole in scadenza."),button("Genera 6 esercizi con Groq",async()=>{const result=await tutor(state.settings,"/tutor","exercises",{lesson_id:id,terms:selected.map(v=>({expression:v.expression,meaning_it:v.meaning_it})),recent_errors:state.attempts.filter(a=>a.lesson_id===id&&!a.correct).slice(-3).map(a=>({stem:a.stem,answer:a.answer}))});await makeSession(id,[...result.items.map((it,i)=>({...it,id:uid("ai"),skill:it.kind==="choice"?"choose":"form",origin:"groq"})),...recoveryItems(selected)],"groq");},"secondary"))),
+      l.sections&&card(h("h2",{},"Approfondisci e usa la regola"),l.sections.map(s=>h("details",{},h("summary",{},s.title),p(s.text)))), 
+      l.related?.length&&card(h("h2",{},"Collega le strutture"),p("Sono collegamenti di studio, non lezioni dichiarate già acquisite dal pretest.","small muted"),h("div",{class:"actions"},l.related.map(id=>{const item=LESSONS.find(l=>l.id===id);return item&&link(item.title,"lesson/"+id,"text-link");}))),
+      card(h("h2",{},"Studia questa lezione con il tutor"),p("Prima degli esercizi, chiedi una spiegazione della forma, del significato e della differenza rispetto alla struttura più simile. Puoi aggiungere un dubbio specifico."),h("label",{for:"grammar-question"},"Il tuo dubbio (facoltativo)"),question,button("Spiegami questa lezione",async()=>{const asked=question.value.trim(),result=await tutor(state.settings,"/tutor","grammar_explain",{lesson_id:id,question:asked});await change(s=>{s.lesson_studies??=[];const record={lesson_id:id,question:asked,result,created_at:now()},index=s.lesson_studies.findIndex(x=>x.lesson_id===id);if(index<0)s.lesson_studies.push(record);else s.lesson_studies[index]=record;});await refresh();},"secondary"),p("Una richiesta Groq. La spiegazione ricevuta resta consultabile offline.","small muted")),
+      study&&card(h("h2",{},"La spiegazione salvata"),study.question&&p("Il tuo dubbio: "+study.question,"muted"),p(study.result.summary),h("h3",{},"Come costruirla"),p(study.result.form,"formula"),h("h3",{},"Quando e perché"),list(study.result.when),study.result.examples.map(e=>h("div",{class:"course-focus"},h("blockquote",{lang:"en"},e.en),p(e.it),p(e.why,"muted"))),h("h3",{},"Confronta le due scelte"),p(study.result.contrast),h("h3",{},"Errori da evitare"),list(study.result.pitfalls)),
+      h("div",{class:"two-columns"},card(h("h2",{},"Pratica senza connessione"),p(id==="negatives"?"30 esercizi in cinque blocchi: ausiliari, tempi, modali, parole negative e significato. Ogni risposta ha una spiegazione specifica; sugli errori puoi riprovare con frasi diverse.":CORE_LESSONS.includes(id)?"30 esercizi controllati: scelta, completamento, negazione, domanda e correzione. Sei situazioni sono riprese in cinque operazioni; non equivalgono a 30 contesti indipendenti. Le varianti cambiano il soggetto e la concordanza resta controllata.":grammarItems(id).length+" esercizi locali con soluzione e motivazione. Per 30 esercizi in nuovi contesti usa il tutor."),button("Esercizi offline",()=>makeSession(id,[...grammarItems(id,state.sessions.length),...recoveryItems(selected)]))),card(h("h2",{},"30 esercizi con il tutor"),p("Cinque blocchi da sei su questa lezione: rispondi, verifica e leggi il perché prima di continuare. Il blocco successivo usa anche gli errori emersi. Puoi fermarti e riprendere."),button("Inizia 30 esercizi con Groq",()=>startAiPractice(id)),p("Una richiesta per blocco: cinque per completare la sessione. Il recupero lessicale è aggiunto alla fine.","small muted"),button("Genera 6 esercizi con Groq",()=>startAiPractice(id,BLOCK_SIZE),"quiet"))),
       selected.length&&p("Recupero di oggi: "+selected.map(v=>v.expression).join(" · "),"muted"),sourceNotes(id)];
   }
   function practice(id) {
     const set=state.sessions.find(s=>s.id===id);if(!set)return [title("ESERCIZI","Sessione non trovata."),link("Apri Studio","studio")];
-    const l=LESSONS.find(l=>l.id===set.lesson_id),done=!!set.completed_at;
-    const form=h("form",{id:"practice-form"});
-    const progressLabel=p("","small muted"),progressBar=h("progress",{max:set.items.length,value:0,"aria-label":"Risposte compilate"});
-    function updateProgress(){const filled=[...form.querySelectorAll(".exercise")].filter(block=>block.querySelector('input[type="radio"]:checked')||[...block.querySelectorAll('input:not([type="radio"])')].some(input=>input.value.trim())).length;progressLabel.textContent=filled+" di "+set.items.length+" risposte compilate";progressBar.value=filled;}
-    for(const [i,item] of set.items.entries()) {
-      const value=set.answers[item.id]||"",result=state.attempts.find(a=>a.session_id===id&&a.item_id===item.id);
-      const block=h("fieldset",{class:"exercise"},h("legend",{},(i+1)+". "+(item.kind==="retrieval"?"Recupero lessicale":item.skill==="recognise"?"Significato":"Uso della forma")),p(item.stem,"stem"));
-      if(item.options?.length)for(const [j,opt] of item.options.entries())block.append(h("label",{class:"option",for:item.id+"-"+j},h("input",{id:item.id+"-"+j,type:"radio",name:item.id,value:opt,checked:value===opt,disabled:done,onchange:e=>{autosave(s=>{s.sessions.find(x=>x.id===id).answers[item.id]=e.target.value;});updateProgress();}}),h("span",{lang:"en"},opt)));
-      else block.append(h("label",{class:"sr-only",for:item.id},"Risposta "+(i+1)),h("input",{id:item.id,value,disabled:done,autocomplete:"off",maxlength:600,oninput:e=>{const v=e.target.value;autosave(s=>{s.sessions.find(x=>x.id===id).answers[item.id]=v;});updateProgress();}}));
-      if(result)block.append(p(result.correct?"Risposta corretta":"Da rivedere",result.correct?"good":"warning"),p(item.why),!result.correct&&p("Risposta di riferimento: "+item.answer,"formula"));
+    const l=LESSONS.find(l=>l.id===set.lesson_id),done=!!set.completed_at,flow=practiceBlock(set),locked=done||flow.checked;
+    const form=h("form",{id:"practice-form"}),visibleIds=new Set(flow.items.map(it=>it.id));
+    const results=state.attempts.filter(a=>a.session_id===id),blockResults=results.filter(a=>visibleIds.has(a.item_id));
+    const mistakes=flow.items.filter(it=>it.kind!=="retrieval"&&blockResults.some(a=>a.item_id===it.id&&!a.correct&&!a.disputed));
+    const progressLabel=p("","small muted"),progressBar=h("progress",{max:flow.target,value:0,"aria-label":"Risposte compilate nella sessione"});
+    function updateProgress(){
+      const current=repo.get().sessions.find(s=>s.id===id);
+      const other=current.items.filter(it=>!visibleIds.has(it.id)&&current.answers[it.id]?.trim()).length;
+      const here=[...form.querySelectorAll(".exercise")].filter(block=>block.querySelector('input[type="radio"]:checked')||[...block.querySelectorAll('input:not([type="radio"])')].some(input=>input.value.trim())).length;
+      const filled=other+here;progressLabel.textContent=filled+" di "+flow.target+" risposte compilate"+(set.training?" · "+results.length+" verificate":"");progressBar.value=filled;
+    }
+    for(const [i,item] of flow.items.entries()) {
+      const value=set.answers[item.id]||"",result=locked?results.find(a=>a.item_id===item.id):null;
+      const block=h("fieldset",{class:"exercise"},h("legend",{},(flow.start+i+1)+". "+(item.kind==="retrieval"?"Recupero lessicale":item.skill==="recognise"?"Significato":"Uso della forma")),p(item.stem,"stem"));
+      if(item.options?.length)for(const [j,opt] of item.options.entries())block.append(h("label",{class:"option",for:item.id+"-"+j},h("input",{id:item.id+"-"+j,type:"radio",name:item.id,value:opt,checked:value===opt,disabled:locked,onchange:e=>{autosave(s=>{s.sessions.find(x=>x.id===id).answers[item.id]=e.target.value;});updateProgress();}}),h("span",{lang:"en"},opt)));
+      else block.append(h("label",{class:"sr-only",for:item.id},"Risposta "+(flow.start+i+1)),h("input",{id:item.id,value,disabled:locked,autocomplete:"off",lang:"en",autocapitalize:"none",autocorrect:"off",spellcheck:"false",maxlength:600,oninput:e=>{const v=e.target.value;autosave(s=>{s.sessions.find(x=>x.id===id).answers[item.id]=v;});updateProgress();}}));
+      if(result)block.append(h("div",{class:"exercise-feedback"},p(result.correct?"Risposta corretta":result.disputed?"Da verificare":"Da rivedere",result.correct?"good":"warning"),p("Risposta di riferimento: "+item.answer,"formula"),item.formula&&h("h3",{},"La forma"),item.formula&&p(item.formula,"small"),h("h3",{},"Perché"),p(item.why)));
+      if(result&&!result.correct&&set.source==="groq"&&item.kind!=="retrieval")block.append(result.disputed?p("Risposta segnalata: esclusa dalle priorità finché resta da verificare.","small warning"):button("La mia risposta potrebbe essere valida",async()=>{await change(s=>s.attempts.find(a=>a.id===result.id).disputed=true);await refresh();},"quiet"));
       form.append(block);
     }
     form.addEventListener("submit",e=>{e.preventDefault();run(async()=>{
-      const latest=repo.get().sessions.find(s=>s.id===id);
-      if(latest.completed_at)return;
-      if(latest.items.some(it=>!latest.answers[it.id]?.trim()))throw new Error("Completa ogni risposta prima di verificare.");
+      const latest=repo.get().sessions.find(s=>s.id===id),currentBlock=practiceBlock(latest);
+      if(latest.completed_at||currentBlock.checked)return;
+      if(!currentBlock.items.length||currentBlock.items.some(it=>!latest.answers[it.id]?.trim()))throw new Error("Completa ogni risposta di questo blocco prima di verificare.");
       await change(s=>{
-        const current=s.sessions.find(x=>x.id===id);
-        for(const item of current.items) {
+        const current=s.sessions.find(x=>x.id===id),items=practiceBlock(current).items;
+        for(const item of items) {
           const answer=current.answers[item.id],ok=correct(item,answer);
-          s.attempts.push({id:uid("attempt"),session_id:id,item_id:item.id,lesson_id:item.kind==="retrieval"?"vocabulary":current.lesson_id,stem:item.stem,answer,correct:ok,assisted:current.assisted,source:current.source,date:now(),skill:item.skill||"form",term_id:item.term_id||null});
+          s.attempts.push({id:uid("attempt"),session_id:id,item_id:item.id,lesson_id:item.kind==="retrieval"?"vocabulary":current.lesson_id,stem:item.stem,...(item.context_id?{context_id:item.context_id}:{}),answer,correct:ok,assisted:current.assisted,source:current.source,date:now(),skill:item.skill||"form",term_id:item.term_id||null});
         }
-        for(const termId of new Set(current.items.map(it=>it.term_id).filter(Boolean))) {
-          const word=s.vocabulary.find(v=>v.id===termId),termItems=current.items.filter(it=>it.term_id===termId);
+        for(const termId of new Set(items.map(it=>it.term_id).filter(Boolean))) {
+          const word=s.vocabulary.find(v=>v.id===termId),termItems=items.filter(it=>it.term_id===termId);
           if(word)recordReview(word,termItems.every(it=>correct(it,current.answers[it.id])),current.assisted);
         }
-        current.completed_at=now();
+        if(current.training){current.training.checked.push(current.training.page);if(current.training.checked.length===Math.ceil(current.training.grammar_target/BLOCK_SIZE))current.completed_at=now();}
+        else current.completed_at=now();
       });await refresh();
     });});
-    if(!done)form.append(h("button",{type:"submit"},"Verifica le risposte"));
+    if(!locked)form.append(h("button",{type:"submit"},set.training?"Verifica questo blocco":"Verifica le risposte"));
     updateProgress();
-    const results=state.attempts.filter(a=>a.session_id===id);
+    const continueButton=set.daily_plan_id?button("Passa alla breve scrittura",()=>startDailyWriting(set.daily_plan_id)):link("Continua",set.writing_id?"writing/"+set.writing_id:"home");
+    const nextNeedsAi=set.training&&set.source==="groq"&&set.items.filter(it=>it.kind!=="retrieval").length<Math.min(set.training.grammar_target,(flow.page+2)*BLOCK_SIZE);
+    const blockNavigation=set.training&&h("div",{class:"actions practice-navigation"},flow.page>0&&button("Rivedi il blocco precedente",async()=>{await change(s=>s.sessions.find(x=>x.id===id).training.page--);await refresh();},"quiet"),flow.checked&&flow.page<flow.pages-1&&button((nextNeedsAi?"Genera":"Apri")+" il blocco "+(flow.page+2),()=>nextPracticeBlock(id)));
     return [link("← "+(l?.title||"Ripasso"),set.writing_id?"writing/"+set.writing_id:l?"lesson/"+set.lesson_id:"review","back"),title(set.source==="groq"?"ESERCIZI · GROQ":"ESERCIZI · OFFLINE",set.writing_id?"Verifica in un nuovo contesto":l?.title||"Recupero del lessico"),
+      set.training&&p("Blocco "+(flow.page+1)+" di "+flow.pages+" · "+set.training.grammar_target+" esercizi di grammatica"+(set.training.recovery.length?" + "+set.training.recovery.length+" recuperi lessicali":""),"practice-step"),
+      set.training&&set.source==="groq"&&card(h("h2",{},blockGoal(flow.page).title),p(blockGoal(flow.page).goal)),
+      set.training?.parent_id&&card(p("Riprova guidata dopo la spiegazione: le frasi sono nuove. I risultati restano separati dalle verifiche senza aiuti."),link("Torna alla sessione precedente","practice/"+set.training.parent_id,"text-link")),
       h("section",{class:"session-progress"},progressLabel,progressBar),
-      done?card(h("h2",{},results.filter(r=>r.correct).length+"/"+results.length+" corrette"),p(set.assisted?"Sessione con suggerimenti: esclusa dai risultati autonomi.":"Sessione senza suggerimenti, salvata nei tuoi progressi."),set.daily_plan_id?button("Passa alla breve scrittura",()=>startDailyWriting(set.daily_plan_id)):link("Continua",set.writing_id?"writing/"+set.writing_id:"home")):h("div",{class:"actions"},p("Risposte salvate mentre scrivi. Le soluzioni compaiono solo dopo la verifica.","muted"),button("Mostra un suggerimento",async()=>{await change(s=>{s.sessions.find(x=>x.id===id).assisted=true;});notify(l?.forms||l?.pitfall||"Pensa al significato e alla costruzione. La sessione ora risulta svolta con un aiuto.");},"quiet")),
-      form];
+      done?card(h("h2",{},results.filter(r=>r.correct&&!r.disputed).length+"/"+results.filter(r=>!r.disputed).length+" corrette nelle risposte valutabili"),p(set.assisted?"Sessione con aiuti o riprova guidata: esclusa dai risultati autonomi.":"Sessione senza suggerimenti, salvata nei tuoi progressi."),continueButton):flow.checked?card(h("h2",{},blockResults.filter(r=>r.correct&&!r.disputed).length+"/"+blockResults.filter(r=>!r.disputed).length+" corrette nel blocco"),p("Leggi la forma e il perché sotto ogni risposta. Poi prosegui oppure esercita di nuovo i punti da rivedere.")):h("div",{class:"actions"},p("Risposte salvate mentre scrivi. Forma, soluzione e spiegazione compaiono dopo la verifica.","muted"),button("Mostra un suggerimento",async()=>{await change(s=>{s.sessions.find(x=>x.id===id).assisted=true;});notify(l?.forms||l?.pitfall||"Pensa al significato e alla costruzione. La sessione ora risulta svolta con un aiuto.");},"quiet")),
+      form,
+      locked&&mistakes.length>0&&card(h("h2",{},"Capisci, poi riprova"),p("Una nuova prova da sei domande sulle regole di questo blocco che hai sbagliato. Il risultato originale resta salvato."),button(set.source==="local"&&set.lesson_id==="negatives"?"Rifai gli errori con frasi diverse":"Rifai gli errori con Groq",()=>retryMistakes(set,mistakes)),p("Puoi ripetere questo ciclo anche dopo la riprova.","small muted")),
+      blockNavigation,
+      done&&!set.training&&l&&card(h("h2",{},"Continua con una sessione completa"),button("Inizia 30 esercizi con Groq",()=>startAiPractice(set.lesson_id)),set.lesson_id==="negatives"&&button("Inizia 30 negazioni offline",()=>makeSession("negatives",grammarItems("negatives",state.sessions.length)),"secondary"))
+    ];
   }
   function placement() {
     const test=state.placement,profile=placementProfile(test);
@@ -196,7 +272,11 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     const core=["carry out","look into","call off","rule out","hand over","fill in","run out of","put up with","find out","point out","set up","bring up","turn down","follow up"];
     function fill(v=""){const terms=PHRASALS.filter(t=>normal(t.expression+" "+t.meaning_it+" "+t.topic).includes(normal(v))).sort((a,b)=>(core.includes(a.expression)?0:1)-(core.includes(b.expression)?0:1));rows.replaceChildren(...terms.map(t=>h("a",{href:"#/word/"+t.id,class:"lesson-card"},p(t.topic,"eyebrow"),h("h2",{lang:"en"},t.expression),p(t.meaning_it),p(PATTERNS[t.pattern],"small muted"))));}
     search.oninput=()=>fill(search.value);fill();
-    return [title("LESSICO","Phrasal verbs da usare.","161 verbi ed espressioni multiword: studia un significato e la sua costruzione alla volta."),card(h("h2",{},"Non basta riconoscere la traduzione"),p("Prima il contesto, poi le particelle e la posizione dell'oggetto. Scrivi anche una frase tua; il tutor può spiegare la costruzione senza considerarla automaticamente acquisita.")),search,rows];
+    const scenarios=PHRASAL_SCENARIOS.map(s=>{
+      const links=PHRASALS.filter(t=>s.expressions.includes(t.expression)).map(t=>link(t.expression+" · "+t.meaning_it,"word/"+t.id,"text-link"));
+      return h("details",{},h("summary",{},s.title),h("blockquote",{lang:"en"},s.text),p("Leggi, chiudi il modello e ricostruisci lo scenario con parole tue. Poi controlla i significati nelle schede.","small muted"),h("div",{class:"actions"},links));
+    });
+    return [title("LESSICO","Phrasal verbs da usare.",PHRASALS.length+" schede di verbi multiword e significati: non sono "+PHRASALS.length+" lemmi distinti."),card(h("h2",{},"Non basta riconoscere la traduzione"),p("Prima il contesto, poi le particelle e la posizione dell'oggetto. Una scheda verificata non conferma gli altri sensi dello stesso verbo.")),card(h("h2",{},"Mini-scenari da ricostruire"),scenarios),search,rows];
   }
   function word(id) {
     const t=VOCABULARY.find(v=>v.id===id)||state.vocabulary.find(v=>v.id===id);
@@ -221,7 +301,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
       const genre=h("select",{id:"genre"},Object.entries(GENRES).map(([k,g])=>h("option",{value:k},g.label))),topic=h("textarea",{id:"new-topic",value:GENRES.report.topic,maxlength:2000});
       genre.onchange=()=>{topic.value=GENRES[genre.value].topic;};
       const exam=h("input",{type:"checkbox",id:"exam"});
-      return [title("SCRITTURA","Scrivi. Correggi. Verifica.","Un editor unico, la tua riscrittura e una prova nuova sugli errori emersi."),
+      return [title("SCRITTURA","Dalla prima frase al testo autonomo.","Studia un modello, prova un passo alla volta, poi scrivi su nuovi fatti senza aiuti."),...courses.overview(),
         card(h("h2",{},"Prepara un testo"),h("label",{for:"genre"},"Tipo di testo"),genre,h("label",{for:"new-topic"},"Consegna"),topic,h("label",{class:"inline-check"},exam,"Simulazione senza suggerimenti durante la stesura"),button("Apri l'editor",async()=>{if(topic.value.trim().length<15)throw new Error("Scrivi una consegna più precisa.");const w={id:uid("writing"),type:genre.value,topic:topic.value.trim(),mode:exam.checked?"exam":"guided",ideas:"",outline:"",draft:"",rewrite:"",feedback:null,comparison:null,transfer:[],created_at:now()};await change(s=>s.writings.push(w));await goto("writing/"+w.id);})),
         state.writings.length>0&&card(h("h2",{},"I tuoi testi"),h("div",{class:"word-list"},state.writings.slice().reverse().map(w=>h("a",{class:"word-row",href:"#/writing/"+w.id},h("strong",{},w.topic.slice(0,90)+(w.topic.length>90?"…":"")),h("span",{},GENRES[w.type]?.label||"Testo"),h("small",{},date(w.created_at)+" · "+(w.comparison?"Confrontato":w.feedback?"Da riscrivere":"Bozza"))))))];
     }
@@ -237,7 +317,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     const comparison=w.comparison;
     return [link("← I tuoi testi","writing","back"),title(w.mode==="exam"?"SCRITTURA · SIMULAZIONE":"SCRITTURA · ALLENAMENTO",GENRES[w.type].label),card(p(w.topic)),daily&&link("← Piano di oggi","home","text-link"),
       w.mode!=="exam"&&h("details",{class:"card"},h("summary",{},"Prima di scrivere: idee e scaletta"),p(w.type==="report"?"Ordina i fatti nel tempo e attribuisci le dichiarazioni.":"Definisci destinatario, scopo e un punto per paragrafo."),field("Appunti","ideas",w.ideas,value=>bind("ideas",value),{area:true,max:2000}),field("Scaletta","outline",w.outline,value=>bind("outline",value),{area:true,max:2000})),
-      card(h("h2",{},"1. Stesura"),draft,draftCount,button(w.feedback?"Revisiona la bozza attuale":"Chiedi la revisione",async()=>{const current=repo.get().writings.find(x=>x.id===id);writingReady(current,"review");const result=await tutor(state.settings,"/tutor","writing_review",{type:current.type,topic:current.topic,text:current.draft,mode:current.mode});await change(s=>{const x=s.writings.find(x=>x.id===id);x.feedback=sanitizeFeedback(result,current.draft);x.feedback_source=current.draft;x.comparison=null;});await refresh();},"secondary"),p("La revisione invia consegna e bozza a Groq. Usa dati fittizi nei tuoi esercizi.","small muted")),
+      card(h("h2",{},"1. Stesura"),draft,draftCount,button(w.feedback?"Revisiona la bozza attuale":"Chiedi la revisione",async()=>{const current=repo.get().writings.find(x=>x.id===id);writingReady(current,"review");const result=await tutor(state.settings,"/tutor","writing_review",{type:current.type,topic:current.topic,text:current.draft,mode:current.mode,...(current.grammar_lesson_id?{lesson_id:current.grammar_lesson_id}:{})});await change(s=>{const x=s.writings.find(x=>x.id===id);x.feedback=sanitizeFeedback(result,current.draft);x.feedback_source=current.draft;x.comparison=null;});await refresh();},"secondary"),p("La revisione invia consegna e bozza a Groq. Usa dati fittizi nei tuoi esercizi.","small muted")),
       feedbackPanel(w),
       w.feedback&&card(h("h2",{},"2. Riscrittura"),p("Riscrivi tu il testo. Cerca di risolvere gli errori mantenendo fatti, significato e voce."),rewrite,rewriteCount,button("Confronta bozza e riscrittura",async()=>{const current=repo.get().writings.find(x=>x.id===id);writingReady(current,"compare");const result=await tutor(state.settings,"/tutor","writing_compare",{type:current.type,topic:current.topic,text:current.draft,rewrite:current.rewrite,issues:current.feedback.issues});await change(s=>{const x=s.writings.find(x=>x.id===id);x.comparison=result;x.compare_source={draft:current.draft,rewrite:current.rewrite};x.transfer=[];});await refresh();})),
       comparison&&card(h("h2",{},"3. Confronto e trasferimento"),p(comparison.summary),w.compare_source?.rewrite!==w.rewrite&&p("La riscrittura è cambiata: rifai il confronto prima della verifica.","warning"),h("h3",{},"Risolto secondo il tutor"),list(comparison.resolved),h("h3",{},"Da controllare ancora"),comparison.remaining.length?list(comparison.remaining):p("Il tutor non segnala errori residui; la verifica successiva resta utile."),button("Verifica in un nuovo contesto",async()=>{const current=repo.get().writings.find(x=>x.id===id);if(current.compare_source?.rewrite!==current.rewrite||current.compare_source?.draft!==current.draft)throw new Error("Il testo è cambiato: rifai il confronto.");const session=await makeSession("mixed",current.comparison.transfer.map(i=>({...i,id:uid("transfer"),kind:"completion",skill:"form",options:[]})),"groq",{writing_id:id});await change(s=>{s.writings.find(x=>x.id===id).transfer.push(session);});},"secondary"),w.transfer?.map(sid=>{const results=state.attempts.filter(a=>a.session_id===sid);return results.length?p("Nuovo contesto: "+results.filter(a=>a.correct&&!a.assisted).length+"/"+results.length+" corrette senza aiuti."):link("Riprendi la verifica","practice/"+sid,"text-link");})),
@@ -258,10 +338,11 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
       sourceNotes("","ARTICLE_FEEDBACK")];
   }
   function progress() {
-    const recent=state.attempts.filter(a=>a.source!=="legacy"),rows=recommendation(state).filter(l=>l.attempts>0),guided=state.writings.filter(w=>w.mode!=="exam"),independent=state.writings.filter(w=>w.mode==="exam");
+    const recent=state.attempts.filter(a=>a.source!=="legacy"&&!a.disputed),rows=recommendation(state).filter(l=>l.attempts>0),guided=state.writings.filter(w=>w.mode!=="exam"),independent=state.writings.filter(w=>w.mode==="exam");
     return [title("PROGRESSI","Conta ciò che riesci a fare.","Il pretest orienta; le risposte senza suggerimenti confermano. La scrittura richiede anche un nuovo contesto."),
       h("div",{class:"stats"},card(h("strong",{class:"big"},recent.filter(a=>!a.assisted).length),p("Risposte senza aiuti")),card(h("strong",{class:"big"},guided.length),p("Scritti guidati")),card(h("strong",{class:"big"},independent.length),p("Scritti in simulazione"))),
       card(h("h2",{},"Le strutture esercitate"),rows.length?h("table",{},h("thead",{},h("tr",{},["Struttura","Senza aiuti","Proposta"].map(v=>h("th",{},v)))),h("tbody",{},rows.map(l=>h("tr",{},h("td",{},link(l.title,"lesson/"+l.id,"text-link")),h("td",{},Math.round(l.accuracy*100)+"% · "+l.attempts+" risposte"),h("td",{},statusLabels[l.status]))))):p("I risultati appariranno dopo i primi esercizi.")),
+      state.writing_courses?.length>0&&card(h("h2",{},"La scrittura passo passo"),state.writing_courses.map(c=>h("div",{},link((c.completed_at?"Percorso svolto":"Passo "+(c.stage+1)+" di 6")+" · "+c.checks.length+" tappe completate","course/"+c.id,"text-link"),p(c.completed_at?"Nuovi fatti affrontati senza aiuti anche in un'altra giornata.":c.stage===5?"Prima prova autonoma svolta; conferma in un altro giorno.":"Aiuti e tentativi sono salvati separatamente dalle prove autonome.","small muted")))),
       card(h("h2",{},"Gli errori da riprendere"),list(recent.filter(a=>!a.correct).slice(-8).reverse().map(a=>h("span",{},a.stem," → ",a.answer))),state.legacy&&p("L'archivio precedente è conservato nel backup. Le vecchie auto-valutazioni non diventano nuove prove di padronanza.","muted")),link("Continua a studiare","home")];
   }
   async function checkHealth(){try{health=await tutor(state.settings,"/health");healthError="";}catch(e){health=null;healthError=e.message;}return health;}
@@ -284,12 +365,12 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
   async function render() {
     const turn=++renderId;await repo.flush();if(turn!==renderId)return;
     state=repo.get();applyTheme();
-    state=repo.get();const [route="home",id]=location.hash.replace(/^#\/?/,"").split("/");
+    state=repo.get();const [route="home",id,returnCourse]=location.hash.replace(/^#\/?/,"").split("/");
     const paths={learn:"studio",guided:"writing",articles:"reading",connect:"settings",lexicon:"phrasals",write:"writing",tenses:"studio"};
     const page=paths[route]||route;
-    const pages={home,studio,lesson:()=>lesson(id),practice:()=>practice(id),placement,phrasals,word:()=>word(id),review,writing:()=>writing(id==="new"?undefined:id),reading:()=>reading(id==="new"?undefined:id),progress,settings};
+    const pages={home,studio,lesson:()=>lesson(id,returnCourse),checkpoint:()=>learning.page(id),practice:()=>practice(id),placement,phrasals,word:()=>word(id),review,writing:()=>writing(id==="new"?undefined:id),course:()=>courses.page(id),reading:()=>reading(id==="new"?undefined:id),progress,settings};
     root.replaceChildren(...(pages[page]||home)().flat().filter(Boolean));
-    document.querySelectorAll("nav a").forEach(a=>{const section=a.dataset.section;const active=section===page||section==="studio"&&["lesson","practice","phrasals","word","placement","reading"].includes(page)||section==="home"&&page==="progress";a.setAttribute("aria-current",active?"page":"false");});
+    document.querySelectorAll("nav a").forEach(a=>{const section=a.dataset.section;const active=section===page||section==="writing"&&page==="course"||section==="studio"&&["lesson","practice","phrasals","word","placement","checkpoint","reading"].includes(page)||section==="home"&&page==="progress";a.setAttribute("aria-current",active?"page":"false");});
     document.title=(root.querySelector("h1")?.textContent||"Studio")+" · JFLT Coach";
     window.scrollTo?.(0,0);
   }

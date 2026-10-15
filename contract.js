@@ -1,4 +1,4 @@
-export const TASKS=["exercises","writing_review","writing_compare","reading_review","clarify"];
+export const TASKS=["exercises","grammar_explain","writing_coach","writing_review","writing_compare","reading_review","clarify"];
 const object=x=>x&&typeof x==="object"&&!Array.isArray(x);
 const str=(x,max=1600)=>typeof x==="string"&&x.trim().length>0&&x.length<=max;
 const arr=(x,max)=>Array.isArray(x)&&x.length<=max;
@@ -6,7 +6,12 @@ export function validateInput(task,d) {
   if(!TASKS.includes(task)||!object(d))throw new Error("Richiesta del tutor non riconosciuta.");
   if(JSON.stringify(d).length>26000)throw new Error("Il testo è troppo lungo: usa un passaggio più breve.");
   if(task==="exercises"&&(!str(d.lesson_id,100)||!arr(d.terms||[],3)))throw new Error("Manca una lezione valida.");
-  if(task.startsWith("writing")&&(!["report","email","argument"].includes(d.type)||!str(d.topic,2000)||!str(d.text,12000)))throw new Error("Mancano consegna o testo dello scritto.");
+  if(task==="grammar_explain"&&(!str(d.lesson_id,100)||d.question!==undefined&&(typeof d.question!=="string"||d.question.length>500)))throw new Error("Manca la lezione o la domanda è troppo lunga.");
+  if(task==="writing_coach") {
+    if(!["report","email","argument"].includes(d.type)||!str(d.unit_id,100)||!Number.isInteger(d.stage)||d.stage<0||d.stage>5||!Number.isInteger(d.round)||d.round<0||d.round>1000||!["hint","review"].includes(d.mode)||!str(d.topic,2000)||typeof d.text!=="string"||d.text.length>6000||d.mode==="review"&&!str(d.text,6000)||typeof d.question!=="string"||d.question.length>500)throw new Error("Passo del percorso o testo non valido.");
+  }
+  if(["writing_review","writing_compare"].includes(task)&&(!["report","email","argument"].includes(d.type)||!str(d.topic,2000)||!str(d.text,12000)))throw new Error("Mancano consegna o testo dello scritto.");
+  if(["writing_review","writing_coach"].includes(task)&&d.lesson_id!==undefined&&!str(d.lesson_id,100))throw new Error("Riferimento alla lezione non valido.");
   if(task==="writing_compare"&&!str(d.rewrite,12000))throw new Error("Manca la riscrittura.");
   if(task==="reading_review"&&(!str(d.text,8000)||!str(d.translation,12000)))throw new Error("Mancano testo o traduzione.");
   if(task==="clarify"&&(!str(d.term,120)||!str(d.context,1200)))throw new Error("Seleziona un termine e il suo contesto.");
@@ -44,6 +49,19 @@ export function validateReply(task,p) {
       kinds.add(i.kind);
     }
     if(kinds.size<3)bad("items.kind","sono richiesti almeno 3 tipi di esercizio diversi");
+  } else if(task==="grammar_explain") {
+    needString(p.summary,"summary");needString(p.form,"form");needString(p.contrast,"contrast");
+    needArray(p.when,"when",4);strings(p.when,"when");if(!p.when.length)bad("when","serve almeno un uso");
+    needArray(p.pitfalls,"pitfalls",3);strings(p.pitfalls,"pitfalls");if(!p.pitfalls.length)bad("pitfalls","serve almeno un punto da controllare");
+    needArray(p.examples,"examples",3);if(p.examples.length<2)bad("examples","servono due o tre esempi");
+    for(const [n,e] of p.examples.entries()){needObject(e,"examples["+n+"]");needString(e.en,"examples["+n+"].en",400);needString(e.it,"examples["+n+"].it",400);needString(e.why,"examples["+n+"].why",1200);}
+  } else if(task==="writing_coach") {
+    needString(p.summary,"summary");needString(p.next_step,"next_step",800);
+    if(typeof p.ready!=="boolean")bad("ready","deve essere booleano");
+    needArray(p.focus,"focus",3);if(!p.focus.length)bad("focus","serve almeno una spiegazione della forma");
+    for(const [n,f] of p.focus.entries()){needObject(f,"focus["+n+"]");for(const [key,max] of [["form",300],["meaning_it",300],["why",1200],["example_en",400]])needString(f[key],"focus["+n+"]."+key,max);}
+    needArray(p.issues,"issues",2);
+    for(const [n,i] of p.issues.entries()){needObject(i,"issues["+n+"]");needString(i.quote,"issues["+n+"].quote",300);needString(i.correction,"issues["+n+"].correction",400);needString(i.explanation,"issues["+n+"].explanation",1200);needString(i.category,"issues["+n+"].category",100);if(!["error","style"].includes(i.kind))bad("issues["+n+"].kind","deve distinguere error e style");}
   } else if(task==="writing_review") {
     needString(p.summary,"summary");needArray(p.priorities,"priorities",3);strings(p.priorities,"priorities");
     needArray(p.issues,"issues",8);needObject(p.rubric,"rubric");
@@ -68,6 +86,11 @@ export function validateReply(task,p) {
   } else bad("task","funzione non riconosciuta");
   return p;
 }
+export function sanitizeCoach(result,text,mode) {
+  const issues=result.issues.filter(i=>text.includes(i.quote));
+  const omitted=(Number.isInteger(result.omitted)?result.omitted:0)+result.issues.length-issues.length;
+  return {...result,issues,ready:mode==="review"&&result.ready&&omitted===0&&!issues.some(i=>i.kind==="error"),...(omitted?{omitted}:{} )};
+}
 // Use the documented Groq strict subset. Counts, text lengths and relationships
 // between fields are described here and enforced by validateReply above.
 const replyText=(max=1600)=>({type:"string",description:"Testo non vuoto, massimo "+max+" caratteri."});
@@ -75,6 +98,8 @@ const replyObject=properties=>({type:"object",properties,required:Object.keys(pr
 const replyList=(items,description)=>({type:"array",items,description});
 const transferFields={stem:replyText(),answer:replyText(600),accept:replyList(replyText(600),"Massimo 8 risposte inglesi accettabili."),why:replyText()};
 export const REPLY_SCHEMAS={
+  grammar_explain:replyObject({summary:replyText(),form:replyText(),when:replyList(replyText(),"Da 1 a 4 usi."),examples:replyList(replyObject({en:replyText(400),it:replyText(400),why:replyText(1200)}),"Due o tre esempi inglesi originali, con traduzione e motivazione."),contrast:replyText(),pitfalls:replyList(replyText(),"Da 1 a 3 errori tipici pertinenti.")}),
+  writing_coach:replyObject({summary:replyText(),focus:replyList(replyObject({form:replyText(300),meaning_it:replyText(300),why:replyText(1200),example_en:replyText(400)}),"Da 1 a 3 forme spiegate, con esempio in un altro contesto."),issues:replyList(replyObject({quote:replyText(300),correction:replyText(400),explanation:replyText(1200),kind:{type:"string",enum:["error","style"]},category:replyText(100)}),"Da 0 a 2 osservazioni con citazione letterale del testo dello studente."),next_step:replyText(800),ready:{type:"boolean",description:"True solo per una revisione senza errori prioritari e con le funzioni richieste presenti. Sempre false per un aiuto."}}),
   exercises:replyObject({items:replyList(replyObject({
     kind:{type:"string",enum:["choice","completion","transformation","error_correction"]},
     stem:replyText(),
@@ -89,6 +114,8 @@ export const REPLY_SCHEMAS={
   clarify:replyObject({expression:replyText(120),meaning_it:replyText(300),explanation:replyText(),example:replyText(500)})
 };
 export const SHAPES={
+  grammar_explain:{summary:"Distingui il fatto concluso dalla situazione collegata al presente.",form:"Past simple: soggetto + passato; present perfect: soggetto + have/has + participio.",when:["Past simple con un momento passato concluso.","Present perfect per un risultato attuale senza tempo passato concluso."],examples:[{en:"We checked the door yesterday.",it:"Abbiamo controllato la porta ieri.",why:"Yesterday identifica un tempo concluso."},{en:"We have checked the door, so it is safe now.",it:"Abbiamo controllato la porta, quindi ora è sicura.",why:"Il risultato interessa il presente."}],contrast:"Il contesto decide; una forma non sostituisce sempre l'altra.",pitfalls:["Non usare il present perfect con yesterday in questo significato."]},
+  writing_coach:{summary:"Lo scopo è comprensibile.",focus:[{form:"Could you + verbo base",meaning_it:"Potrebbe…?",why:"Una richiesta cortese usa il verbo base dopo could.",example_en:"Could you confirm the address?"}],issues:[],next_step:"Controlla che il destinatario trovi tutte le informazioni richieste.",ready:false},
   exercises:{items:[
     {kind:"choice",stem:"Scegli la forma corretta: They ___ on duty.",options:["am","is","are"],answer:"are",accept:["are"],why:"They richiede are."},
     {kind:"choice",stem:"Scegli il past simple di go.",options:["goed","went","gone"],answer:"went",accept:["went"],why:"Go ha il past simple irregolare went."},

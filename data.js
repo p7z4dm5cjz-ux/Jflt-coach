@@ -245,7 +245,7 @@ export const ERRATA = [
   E(24, "TARGET", "154-157", "piece if writing; linking words my come useful; you reader; Don't give anyting for granted", "piece of writing; may come in useful; your reader; take anything for granted", "bassa", ["B2", "TARGET-154-157"]),
   E(25, "CAMPAIGN", "43", "Why is the Central Station area hotspot?; How much time to they have", "a hotspot; do they have", "bassa", ["A4", "CAMP-43"]),
   E(26, "CAMPAIGN", "51", "write short a report", "write a short report", "bassa", ["A2", "CAMP-51"]),
-  E(27, "MISSION", "39-40", "some what; fumbling the with the papers; the defendants mouth; Upon Tpr. Maliszewski I explained; in front a small red vehicle; preforming; 700 mil.", "somewhat; fumbling with the papers; the defendant's mouth; Upon Tpr. Maliszewski's arrival, I explained; in front of; performing; 700 ml", "bassa", ["A2", "A4", "MISSION-39-40"]),
+  E(27, "MISSION", "39-40", "some what; fumbling the with the papers; the defendants mouth; Upon Tpr. [nome omesso] I explained; in front a small red vehicle; preforming; 700 mil.", "somewhat; fumbling with the papers; the defendant's mouth; Upon Tpr. [nome omesso]'s arrival, I explained; in front of; performing; 700 ml", "bassa", ["A2", "A4", "MISSION-39-40"]),
   E(28, "OXFORD", "236, 238, 240", "alla fine del periodo, non è mai seguita dalla virgola", "non è preceduta dalla virgola (di norma)", "bassa", ["conditionals", "OXF-101-104"]),
   E(29, "OXFORD", "372, 386", "while (anche); Anyway… tradotto Tuttavia", "while = mentre; anyway = comunque", "bassa", ["connectors", "OXF-165"]),
   E(30, "MISSION", "11", "posh da Port Out, Starboard Home presentato come fatto", "paretimologia senza prove (Etymonline)", "bassa", ["lexis"])

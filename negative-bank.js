@@ -1,0 +1,78 @@
+// Materiale originale: contesti e soluzioni controllabili, senza chiamate AI.
+const people=["technician","dispatcher","supervisor","driver","clerk","officer","inspector","coordinator"];
+const rooms=["control room","office","waiting room","vehicle","store room","interview room","corridor","reception area"];
+const equipment=["radios","cameras","vehicles","computers","batteries","alarms","headsets","lights"];
+const tasks=[
+  ["check the batteries","checks the batteries"],["print the forms","prints the forms"],
+  ["lock the cabinet","locks the cabinet"],["sort the files","sorts the files"],
+  ["test the alarm","tests the alarm"],["inspect the doors","inspects the doors"],
+  ["update the log","updates the log"],["verify the address","verifies the address"]
+];
+const past=[
+  ["see the vehicle","saw the vehicle"],["know the location","knew the location"],
+  ["go to the checkpoint","went to the checkpoint"],["write the report","wrote the report"],
+  ["take the keys","took the keys"],["send the warning","sent the warning"],
+  ["find the address","found the address"],["hear the warning","heard the warning"]
+];
+const ongoing=["watching the entrance","monitoring the camera","checking the list","preparing the report","guarding the gate","testing the radio","reading the message","interviewing the witness"];
+const completed=["received the update","checked the equipment","finished the inspection","sent the report","found the entrance","read the instructions","recorded the interview","located the vehicle"];
+const actions=["open the gate","move the vehicle","use the radio","enter the building","touch the equipment","share the password","leave the area","remove the notice"];
+const optional=["wear a tie","bring a laptop","print the form","attend the briefing","stay overnight","use the car","book a seat","submit a paper copy"];
+const reports=["reported the noise","identified the vehicle","described the damage","recorded the time","confirmed the address","mentioned the delay","noticed the warning","found the entrance"];
+const objects=["spare keys","blank forms","working radios","recent photographs","printed maps","replacement batteries","signed statements","spare headsets"];
+const groups=["witnesses","officers","drivers","inspectors","visitors","technicians","applicants","coordinators"];
+const oldTasks=["work at night","drive to the office","carry a radio","write reports by hand","patrol this street","use that entrance","check the log daily","attend the morning briefing"];
+const cases=["handled such a case","seen such a delay","received such a request","written such a report","used such a device","heard such a noise","visited such a place","worked such a long shift"];
+const rows=(v)=>{
+  const who="The "+people[v],room="The "+rooms[v],gear="The "+equipment[v];
+  const [base,third]=tasks[v],[infinitive,pastForm]=past[v],progressive=ongoing[v],participle=completed[v],action=actions[v],job=optional[v],reported=reports[v];
+  const entry=(rule,kind,stem,answer,formula,why,accept=[],options=[])=>({rule,kind,skill:kind==="choice"?"choose":"form",stem,answer,formula,why,accept:[answer,...accept],options,origin:"local"});
+  return [
+    entry("be","completion",`Completa al presente negativo: ${room} ___ empty right now. (be; scrivi solo il gruppo verbale mancante)`,"is not","Soggetto + am/is/are + not + complemento",`${room} è singolare, quindi usa is. Con be la negazione si costruisce aggiungendo not: non serve do/does.`,["isn't"]),
+    entry("be","completion",`Completa al passato negativo: ${gear} ___ ready yesterday. (be; solo il gruppo mancante)`,"were not","Soggetto + was/were + not + complemento",`${gear} è plurale e yesterday colloca il fatto nel passato. Serve were not, senza introdurre did.`,["weren't"]),
+    entry("present-do","error_correction",`Correggi il verbo dopo doesn't e riscrivi tutta la frase: ${who} doesn't ${third} every morning.`,`${who} does not ${base} every morning`,"Soggetto singolare + does not + verbo base",`Does porta già la terza persona singolare. Il verbo successivo torna alla forma base: ${base.split(" ")[0]}. Conserva il riferimento abituale every morning.`,[`${who} doesn't ${base} every morning`]),
+    entry("present-do","transformation",`Trasforma in negativa al present simple e conserva il resto: We ${base} every evening.`,`We do not ${base} every evening`,"I/you/we/they + do not + verbo base",`Con we si usa do not; il verbo resta ${base.split(" ")[0]}. Every evening descrive un'abitudine, quindi non passare al continuous.`,[`We don't ${base} every evening`]),
+    entry("past-did","error_correction",`Mantieni il past simple e correggi tutta la frase: ${who} didn't ${pastForm} yesterday.`,`${who} did not ${infinitive} yesterday`,"Soggetto + did not + verbo base",`Il passato è già indicato da did. Dopo did not serve ${infinitive.split(" ")[0]}, non una seconda forma al passato.`,[`${who} didn't ${infinitive} yesterday`]),
+    entry("present-do","choice",`Quale negativa conserva il present simple? ${who} ${third} every Friday.`,`${who} doesn't ${base} every Friday`,"Terza persona singolare + does not + verbo base",`Il soggetto è singolare: scegli doesn't. Dopo l'ausiliare il verbo perde la -s; non usare don't o il passato.`,[],[`${who} doesn't ${base} every Friday`,`${who} doesn't ${third} every Friday`,`${who} don't ${base} every Friday`]),
+    entry("progressive","completion",`Completa al present continuous negativo: They ___ at the moment. (usa '${progressive}'; scrivi l'intero gruppo mancante)`,`are not ${progressive}`,"Soggetto + am/is/are + not + verbo in -ing",`At the moment indica l'azione in corso. La negazione si inserisce dopo are, mentre il participio ${progressive.split(" ")[0]} resta invariato.`,[`aren't ${progressive}`]),
+    entry("progressive","completion",`Completa al past continuous negativo: ${who} ___ when the alarm rang. (usa '${progressive}'; solo il gruppo mancante)`,`was not ${progressive}`,"Soggetto + was/were + not + verbo in -ing",`Il soggetto è singolare e l'azione era in corso nel momento dell'allarme: was not + ${progressive.split(" ")[0]}. Didn't cambierebbe il tempo richiesto.`,[`wasn't ${progressive}`]),
+    entry("perfect","completion",`Completa al present perfect negativo: ${who} ___ yet. (usa '${participle}'; solo il gruppo mancante)`,`has not ${participle}`,"Soggetto singolare + has not + participio passato",`Il soggetto richiede has. Not va dopo l'ausiliare; yet resta alla fine. Il participio ${participle.split(" ")[0]} non torna alla forma base.`,[`hasn't ${participle}`]),
+    entry("perfect","error_correction",`Correggi il participio, mantenendo il past perfect: They had not took the ${equipment[v]} before the inspection.`,`They had not taken the ${equipment[v]} before the inspection`,"Soggetto + had not + participio passato",`Dopo had serve il participio taken, non il past simple took. Had not descrive il mancato evento anteriore all'ispezione.`,[`They hadn't taken the ${equipment[v]} before the inspection`]),
+    entry("modal","error_correction",`Esprimi impossibilità con can e correggi tutta la frase: ${who} doesn't can ${action}.`,`${who} cannot ${action}`,"Soggetto + cannot + verbo base",`Can è già un modale: non si aggiunge doesn't. La negativa è cannot oppure can't; il verbo ${action.split(" ")[0]} resta alla forma base.`,[`${who} can't ${action}`]),
+    entry("modal","transformation",`Trasforma in negativa con will e conserva il resto: We will ${base} tomorrow.`,`We will not ${base} tomorrow`,"Soggetto + will not + verbo base",`Not si inserisce subito dopo will. Won't è la contrazione valida; non introdurre do e non aggiungere to al verbo.`,[`We won't ${base} tomorrow`]),
+    entry("obligation","choice",`La scelta è facoltativa, non vietata. Completa con have to: You ___; it is optional. (${job})`,`do not have to ${job}`,"Soggetto + do/does not have to + verbo base",`Do not have to significa che non c'è obbligo. Must not indicherebbe un divieto e cambierebbe il significato di optional.`,[],[`do not have to ${job}`,`must not ${job}`,`do not have ${job}`]),
+    entry("obligation","completion",`La regola vieta questa azione. Completa con must alla negativa: Visitors ___ ${action}. (solo il modale negativo)`,"must not","Soggetto + must not + verbo base",`Il contesto esprime un divieto, quindi usa must not, anche mustn't. Don't have to direbbe solo che l'azione non è obbligatoria.`,["mustn't"]),
+    entry("modal","completion",`È possibile che non partecipi. Usa may alla negativa: ${who} ___ attend the briefing. (solo il modale negativo)`,"may not","Soggetto + may not + verbo base",`Qui may not esprime la possibilità che l'azione non avvenga. Non esprime un divieto: il contesto «è possibile» determina la lettura.`),
+    entry("modal","transformation",`Trasforma in negativa usando should e conserva il resto: We should ${action}.`,`We should not ${action}`,"Soggetto + should not + verbo base",`Should not esprime un consiglio negativo. Non usare don't should: il modale forma direttamente la negazione.`,[`We shouldn't ${action}`]),
+    entry("non-finite","error_correction",`Correggi la costruzione dopo decided e riscrivi tutta la frase: ${who} decided not ${action}.`,`${who} decided not to ${action}`,"Verbo principale + not to + verbo base",`Decide richiede l'infinito con to. La forma richiesta è not to ${action.split(" ")[0]}; not da solo non sostituisce to.`,[`${who} decided to not ${action}`]),
+    entry("passive","completion",`Completa il passivo negativo al passato: ${gear} ___ before delivery. (check; solo il gruppo mancante)`,"were not checked","Soggetto plurale + were not + participio passato",`Il soggetto subisce il controllo: la frase è passiva. Mantieni were e checked, inserendo not dopo l'ausiliare; didn't check renderebbe la frase attiva.`,["weren't checked"]),
+    entry("negative-words","error_correction",`Mantieni il significato «non abbiamo alcun...», correggi la doppia negazione e riscrivi: We don't have no ${objects[v]}.`,`We do not have any ${objects[v]}`,"Verbo negativo + any; oppure verbo affermativo + no",`Nell'inglese standard di questo esercizio evita don't + no. Puoi tenere il verbo negativo con any oppure usare have no con il verbo affermativo.`,[`We don't have any ${objects[v]}`,`We have no ${objects[v]}`]),
+    entry("negative-words","error_correction",`Il significato deve essere «nessuno ha compiuto l'azione». Elimina la doppia negazione: Nobody didn't ${reported}.`,`Nobody ${reported}`,"Nobody/no one + verbo affermativo",`Nobody contiene già la negazione. Aggiungere didn't produce una doppia negazione e non conserva la lettura standard richiesta.`,[`No one ${reported}`,`No-one ${reported}`]),
+    entry("negative-words","completion",`Completa il present simple: Nobody ___ the access code for the ${rooms[v]}. (know; solo il verbo, senza una seconda negazione)`,"knows","Nobody + verbo alla terza persona singolare",`Nobody vale grammaticalmente come soggetto singolare. La negazione è già nella parola nobody: usa knows, senza doesn't.`),
+    entry("negative-words","choice",`Scegli no, not oppure none nella frase: There is ___ visible damage to the ${rooms[v]}.`,"no","No + nome; not + verbo/aggettivo/avverbio",`No determina direttamente il gruppo nominale visible damage. La variante con verbo negativo sarebbe There is not any visible damage.`,[],["no","not","none"]),
+    entry("scope","choice",`Scegli la frase che significa «non tutti i ${groups[v]} hanno firmato», senza affermare che nessuno ha firmato.`,`Not all the ${groups[v]} have signed`,"Not all + soggetto: negazione di «tutti»",`Not all nega che abbiano firmato tutti; non equivale a none, che dice che non ha firmato nessuno. La posizione della negazione cambia il significato.`,[],[`Not all the ${groups[v]} have signed`,`None of the ${groups[v]} have signed`,`All the ${groups[v]} have signed`]),
+    entry("scope","transformation",`Mantieni il significato e il present simple, usando not e any more finale: They no longer ${oldTasks[v]}.`,`They do not ${oldTasks[v]} any more`,"Do/does not + verbo base + any more/anymore",`No longer e not ... any more esprimono la cessazione di un'abitudine. Con they il present simple negativo usa do not, seguito dalla forma base.`,[`They don't ${oldTasks[v]} any more`,`They do not ${oldTasks[v]} anymore`,`They don't ${oldTasks[v]} anymore`]),
+    entry("perfect","completion",`Completa al present perfect continuous negativo: We ___ recently. (usa '${progressive}'; solo il gruppo mancante)`,`have not been ${progressive}`,"Soggetto + have/has not been + verbo in -ing",`Not segue have. Been e il participio in -ing restano necessari per conservare il perfect continuous, che riguarda l'attività nel periodo recente.`,[`haven't been ${progressive}`]),
+    entry("perfect","completion",`Completa il future perfect negativo: By noon tomorrow, we ___ the inspection of the ${equipment[v]}. (finish; solo il gruppo mancante)`,"will not have finished","Soggetto + will not have + participio passato",`Il limite futuro By noon tomorrow richiede il future perfect indicato. Not segue il primo ausiliare will; have e finished rimangono.`,["won't have finished"]),
+    entry("past-did","error_correction",`Correggi la forma dopo didn't e riscrivi la frase: ${who} didn't used to ${oldTasks[v]}.`,`${who} did not use to ${oldTasks[v]}`,"Soggetto + did not use to + verbo base",`La forma di riferimento richiesta dopo did è use to, senza -d. Si parla di un'abitudine passata: non sostituire use to con be used to, che significa essere abituato a.`,[`${who} didn't use to ${oldTasks[v]}`]),
+    entry("negative-words","error_correction",`Mantieni il significato «non mi è mai successo» ed elimina la doppia negazione: I haven't never ${cases[v]}.`,`I have never ${cases[v]}`,"Have/has + never + participio passato",`Never contiene già «non ... mai». Mantieni have e togli not: haven't never non è la forma standard richiesta. È valida anche have not ever.`,[`I have not ever ${cases[v]}`,`I haven't ever ${cases[v]}`,`I've never ${cases[v]}`]),
+    entry("non-finite","completion",`Completa il participio presente negativo: Not ___ the procedure, ${who.toLowerCase()} asked for help. (understand; solo il participio)`,"understanding","Not + verbo in -ing, nella proposizione participiale",`La frase participiale richiede understanding. Not si colloca davanti al participio e non richiede do; don't understand sarebbe una proposizione finita diversa.`),
+    entry("scope","transformation",`Riscrivi iniziando con Never e conserva il present perfect: ${who} has never ${cases[v]}.`,`Never has ${who.toLowerCase()} ${cases[v]}`,"Never + ausiliare + soggetto + participio passato",`Portando never all'inizio, nella costruzione formale richiesta si invertono ausiliare e soggetto. Has precede ${who.toLowerCase()}, mentre il participio resta invariato.`)
+  ];
+};
+
+export function negativeItems(variation=0,{count=30,rules=[],exclude=[]}={}) {
+  const seen=new Set(exclude.map(s=>s.toLowerCase().replace(/\s+/g," ").trim()));
+  const candidates=[];
+  for(let offset=0;offset<8;offset++) {
+    const variant=((variation+offset)%8+8)%8;
+    for(const [index,item] of rows(variant).entries()) {
+      if(rules.length&&!rules.includes(item.rule))continue;
+      if(seen.has(item.stem.toLowerCase().replace(/\s+/g," ").trim()))continue;
+      candidates.push({...item,id:`negatives-${index}-v${variant}`});
+    }
+  }
+  if(!Number.isInteger(count)||count<1||count>30||candidates.length<count)throw new Error("Non ci sono abbastanza nuove varianti offline per questa riprova. Puoi generarla con Groq.");
+  // Il primo giro segue la progressione; le riprove alternano le regole deboli.
+  return candidates.slice(0,count);
+}

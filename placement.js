@@ -54,8 +54,8 @@ export const QUESTIONS = [
   q("R02","patterns","linkers clauses cohesion","choose","Quale frase collega correttamente due proposizioni indipendenti con however?",["The road was closed; however, the team found another route.","The road was closed, however the team found another route.","Although the road was closed, however the team found another route."],"The road was closed; however, the team found another route.","However non lega le due proposizioni come but: servono punto o punto e virgola; evita although insieme a however per lo stesso collegamento.","OXFORD unità 165, pp. 372-373; TARGET pp. 14-18, con errata"),
   q("R03","patterns","verb-patterns","choose","Il senso è 'si è fermato per parlare': The officer stopped ___ to the witness.",["to talk","talking","talk"],"to talk","Stop to talk descrive lo scopo della sosta; stop talking significa smettere di parlare.","OXFORD unità 77, p. 184")
 ];
-const norm=value=>String(value??"").normalize("NFKC").toLowerCase().replace(/[’‘]/g,"'").replace(/[.!?]+$/g,"").replace(/\s+/g," ").trim();
-export function isCorrect(item,value){return item.accept.some(a=>norm(a)===norm(value));}
+import {correct} from "./answer-normal.js";
+export function isCorrect(item,value){return correct(item,value);}
 function hash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;}
 export function orderedQuestions(seed){return QUESTIONS.slice().sort((a,b)=>hash(seed+a.id)-hash(seed+b.id));}
 export function orderedOptions(item,seed){return (item.options||[]).slice().sort((a,b)=>hash(seed+item.id+a)-hash(seed+item.id+b));}
