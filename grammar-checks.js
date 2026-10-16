@@ -63,6 +63,22 @@ export function newCheck(state,priorities,lessonId=null,timestamp=Date.now()){
  if(items.length!==(lessonId?4:10))throw new Error("Questa lezione non ha ancora una verifica locale dedicata.");
  return {id:"check-"+crypto.randomUUID(),lesson_id:lessonId,item_ids:items.map(i=>i.id),reused_ids:items.filter(i=>used.has(i.id)).map(i=>i.id),answers:{},created_at:new Date(timestamp).toISOString(),completed_at:null};
 }
+// Un'unica regola per «senza aiuti» e «mantenimento», usata da classifica, scheda della lezione
+// e progressi: contano le ultime due sessioni intere, non un numero fisso di risposte.
+export function practiceWindow(state,id,timestamp=Date.now()){
+ const all=(state.attempts||[]).filter(a=>a.lesson_id===id&&!a.assisted&&!a.disputed&&a.source!=="legacy");
+ const order=[...new Set(all.map(a=>a.session_id))],lastTwo=order.slice(-2),lastOne=order.slice(-1);
+ const window=all.filter(a=>lastTwo.includes(a.session_id)),latest=all.filter(a=>lastOne.includes(a.session_id));
+ const rate=list=>list.length?list.filter(a=>a.correct).length/list.length:null;
+ const contexts=new Set(window.filter(a=>a.correct).map(a=>a.context_id||a.stem)).size;
+ const independent=lastTwo.length>=2&&window.length>=8&&contexts>=8&&rate(window)>=0.85;
+ const goodSession=latest.length>=6&&rate(latest)>=0.85;
+ // Ritorno nel tempo anche per le lezioni senza domande nella verifica breve: una sessione
+ // riuscita si conferma dopo 3 giorni, il mantenimento si ricontrolla dopo 21.
+ const last=Math.max(0,...latest.map(a=>Date.parse(a.date)||0)),days=independent?21:goodSession?3:null;
+ const due=days!==null&&last>0&&timestamp-last>=days*86400000;
+ return {all,window,latest,accuracy:rate(window),latestRate:rate(latest),errors:latest.filter(a=>!a.correct).length,independent,goodSession,due};
+}
 export function lessonEvidence(state,id,timestamp=Date.now()){
  const checks=(state.grammar_checks||[]).filter(c=>c.completed_at&&checkItems(c).some(i=>i.lesson_id===id)).sort((a,b)=>Date.parse(a.completed_at)-Date.parse(b.completed_at));
  const last=checks.at(-1),results=last?checkResults(last).filter(i=>i.lesson_id===id):[];

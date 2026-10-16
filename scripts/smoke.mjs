@@ -48,6 +48,12 @@ try{
       await context.close();
     }
   }
+  // Browser che rifiutano il service worker (navigazione privata, browser integrati): l'app deve aprirsi lo stesso.
+  const blocked=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:"block"}),bp=await blocked.newPage();
+  await bp.goto(base+"#/");await bp.waitForTimeout(900);
+  const bt=await bp.evaluate(()=>document.getElementById("view")?.textContent||"");
+  if(/Non ho potuto aprire/.test(bt)||!bt.trim())failures.push("senza service worker: l'app non si apre");
+  await blocked.close();
 }finally{await browser.close();server.close();}
 if(failures.length){console.error("Prova nel browser non superata:\n- "+failures.join("\n- "));process.exitCode=1;}
 else console.log("Prova nel browser superata: "+routes.length+" pagine × iPhone/computer × chiaro/scuro, versione "+VERSION+".");

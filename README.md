@@ -1,4 +1,12 @@
-# JFLT Coach 1.9.3
+# JFLT Coach 1.9.4
+
+## Novità della 1.9.4 (verifica di coerenza)
+
+- **Una sola regola per «senza aiuti» e «mantenimento»** in classifica, scheda della lezione, motivi del percorso e Progressi: le ultime due sessioni intere, almeno 8 risposte e 8 contesti diversi, 85% di risposte giuste. Prima la scheda della lezione usava ancora le ultime 12 risposte.
+- **I motivi delle tappe seguono lo stato reale:** dopo una sessione riuscita non compare più «hai incontrato difficoltà», ma la percentuale dell'ultima sessione.
+- **Le lezioni da confermare tornano davvero.** La verifica breve copre 30 lezioni su 117: per le altre una sessione riuscita torna nel percorso dopo 3 giorni, il mantenimento dopo 21.
+- **Progressi:** la percentuale indica su quante risposte recenti è calcolata.
+- **App più robusta:** se il browser rifiuta il funzionamento offline (navigazione privata, browser integrati), l'app si apre comunque invece di mostrare «Non ho potuto aprire l'archivio».
 
 ## Novità della 1.9.3
 

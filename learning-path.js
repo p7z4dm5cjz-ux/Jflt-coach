@@ -1,6 +1,6 @@
 import {LESSONS} from "./catalog.js";
 import {placementProfile} from "./placement.js";
-import {lessonEvidence,CHECK_LESSONS,reassessmentDue} from "./grammar-checks.js";
+import {lessonEvidence,CHECK_LESSONS,reassessmentDue,practiceWindow} from "./grammar-checks.js";
 export const PATH_GROUPS=[
  {id:"foundations",title:"Basi da verificare",level:"A1–A2",ids:["sentence","present-simple","present-continuous","questions","negatives","past-simple","past-continuous","nouns","articles","pronouns","some-any","quantifiers","adjectives","comparison","prepositions"]},
  {id:"time",title:"Tempo e punto di vista",level:"A2–B2",ids:["present","past","present-perfect-simple","perfect-simple","present-perfect-continuous","perfect-continuous","past-perfect-simple","past-perfect-continuous","past-perfect","future-will","future-going-to","future-arrangements","future","future-continuous","future-perfect-simple","future-perfect-continuous","future-perfect","used-to","future-in-past"]},
@@ -22,9 +22,7 @@ export function lessonMeta(lesson){
  return {group:group.id,level:group.level,prerequisites:candidates.filter(id=>id!==lesson.id&&LESSONS.some(l=>l.id===id))};
 }
 export function lessonProgress(state,id,timestamp=Date.now()){
- const attempts=state.attempts.filter(a=>a.lesson_id===id&&!a.assisted&&!a.disputed&&a.source!=="legacy");
- const contexts=new Set(attempts.filter(a=>a.correct).map(a=>a.context_id||a.stem));
- const independent=contexts.size>=8&&new Set(attempts.map(a=>a.session_id)).size>=2&&attempts.slice(-12).filter(a=>a.correct).length/Math.min(12,attempts.length)>=.85;
+ const independent=practiceWindow(state,id).independent;
  const ev=lessonEvidence(state,id,timestamp);
  return {read:!!state.lesson_reads?.some(r=>r.lesson_id===id)||!!state.lesson_studies?.some(r=>r.lesson_id===id),practised:state.attempts.some(a=>a.lesson_id===id),independent,delayed:ev.delayed,due:ev.due_now,evidence:ev};
 }
@@ -32,10 +30,13 @@ export function learningReason(state,lesson,timestamp=Date.now()){
  const ev=lessonEvidence(state,lesson.id,timestamp),profile=placementProfile(state.placement),progress=lessonProgress(state,lesson.id,timestamp);
  if(ev.errors)return "Nell'ultima verifica breve sono emersi errori su questa struttura.";
  if(ev.due_now)return "È il momento di controllare se ricordi la struttura a distanza di giorni.";
- if(state.attempts.some(a=>a.lesson_id===lesson.id&&!a.correct&&!a.assisted&&!a.disputed))return "Negli esercizi senza aiuti hai incontrato difficoltà su questa struttura.";
+ const w=practiceWindow(state,lesson.id,timestamp);
+ if(w.due)return w.independent?"Sono passate tre settimane dall'ultima sessione riuscita: una sessione controlla che la struttura tenga.":"Sono passati almeno tre giorni dalla sessione riuscita: una seconda sessione la conferma.";
+ if(w.independent)return "Due sessioni diverse riuscite senza aiuti: resta in mantenimento, il ripasso a distanza controlla la tenuta.";
+ if(w.goodSession)return "Ultima sessione riuscita ("+Math.round(w.latestRate*100)+"%): da confermare con una verifica a distanza di giorni.";
+ if(w.errors)return "Nell'ultima sessione senza aiuti: "+w.errors+(w.errors===1?" errore":" errori")+" su "+w.latest.length+" risposte.";
  if(profile?.lessonStatus[lesson.id]==="review"){const rows=profile.rows.filter(r=>r.item.lessons.includes(lesson.id)),wrong=rows.filter(r=>!r.correct).length;return wrong?"Nel pretest: "+wrong+(wrong===1?" risposta sbagliata":" risposte sbagliate")+" su "+rows.length+(rows.length===1?" domanda":" domande")+" che riguardano questa struttura.":"Nel pretest le risposte su questa struttura erano giuste ma date con dubbio: da confermare.";}
  if(profile?.lessonStatus[lesson.id]==="skip")return "Il pretest consente di alleggerire questa base. Puoi verificarla brevemente prima di saltarla.";
- if(progress.independent)return "Hai risposto bene in più sessioni senza aiuti; il ripasso a distanza controlla la tenuta.";
  return "Segue la progressione del percorso. Puoi aprire liberamente anche le altre lezioni.";
 }
 export function checkPriorities(state,ranked,timestamp=Date.now()){

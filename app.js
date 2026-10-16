@@ -455,7 +455,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     const recent=state.attempts.filter(a=>a.source!=="legacy"&&!a.disputed),rows=recommendation(state).filter(l=>l.attempts>0),guided=state.writings.filter(w=>w.mode!=="exam"),independent=state.writings.filter(w=>w.mode==="exam");
     return [title("PROGRESSI","Conta ciò che riesci a fare.","Il pretest orienta; le risposte senza suggerimenti confermano. La scrittura richiede anche un nuovo contesto."),
       h("div",{class:"stats"},card(h("strong",{class:"big"},recent.filter(a=>!a.assisted).length),p("Risposte senza aiuti")),card(h("strong",{class:"big"},guided.length),p("Scritti guidati")),card(h("strong",{class:"big"},independent.length),p("Scritti in simulazione"))),
-      card(h("h2",{},"Le strutture esercitate"),rows.length?h("table",{},h("thead",{},h("tr",{},["Struttura","Senza aiuti","Proposta"].map(v=>h("th",{},v)))),h("tbody",{},rows.map(l=>h("tr",{},h("td",{},link(l.title,"lesson/"+l.id,"text-link")),h("td",{},Math.round(l.accuracy*100)+"% · "+l.attempts+" risposte"),h("td",{},statusLabels[l.status]))))):p("I risultati appariranno dopo i primi esercizi.")),
+      card(h("h2",{},"Le strutture esercitate"),rows.length?h("table",{},h("thead",{},h("tr",{},["Struttura","Senza aiuti","Proposta"].map(v=>h("th",{},v)))),h("tbody",{},rows.map(l=>h("tr",{},h("td",{},link(l.title,"lesson/"+l.id,"text-link")),h("td",{},Math.round(l.accuracy*100)+"% su "+l.window+" risposte recenti · "+l.attempts+" in totale"),h("td",{},statusLabels[l.status]))))):p("I risultati appariranno dopo i primi esercizi.")),
       state.writing_courses?.length>0&&card(h("h2",{},"La scrittura passo passo"),state.writing_courses.map(c=>h("div",{},link((c.completed_at?"Percorso svolto":"Passo "+(c.stage+1)+" di 6")+" · "+c.checks.length+" tappe completate","course/"+c.id,"text-link"),p(c.completed_at?"Nuovi fatti affrontati senza aiuti anche in un'altra giornata.":c.stage===5?"Prima prova autonoma svolta; conferma in un altro giorno.":"Aiuti e tentativi sono salvati separatamente dalle prove autonome.","small muted")))),
       card(h("h2",{},"Gli errori da riprendere"),list(recent.filter(a=>!a.correct).slice(-8).reverse().map(a=>h("span",{},a.stem," → ",a.answer))),state.legacy&&p("L'archivio precedente è conservato nel backup. Le vecchie auto-valutazioni non diventano nuove prove di padronanza.","muted")),link("Continua a studiare","home")];
   }
@@ -500,13 +500,16 @@ export async function start() {
     const app=await mountApp(repo);
     function online(){const el=document.getElementById("connection");el.textContent=navigator.onLine?"Online":"Offline";el.dataset.state=navigator.onLine?"online":"offline";}
     online();window.addEventListener("online",online);window.addEventListener("offline",online);
-    if("serviceWorker" in navigator) {
+    // Il funzionamento offline è un di più: se il browser rifiuta il service worker
+    // (navigazione privata, browser integrati) l'app resta aperta e usabile.
+    if("serviceWorker" in navigator) try {
       const reg=await navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"});
+      if(!reg)throw new Error("service worker non disponibile");
       const offer=worker=>{if(!worker)return;const banner=document.getElementById("update");banner.hidden=false;banner.querySelector("button").onclick=async()=>{await app.flush();let reload=true;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(reload){reload=false;location.reload();}});worker.postMessage({type:"SKIP_WAITING"});};};
       if(reg.waiting)offer(reg.waiting);
       reg.addEventListener("updatefound",()=>{const worker=reg.installing;worker?.addEventListener("statechange",()=>{if(worker.state==="installed"&&navigator.serviceWorker.controller)offer(reg.waiting);});});
       reg.update().catch(()=>{});
-    }
+    }catch(error){console.warn("Offline non disponibile:",error.message);}
     navigator.storage?.persist?.().catch(()=>{});
     return app;
   }catch(e){document.getElementById("view").replaceChildren(title("AVVIO","Non ho potuto aprire l'archivio."),p(e.message,"warning"),p("I dati precedenti non vengono cancellati. Prova a chiudere le altre schede e a riaprire l'app."));}

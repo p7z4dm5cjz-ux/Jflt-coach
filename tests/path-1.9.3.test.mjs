@@ -22,3 +22,10 @@ test("1.9.3: due sessioni intere riuscite portano al mantenimento anche con 30 e
   const s=pretest();session(s,"negatives","a",27);session(s,"negatives","b",28);
   assert.equal(recommendation(s).find(l=>l.id==="negatives").status,"maintain");
 });
+
+test("1.9.3: una lezione da confermare torna dopo tre giorni anche senza domande nella verifica breve",()=>{
+  const s=pretest();session(s,"questions","q1",28);
+  const old=new Date(Date.now()-4*86400000).toISOString();s.attempts.forEach(a=>{if(a.session_id==="q1")a.date=old;});
+  const ranked=recommendation(s);assert.equal(ranked.find(l=>l.id==="questions").status,"confirm");
+  assert.ok(ranked.findIndex(l=>l.id==="questions")<3,"deve tornare tra le prime tappe");
+});
