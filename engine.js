@@ -1,10 +1,11 @@
 import {LESSONS, VOCABULARY, PHRASALS} from "./catalog.js";
 import {placementProfile, validPlacement, newPlacement} from "./placement.js";
-import {PARTICLE_ALTERNATIVES,BASE_MEANING_DISTRACTORS} from "./phrasal-extension.js";
+import {PARTICLE_ALTERNATIVES,BASE_MEANING_DISTRACTORS,MEANING_GROUPS} from "./phrasal-extension.js";
+const SAME_MEANING=new Map(MEANING_GROUPS.flatMap(group=>group.map(id=>[id,new Set(group)])));
 import {normal,correct} from "./answer-normal.js";
 import {lessonEvidence} from "./grammar-checks.js";
 export {normal,correct} from "./answer-normal.js";
-export const VERSION = "1.6.0";
+export const VERSION = "1.6.1";
 export const API_VERSION = 1;
 export const LEGACY_STORES = ["settings","diag_responses","diag_texts","profile","requests","grammar_sets","grammar_answers","tasks","texts","feedback","error_log","cards","transfer_checks","device_tests","to_verify"];
 export const now = () => new Date().toISOString();
@@ -97,7 +98,7 @@ export function recoveryItems(terms) {
   return terms.map(v=>({id:"recover-"+v.id,term_id:v.id,kind:"retrieval",skill:"form",stem:"Richiama l'espressione inglese della scheda studiata: «"+v.meaning_it+"». Indizio: "+v.expression[0]+"… ("+v.expression.split(/\s+/).length+" parole).",answer:v.expression,accept:[v.expression],options:[],why:"Espressione della scheda: "+v.expression+". Esempio: "+v.example,origin:"local"}));
 }
 export function phrasalItems(term, variation=0) {
-  const other=[...new Map(PHRASALS.filter(v=>v.id!==term.id&&v.meaning_it!==term.meaning_it&&v.alternative!==term.alternative).map(v=>[v.meaning_it,v])).values()];
+  const other=[...new Map(PHRASALS.filter(v=>v.id!==term.id&&v.meaning_it!==term.meaning_it&&v.alternative!==term.alternative&&!SAME_MEANING.get(term.id)?.has(v.id)).map(v=>[v.meaning_it,v])).values()];
   const distractors=term.meaning_distractors||BASE_MEANING_DISTRACTORS[term.id]||[other[variation%other.length].meaning_it,other[(variation+17)%other.length].meaning_it];
   const words=term.expression.split(" ");
   const particles=words.slice(1).join(" "),alternatives=PARTICLE_ALTERNATIVES[term.id]||[];

@@ -20,12 +20,12 @@ test("16 nuclei: trenta operazioni, sei situazioni e varianti che non fingono nu
  for(const id of CORE_LESSONS){const items=grammarItems(id),variant=grammarItems(id,1);assert.equal(items.length,30);assert.equal(new Set(items.map(i=>i.id)).size,30);assert.equal(new Set(items.map(i=>i.context_id)).size,6);assert.deepEqual(new Set(variant.map(i=>i.context_id)),new Set(items.map(i=>i.context_id)));
   for(const item of items){assert.ok(correct(item,item.answer));assert.ok(item.why.length>70);for(const option of item.options)assert.equal(correct(item,option),option===item.answer);}
  }
- assert.equal(grammarItems("past-simple")[12].answer,"The coordinator did not check the equipment.");
- assert.equal(grammarItems("present-simple")[18].answer,"Does the coordinator check the equipment?");
+ assert.equal(grammarItems("past-simple")[12].answer,"The coordinator did not check the radios yesterday.");
+ assert.equal(grammarItems("present-simple")[18].answer,"Does the coordinator check the door locks every Monday?");
  assert.equal(grammarItems("present-perfect-simple")[1].answer,"has written");
- assert.equal(grammarItems("obligation")[12].answer,"The coordinator must not check the equipment.");
+ assert.equal(grammarItems("obligation")[12].answer,"The coordinator must not check the radios before the meeting.");
  assert.ok(grammarItems("obligation")[12].stem.includes("divieto"));
- assert.equal(correct(grammarItems("past-simple")[12],"The coordinator didn't checked the equipment"),false);
+ assert.equal(correct(grammarItems("past-simple")[12],"The coordinator didn't checked the radios yesterday"),false);
 });
 test("Ripetere operazioni o cambiare il soggetto non certifica otto contesti",()=>{
  const s=freshState();s.attempts=[0,1].flatMap(round=>grammarItems("past-simple",round).map(i=>({lesson_id:"past-simple",context_id:i.context_id,stem:i.stem,session_id:"s"+round,correct:true,assisted:false,source:"local"})));

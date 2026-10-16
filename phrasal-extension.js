@@ -106,6 +106,24 @@ const distractors={
   "wrap-up-object":["scartare un pacco","concludere una riunione"]
 };
 // Due casi della banca precedente con traduzioni sinonime: opzioni esplicite.
+// Sensi equivalenti o quasi equivalenti: non compaiono mai come opzione sbagliata l'uno dell'altro.
+export const MEANING_GROUPS=[
+  ["pv-076","pv-078","phrasal-sense-give-in-submit"],
+  ["pv-136","pv-153","phrasal-sense-get-down-write","phrasal-sense-put-down-write"],
+  ["pv-050","phrasal-sense-get-along"],
+  ["pv-069","phrasal-sense-get-on-progress"],
+  ["pv-017","pv-072","pv-083","phrasal-sense-keep-up"],
+  ["pv-105","phrasal-sense-go-for-choice"],
+  ["pv-037","pv-143","phrasal-sense-get-rid-of"],
+  ["pv-150","phrasal-sense-wear-out-object"],
+  ["pv-106","phrasal-sense-call-for-person"],
+  ["pv-013","phrasal-sense-ring-back"],
+  ["phrasal-sense-break-up-relationship","phrasal-sense-split-up"],
+  ["pv-003","pv-146","phrasal-sense-go-off-light"],
+  ["phrasal-sense-go-with-match","phrasal-sense-go-together"],
+  ["phrasal-sense-hang-out","phrasal-sense-go-out-leisure"],
+  ["pv-126","phrasal-sense-tidy-up"]
+];
 export const BASE_MEANING_DISTRACTORS={
   "pv-110":["annullare definitivamente","anticipare un appuntamento"],
   "pv-158":["iniziare immediatamente","interrompere per sempre"]

@@ -32,7 +32,7 @@ test('Dizionario salva senso e origine; sensi distinti, duplicati senza azzerare
  state.readings[0].understanding_source.text='Not the source';assert.throws(()=>validateState(state));
 });
 test('Ortografia verifica le maiuscole solo nelle consegne pertinenti; varianti britanniche/americane accettate',()=>{
- const items=grammarItems('spelling-control');const i=items.find(x=>x.answer==='I');assert.equal(correct(i,'i'),false);assert.equal(correct(i,'I'),true);
+ const items=grammarItems('spelling-control');const i=items.find(x=>x.answer==='Yesterday I called the office.');assert.equal(correct(i,'Yesterday i called the office.'),false);assert.equal(correct(i,'yesterday I called the office'),false);assert.equal(correct(i,'Yesterday I called the office'),true);assert.equal(correct(i,'Yesterday I called the office. '),true);
  const travel=items.find(x=>x.answer==='travelled');assert.equal(correct(travel,'traveled'),true);
  assert.equal(correct({answer:'Monday'},'monday'),true);
  for(const id of ['word-building','spelling-control','review-foundation','dependent-prepositions']){const rows=grammarItems(id);assert.equal(rows.length,30);assert.equal(new Set(rows.map(x=>x.stem)).size,30);}

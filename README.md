@@ -1,4 +1,8 @@
-# JFLT Coach 1.6.0
+# JFLT Coach 1.6.1
+
+## Correzioni della 1.6.1
+
+Revisione didattica completa degli esercizi locali, delle verifiche e dei percorsi di scrittura. Corrette le risposte giuste che venivano rifiutate, tolte le soluzioni visibili nelle consegne, resi indipendenti i controlli e migliorate le opzioni a scelta multipla. Il Worker Groq resta invariato nel funzionamento. Dettagli in [CORREZIONI_1.6.1.md](CORREZIONI_1.6.1.md).
 
 ## Novità del 16 ottobre
 

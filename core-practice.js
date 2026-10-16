@@ -1,12 +1,15 @@
 // Original controlled practice. Six situations, five operations per situation.
+// Each situation keeps its verb; the complement changes at every operation.
 // Reusing a situation is deliberate practice, not independent proof of mastery.
+// Each operation uses a different complement, so a later item never repeats the
+// sentence (or the answer) already shown in an earlier operation of the same situation.
 const verbs=[
-  ["check","checked","checked","checking","the equipment"],
-  ["write","wrote","written","writing","the summary"],
-  ["prepare","prepared","prepared","preparing","the timetable"],
-  ["read","read","read","reading","the instructions"],
-  ["inspect","inspected","inspected","inspecting","the room"],
-  ["update","updated","updated","updating","the register"]
+  ["check","checked","checked","checking",["the equipment","the visitor list","the radios","the door locks","the vehicles"]],
+  ["write","wrote","written","writing",["the summary","the shift report","the incident log","the reply","the statement"]],
+  ["prepare","prepared","prepared","preparing",["the timetable","the briefing","the documents","the patrol plan","the meeting room"]],
+  ["read","read","read","reading",["the instructions","the new rules","the messages","the case file","the warning notice"]],
+  ["inspect","inspected","inspected","inspecting",["the room","the vehicle","the storage area","the cameras","the entrance"]],
+  ["update","updated","updated","updating",["the register","the database","the contact list","the map","the schedule"]]
 ];
 const subjects=["The coordinator","The instructor","The assistant","The supervisor"];
 const rules={
@@ -29,19 +32,44 @@ const rules={
 };
 export const CORE_LESSONS=Object.keys(rules);
 const cap=s=>s[0].toUpperCase()+s.slice(1);
+const third=v=>v[0]==="have"?"has":v[0]+(/(ch|sh|ss|x)$/.test(v[0])?"es":"s");
+// Wrong options are well-formed verb groups of another tense or meaning that the
+// stated time expression or instruction excludes, so the item tests the choice of form.
+const DISTRACTORS={
+ "present-simple":v=>[v[0],"is "+v[3]],
+ "present-continuous":v=>[third(v),"was "+v[3]],
+ "past-simple":v=>["has "+v[2],third(v)],
+ "past-continuous":v=>["is "+v[3],"has been "+v[3]],
+ "present-perfect-simple":v=>["had "+v[2],"is "+v[3]],
+ "present-perfect-continuous":v=>["is "+v[3],third(v)],
+ "past-perfect-simple":v=>["has "+v[2],"will have "+v[2]],
+ "past-perfect-continuous":v=>["has been "+v[3],"is "+v[3]],
+ "future-will":v=>[v[1],"has "+v[2]],
+ "future-going-to":v=>[v[1],"has "+v[2]],
+ "future-arrangements":v=>[v[1],"has "+v[2]],
+ "future-continuous":v=>[v[1],"has been "+v[3]],
+ "future-perfect-simple":v=>["had "+v[2],v[1]],
+ "future-perfect-continuous":v=>["had been "+v[3],"has been "+v[3]],
+ "ability":v=>[v[1],"must "+v[0]],
+ "obligation":v=>["can "+v[0],"may "+v[0]]
+};
 export function coreItems(id,variation=0){
  const r=rules[id];if(!r)return null;
  const [name,time,affirm,negative,aux,tail,why]=r;
  const subject=subjects[Math.abs(variation)%subjects.length],who=subject.toLowerCase();
+ const when=time[0].toLowerCase()+time.slice(1);
  const contexts=verbs.map((v,i)=>({v,i,context:id+"-s"+(Math.abs(variation)%subjects.length)+"-v"+i}));
- const make=(x,page,stem,answer,kind="completion",options=[])=>({id:x.context+"-task"+page,context_id:id+"-situation-"+x.i,kind,skill:page===0?"recognise":"form",stem,answer,accept:[answer],options,why,formula:name,origin:"local"});
+ const make=(x,page,stem,answer,kind="completion",options=[],accept=[answer])=>({id:x.context+"-task"+page,context_id:id+"-situation-"+x.i,kind,skill:page===0?"recognise":"form",stem,answer,accept:[...new Set(accept)],options,why,formula:name,origin:"local"});
  return [0,1,2,3,4].flatMap(page=>contexts.map(x=>{
-   const {v}=x,phrase=affirm(v),rest=v[4],full=subject+" "+phrase+" "+rest+".",neg=subject+" "+negative+" "+tail(v)+" "+rest+".";
-   if(page===0){const options=[phrase,"to "+v[0],"has "+v[3]];return make(x,page,"Usa "+name+". "+time+": "+who+" ___ "+rest+".",phrase,"choice",options);}
+   const {v}=x,phrase=affirm(v),rest=v[4][page];
+   const body=subject+" "+phrase+" "+rest,full=body+" "+when+".";
+   if(page===0){const options=[phrase,...DISTRACTORS[id](v).filter(o=>o!==phrase)];return make(x,page,"Usa "+name+". "+time+": "+who+" ___ "+rest+".",phrase,"choice",options);}
    if(page===1)return make(x,page,"Forma richiesta: "+name+". "+time+": "+who+" ___ "+rest+". ("+v[0]+")",phrase);
-   if(page===2)return make(x,page,"Riscrivi nella negativa della forma indicata ("+name+"): "+full+(id==="obligation"?" Qui devi esprimere un divieto, non assenza di obbligo.":""),neg,"transformation");
-   if(page===3)return make(x,page,"In un rapporto fittizio vuoi formulare una domanda sì/no. Usa "+name+"; inizia con "+cap(aux)+" e mantieni soggetto e complemento: "+full,cap(aux)+" "+who+" "+tail(v)+" "+rest+"?","transformation");
-   // Both the required tense and exactly one wrong verb phrase are specified.
-   return make(x,page,"Correggi il gruppo verbale usando "+name+" ("+time.toLowerCase()+"): "+subject+" to "+v[0]+" "+rest+".",full,"error_correction");
+   if(page===2){const neg=subject+" "+negative+" "+tail(v)+" "+rest+" "+when+".";return make(x,page,"Riscrivi nella negativa della forma indicata ("+name+"): "+full+(id==="obligation"?" Qui devi esprimere un divieto, non assenza di obbligo.":""),neg,"transformation");}
+   if(page===3)return make(x,page,"In un rapporto fittizio vuoi formulare una domanda sì/no. Usa "+name+"; inizia con "+cap(aux)+" e mantieni soggetto, complemento ed espressione di tempo: "+full,cap(aux)+" "+who+" "+tail(v)+" "+rest+" "+when+"?","transformation");
+   // Both the required tense and exactly one wrong verb group are specified; the
+   // time expression may stay at the end, move to the front, or be left out.
+   const front=time+" "+who+" "+phrase+" "+rest,frontComma=time+", "+who+" "+phrase+" "+rest;
+   return make(x,page,"Correggi il gruppo verbale usando "+name+": "+subject+" to "+v[0]+" "+rest+" "+when+".",full,"error_correction",[],[full,body,front,frontComma]);
  }));
 }
