@@ -5,7 +5,7 @@ const SAME_MEANING=new Map(MEANING_GROUPS.flatMap(group=>group.map(id=>[id,new S
 import {normal,correct} from "./answer-normal.js";
 import {lessonEvidence} from "./grammar-checks.js";
 export {normal,correct} from "./answer-normal.js";
-export const VERSION = "1.9.2";
+export const VERSION = "1.9.3";
 export const API_VERSION = 1;
 export const LEGACY_STORES = ["settings","diag_responses","diag_texts","profile","requests","grammar_sets","grammar_answers","tasks","texts","feedback","error_log","cards","transfer_checks","device_tests","to_verify"];
 export const now = () => new Date().toISOString();
@@ -43,11 +43,19 @@ export function recommendation(state) {
   const writingErrors=[...state.writings.slice(-3).flatMap(w=>w.feedback_source===w.draft?(w.feedback?.issues||[]).filter(i=>i.kind==="error"):[]),...courseErrors];
   const mapCategory={tenses:["past-simple","present-perfect-simple"],negation:["negatives"],phrasals:["phrasal-basics"],word_order:["sentence"],verb_patterns:["verb-patterns"]};
   const scored=LESSONS.map((l,index)=>{
-    const a=state.attempts.filter(a=>a.lesson_id===l.id&&!a.assisted&&!a.disputed&&a.source!=="legacy").slice(-12);
-    const errors=a.filter(a=>!a.correct).length, recent=a.length?a.filter(a=>a.correct).length/a.length:null;
-    const distinct=new Set(a.map(a=>a.session_id)).size;
+    const all=state.attempts.filter(a=>a.lesson_id===l.id&&!a.assisted&&!a.disputed&&a.source!=="legacy");
+    // Finestra = le ultime due sessioni intere: con sessioni da 30 esercizi le ultime 12 risposte
+    // venivano tutte dalla stessa sessione e il mantenimento non era mai raggiungibile.
+    const order=[...new Set(all.map(a=>a.session_id))],lastTwo=order.slice(-2),lastOne=order.slice(-1);
+    const a=all.filter(x=>lastTwo.includes(x.session_id)),latest=all.filter(x=>lastOne.includes(x.session_id));
+    const errors=latest.filter(a=>!a.correct).length, recent=a.length?a.filter(a=>a.correct).length/a.length:null;
+    const latestRate=latest.length?latest.filter(a=>a.correct).length/latest.length:null;
+    const distinct=lastTwo.length;
     let status=profile?.lessonStatus[l.id]||"new";
     if(distinct>=2&&new Set(a.filter(x=>x.correct).map(a=>a.context_id||a.stem)).size>=8&&a.length>=8&&recent>=0.85)status="maintain";
+    // Ultima sessione riuscita (almeno 6 risposte, 85%): la tappa lascia il posto alla successiva
+    // e torna con la verifica distanziata; il pretest non la tiene più in testa.
+    else if(latest.length>=6&&latestRate>=0.85)status="confirm";
     else if(errors)status="review";
     const evidence=lessonEvidence(state,l.id);
     if(evidence.errors)status="review";
@@ -56,8 +64,8 @@ export function recommendation(state) {
     // Un pretest di base non dimostra la padronanza degli approfondimenti.
     // Gli errori nei prerequisiti li rendono pertinenti, senza precedere il recupero.
     const bridge=l.extension&&profile?(l.prerequisites||[]).some(id=>profile.lessonStatus[id]==="review")?5:0:0;
-    const score=errors*6+writingWeight+evidence.errors*12+(evidence.due_now?120:0)+(status==="review"?20:0)+(profile?.priorityIds.includes(l.id)?30-profile.priorityIds.indexOf(l.id):0)+base+bridge-(l.extension?l.stage+1:0)-(["skip","maintain"].includes(status)?100:0)-(evidence.passed&&!evidence.due_now?35:0);
-    return {...l,status,score,index,accuracy:recent,attempts:a.length};
+    const score=Math.min(errors,6)*6+writingWeight+evidence.errors*12+(evidence.due_now?120:0)+(status==="review"?20:0)+(status!=="confirm"&&profile?.priorityIds.includes(l.id)?30-profile.priorityIds.indexOf(l.id):0)+base+bridge-(l.extension?l.stage+1:0)-(["skip","maintain"].includes(status)?100:0)-(evidence.passed&&!evidence.due_now?35:0);
+    return {...l,status,score,index,accuracy:recent,attempts:all.length};
   });
   return scored.sort((a,b)=>b.score-a.score||a.index-b.index);
 }

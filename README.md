@@ -1,4 +1,9 @@
-# JFLT Coach 1.9.2
+# JFLT Coach 1.9.3
+
+## Novità della 1.9.3
+
+- **Corretto: il piano restava sempre sulla stessa lezione.** Il mantenimento guardava solo le ultime 12 risposte; con le sessioni da 30 esercizi venivano tutte dalla stessa sessione, quindi la condizione «due sessioni diverse» non si verificava mai e la prima priorità del pretest (spesso le negazioni) restava in testa per sempre. Ora contano le ultime due sessioni intere. Dopo una sessione riuscita (almeno 85%) la lezione passa a «Da confermare» e il percorso va alla tappa successiva; con due sessioni riuscite passa al mantenimento e torna solo con le verifiche distanziate.
+- Il peso degli errori di una sessione lunga è limitato, così una sessione andata male non blocca la classifica per giorni.
 
 ## Novità della 1.9.2
 
