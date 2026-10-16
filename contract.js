@@ -145,10 +145,10 @@ export const SHAPES={
   exercises:{items:[
     {kind:"choice",stem:"Scegli la forma corretta: They ___ on duty.",options:["am","is","are"],answer:"are",accept:["are"],why:"They richiede are."},
     {kind:"choice",stem:"Scegli il past simple di go.",options:["goed","went","gone"],answer:"went",accept:["went"],why:"Go ha il past simple irregolare went."},
-    {kind:"completion",stem:"Completa con il past simple di leave: She ___ yesterday.",options:[],answer:"left",accept:["left"],why:"Il past simple di leave è left."},
-    {kind:"completion",stem:"Completa con il present perfect simple di finish: We ___ the report.",options:[],answer:"have finished",accept:["have finished"],why:"Con we si usa have + participio."},
-    {kind:"transformation",stem:"Rendi negativa con didn't: They checked the gate.",options:[],answer:"They didn't check the gate.",accept:["They didn't check the gate.","They did not check the gate."],why:"Dopo did il verbo è alla forma base."},
-    {kind:"error_correction",stem:"Correggi l'unico errore: She doesn't works here.",options:[],answer:"She doesn't work here.",accept:["She doesn't work here.","She does not work here."],why:"Dopo doesn't si usa work, senza -s."}
+    {kind:"completion",stem:"Scrivi solo la parola mancante: She ___ yesterday. (usa leave al past simple)",options:[],answer:"left",accept:["left"],why:"Il past simple di leave è left."},
+    {kind:"completion",stem:"Scrivi solo le parole mancanti: We ___ the report. (usa finish al present perfect simple)",options:[],answer:"have finished",accept:["have finished"],why:"Con we si usa have + participio."},
+    {kind:"transformation",stem:"Rendi negativa con didn't e riscrivi tutta la frase: They checked the gate.",options:[],answer:"They didn't check the gate.",accept:["They didn't check the gate.","They did not check the gate."],why:"Dopo did il verbo è alla forma base."},
+    {kind:"error_correction",stem:"Correggi l'errore e riscrivi tutta la frase: She doesn't works here.",options:[],answer:"She doesn't work here.",accept:["She doesn't work here.","She does not work here."],why:"Dopo doesn't si usa work, senza -s."}
   ]},
   writing_review:{summary:"Valutazione italiana",priorities:["massimo tre priorità"],rubric:{grammar:"valutazione",content:"valutazione",cohesion:"valutazione",register:"valutazione"},issues:[{quote:"citazione esatta presente nel testo",correction:"correzione minima",explanation:"regola e motivo",kind:"error",category:"negatives"}]},
   writing_compare:{summary:"confronto concreto",resolved:["errore realmente risolto"],remaining:["errore ancora presente"],transfer:[1,2,3].map(n=>({stem:"Nuovo esercizio "+n+" con contesto diverso",answer:"risposta",accept:["risposta","variante"],why:"spiegazione"}))},

@@ -14,6 +14,8 @@ export function correct(item,answer) {
 export function answerHint(item) {
   if(!item||item.options?.length)return null;
   const stem=String(item.stem||item.question||""),answer=String(item.answer||"").trim(),gap=/_{2,}/.test(stem);
+  // La consegna dice già che cosa scrivere: nessuna indicazione in più, sarebbe solo un doppione.
+  if(/scrivi/i.test(stem))return null;
   const sentence=answer.split(/\s+/).length>=3&&/^[A-Z]/.test(answer);
   if(!gap||sentence&&["transformation","error_correction"].includes(item.kind))return "Scrivi tutta la frase.";
   return "Scrivi solo ciò che va al posto di ___, non tutta la frase.";

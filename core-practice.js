@@ -63,13 +63,13 @@ export function coreItems(id,variation=0){
  return [0,1,2,3,4].flatMap(page=>contexts.map(x=>{
    const {v}=x,phrase=affirm(v),rest=v[4][page];
    const body=subject+" "+phrase+" "+rest,full=body+" "+when+".";
-   if(page===0){const options=[phrase,...DISTRACTORS[id](v).filter(o=>o!==phrase)];return make(x,page,"Usa "+name+". "+time+": "+who+" ___ "+rest+".",phrase,"choice",options);}
-   if(page===1)return make(x,page,"Forma richiesta: "+name+". "+time+": "+who+" ___ "+rest+". ("+v[0]+")",phrase);
-   if(page===2){const neg=subject+" "+negative+" "+tail(v)+" "+rest+" "+when+".";return make(x,page,"Riscrivi nella negativa della forma indicata ("+name+"): "+full+(id==="obligation"?" Qui devi esprimere un divieto, non assenza di obbligo.":""),neg,"transformation");}
-   if(page===3)return make(x,page,"In un rapporto fittizio vuoi formulare una domanda sì/no. Usa "+name+"; inizia con "+cap(aux)+" e mantieni soggetto, complemento ed espressione di tempo: "+full,cap(aux)+" "+who+" "+tail(v)+" "+rest+" "+when+"?","transformation");
+   if(page===0){const options=[phrase,...DISTRACTORS[id](v).filter(o=>o!==phrase)];return make(x,page,"Scegli la forma corretta del verbo ("+name+"): "+time+", "+who+" ___ "+rest+".",phrase,"choice",options);}
+   if(page===1)return make(x,page,(phrase.includes(" ")?"Scrivi solo le parole mancanti (":"Scrivi solo la parola mancante (")+name+"): "+time+", "+who+" ___ "+rest+". ("+v[0]+")",phrase);
+   if(page===2){const neg=subject+" "+negative+" "+tail(v)+" "+rest+" "+when+".";return make(x,page,"Rendi negativa e riscrivi tutta la frase"+(id==="obligation"?" esprimendo un divieto, non l'assenza di obbligo":"")+": "+full,neg,"transformation");}
+   if(page===3)return make(x,page,"Trasforma in domanda e riscrivi tutta la frase, iniziando con "+cap(aux)+": "+full,cap(aux)+" "+who+" "+tail(v)+" "+rest+" "+when+"?","transformation");
    // Both the required tense and exactly one wrong verb group are specified; the
    // time expression may stay at the end, move to the front, or be left out.
    const front=time+" "+who+" "+phrase+" "+rest,frontComma=time+", "+who+" "+phrase+" "+rest;
-   return make(x,page,"Correggi il gruppo verbale usando "+name+": "+subject+" to "+v[0]+" "+rest+" "+when+".",full,"error_correction",[],[full,body,front,frontComma]);
+   return make(x,page,"Correggi l'errore e riscrivi tutta la frase ("+name+"): "+subject+" to "+v[0]+" "+rest+" "+when+".",full,"error_correction",[],[full,body,front,frontComma]);
  }));
 }

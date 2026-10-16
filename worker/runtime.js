@@ -1,7 +1,7 @@
 // Incorporato con contratto e libri in worker/index.js, autonomo al deploy.
 const MODELS=["openai/gpt-oss-120b","openai/gpt-oss-20b"];
 const DIAGNOSTICS_REVISION="groq-reply-v1";
-const PROMPT_REVISION="groq-translate-v9";
+const PROMPT_REVISION="groq-clarity-v10";
 const FALLBACK_MODEL="openai/gpt-oss-20b";
 const TASK_INSTRUCTIONS={
   grammar_explain:[
@@ -27,6 +27,8 @@ const TASK_INSTRUCTIONS={
     "DATA.practice descrive un blocco della sessione: produci sempre e soltanto 6 esercizi, non tutti quelli di total. Non ripetere consegne o frasi presenti in already_seen. Per una riprova conserva le regole deboli di recent_errors ma cambia verbo, situazione e contenuto, non solo un nome. Aumenta gradualmente il contrasto tra forme nei blocchi successivi.",
     "Why deve insegnare: indica la forma o l'ordine dei componenti, spiega perché è la scelta giusta in QUEL contesto e cita l'errore tipico pertinente. Non riciclare la stessa spiegazione per sei regole diverse e non trattare una variante di stile come errore. Controlla che la frase da correggere abbia davvero un errore.",
     "Se la lezione contiene practice_focus/sections, distribuisci i nuclei della scheda fra i cinque blocchi: forma di base, significato, contrasto, eccezioni/varianti, trasferimento in frasi nuove. Non interpretare il numero della tappa come certificazione CEFR. Le varianti dichiarate standard nella scheda devono restare accettabili. Le consegne di scrittura in sections sono obiettivi di trasferimento, non esercizi aperti da correggere per coincidenza testuale.",
+    "Lo stem inizia SEMPRE con un'istruzione italiana breve che dice cosa scrivere, poi la frase inglese. Completion con ___: «Scrivi solo la parola mancante:» se answer è una parola, «Scrivi solo le parole mancanti:» se answer ha più parole; answer contiene SOLO le parole dello spazio ___. Se answer è la frase intera: «Riscrivi tutta la frase …» (transformation) o «Correggi l'errore e riscrivi tutta la frase:» (error_correction). Choice: «Scegli …». Riordino: «Metti le parole in ordine e scrivi la frase:».",
+    "La parola da usare va tra parentesi alla fine: «(work)»; se va trasformata dillo in modo concreto: «(usa work al past simple)», «(trasforma decide in un nome)». Non mettere tra parentesi finali indicazioni che non siano la parola da usare. Una sola richiesta per stem, frasi brevi in italiano naturale, senza etichette tecniche iniziali. Nel testo dello stem non usare gergo: vietati «lacuna», «gruppo verbale», «stem», «segmento», «nucleo», «operazione», «fronting», «ellissi», «proposizione participiale», «soggetto nominale», «sintagma». Past simple, present perfect, participio passato, forma base del verbo, ausiliare e passivo sono ammessi se servono.",
     "Limiti per ogni elemento: stem e why massimo 1600 caratteri; answer, ogni option e ogni variante in accept massimo 600. Testi non vuoti. Controlla internamente soluzione, varianti e spiegazione prima di rispondere."
   ],
   writing_review:[
@@ -42,6 +44,7 @@ const TASK_INSTRUCTIONS={
     "Dichiara risolto solo un errore realmente corretto in rewrite. Controlla anche eventuali nuovi errori. Mantieni distinta una correzione linguistica da una preferenza stilistica. Non fornire una riscrittura sostitutiva.",
     "transfer contiene esattamente 3 esercizi oggettivi in contesti nuovi, legati alle regole emerse. Se non ci sono errori, esercita tre costruzioni presenti nel testo. Ogni esercizio contiene SEMPRE stem, answer, accept e why, senza options o kind. La prova viene valutata dopo nell'app.",
     "stem precisa forma o trasformazione richiesta; answer è una risposta inglese breve, accept un elenco con soluzione e varianti standard valide (massimo 8), why una spiegazione italiana. Evita consegne ambigue; non copiare frasi della bozza o della riscrittura.",
+    "Ogni stem inizia con un'istruzione italiana, poi la frase inglese: con ___ «Scrivi solo la parola mancante:» (answer di una parola) o «Scrivi solo le parole mancanti:» (più parole), e answer contiene solo le parole dello spazio; se answer è la frase intera «Riscrivi tutta la frase …» o «Correggi l'errore e riscrivi tutta la frase:». Parola da usare tra parentesi alla fine, es. «(usa work al past simple)». Una sola richiesta per stem; niente gergo come «lacuna», «gruppo verbale», «segmento», «sintagma».",
     "Limiti: summary, ogni resolved/remaining, stem e why massimo 1600 caratteri; answer e ogni variante massimo 600. Testi non vuoti."
   ],
   reading_review:[

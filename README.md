@@ -1,4 +1,10 @@
-# JFLT Coach 1.9.0
+# JFLT Coach 1.9.1
+
+## Novità della 1.9.1
+
+- **Consegne chiare in tutti gli esercizi.** Ogni esercizio con risposta da scrivere comincia con un'istruzione italiana che dice esattamente che cosa scrivere: «Scrivi solo la parola mancante» (una parola), «Scrivi solo le parole mancanti» (più parole), «Riscrivi tutta la frase» o «Correggi l'errore e riscrivi tutta la frase» (frase intera), «Metti le parole in ordine e scrivi la frase». La parola da usare è tra parentesi alla fine, es. «(work)» o «(usa work al past simple)». Tolte le etichette tecniche e i termini come «lacuna» o «gruppo verbale». Riviste oltre 800 consegne: pretest, verifiche, esercizi di grammatica, banca offline, negazioni, phrasal verbs e recupero. Le soluzioni non cambiano; dove la nuova consegna ammette un'altra risposta corretta, questa è stata aggiunta alle varianti accettate.
+- **Esercizi generati da Groq:** il Worker chiede le stesse regole di chiarezza; per quelli che non le rispettano, sotto la casella compare un'indicazione automatica («Scrivi solo ciò che va al posto di ___» oppure «Scrivi tutta la frase»).
+- Controllo automatico nei test: ogni consegna locale dice che cosa scrivere, non usa gergo e dice «parola» o «parole» secondo la soluzione.
 
 ## Novità della 1.9.0
 
