@@ -1,4 +1,11 @@
-# JFLT Coach 1.8.0
+# JFLT Coach 1.9.0
+
+## Novità della 1.9.0
+
+- **Testo e traduzione affiancati** (Comprendi → una lettura): a sinistra incolli il testo inglese, a destra «Traduci con Groq» mostra la traduzione italiana paragrafo per paragrafo. I due riquadri scorrono insieme. I testi lunghi vengono divisi automaticamente in richieste da circa 3.000 caratteri; ogni traduzione deve avere lo stesso numero di paragrafi dell'originale. Se modifichi il testo, l'app avvisa che la traduzione è da rifare. La traduzione resta salvata nella lettura e nel backup.
+- La funzione esistente di confronto con **la tua traduzione** resta disponibile sotto i riquadri, in «Prova a tradurre tu e confronta».
+- **Eliminare letture e testi:** in fondo alla pagina di ogni lettura e di ogni testo scritto, con richiesta di conferma. I risultati degli esercizi restano.
+
 
 ## Novità della 1.8.0
 

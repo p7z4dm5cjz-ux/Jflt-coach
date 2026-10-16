@@ -137,3 +137,17 @@ nav a[aria-current=page]{background:var(--soft);color:var(--ink);box-shadow:none
 }
 @media(min-width:761px){.today-tiles{max-width:520px}.hero{padding:28px 30px}}
 @media print{.week-strip,.settings-link{display:none}}
+
+/* 1.9.0 · testo e traduzione affiancati, eliminazione */
+.translate{margin:14px 0}
+.translate-panes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch}
+.pane{display:flex;flex-direction:column;min-width:0}
+.pane label,.pane-label{display:block;font-weight:700;margin-bottom:7px}
+.pane textarea,.pane-output{height:62vh;min-height:300px;max-height:680px;font-size:16px;line-height:1.6}
+.pane textarea{resize:none}
+.pane-output{overflow:auto;border:2px solid var(--option-line);border-radius:12px;padding:12px 14px;background:var(--soft);color:var(--ink);overflow-wrap:anywhere}
+.pane-output p{margin:0 0 14px}
+.own-translation{margin-top:8px}
+.danger-zone{margin:28px 0 8px;padding-top:16px;border-top:1px solid var(--line)}
+.danger,.danger:hover{color:var(--error-ink);background:transparent}
+@media(max-width:760px){.translate-panes{gap:8px}.pane textarea,.pane-output{font-size:14px;line-height:1.5;padding:10px}.pane label,.pane-label{font-size:14px}}

@@ -346,7 +346,8 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
       feedbackPanel(w),
       w.feedback&&card(h("h2",{},"2. Riscrittura"),p("Riscrivi tu il testo. Cerca di risolvere gli errori mantenendo fatti, significato e voce."),rewrite,rewriteCount,button("Confronta bozza e riscrittura",async()=>{const current=repo.get().writings.find(x=>x.id===id);writingReady(current,"compare");const result=await tutor(state.settings,"/tutor","writing_compare",{type:current.type,topic:current.topic,text:current.draft,rewrite:current.rewrite,issues:current.feedback.issues});await change(s=>{const x=s.writings.find(x=>x.id===id);x.comparison=result;x.compare_source={draft:current.draft,rewrite:current.rewrite};x.transfer=[];});await refresh();})),
       comparison&&card(h("h2",{},"3. Confronto e trasferimento"),p(comparison.summary),w.compare_source?.rewrite!==w.rewrite&&p("La riscrittura è cambiata: rifai il confronto prima della verifica.","warning"),h("h3",{},"Risolto secondo il tutor"),list(comparison.resolved),h("h3",{},"Da controllare ancora"),comparison.remaining.length?list(comparison.remaining):p("Il tutor non segnala errori residui; la verifica successiva resta utile."),button("Verifica in un nuovo contesto",async()=>{const current=repo.get().writings.find(x=>x.id===id);if(current.compare_source?.rewrite!==current.rewrite||current.compare_source?.draft!==current.draft)throw new Error("Il testo è cambiato: rifai il confronto.");const session=await makeSession("mixed",current.comparison.transfer.map(i=>({...i,id:uid("transfer"),kind:"completion",skill:"form",options:[]})),"groq",{writing_id:id});await change(s=>{s.writings.find(x=>x.id===id).transfer.push(session);});},"secondary"),w.transfer?.map(sid=>{const results=state.attempts.filter(a=>a.session_id===sid);return results.length?p("Nuovo contesto: "+results.filter(a=>a.correct&&!a.assisted).length+"/"+results.length+" corrette senza aiuti."):link("Riprendi la verifica","practice/"+sid,"text-link");})),
-      sourceNotes("","WRITING_REVIEW",w.type)];
+      sourceNotes("","WRITING_REVIEW",w.type),
+      h("div",{class:"danger-zone"},button("Elimina questo testo",async()=>{if(!window.confirm("Eliminare il testo «"+w.topic.slice(0,60)+"»? Bozza, riscrittura e revisioni verranno cancellate da questo dispositivo. I risultati degli esercizi restano."))return;await change(s=>{s.writings=s.writings.filter(x=>x.id!==id);for(const plan of s.daily_plans||[])if(plan.writing_id===id)plan.writing_id=null;for(const set of s.sessions)if(set.writing_id===id)delete set.writing_id;});notify("Testo eliminato.");await goto("writing");},"quiet danger"))];
   }
   function comprehension(r) {
     const selection=h("input",{id:"understand-selection",maxlength:120,placeholder:"Facoltativo: parola o espressione esatta del testo",lang:"en",autocorrect:"off"});
@@ -365,6 +366,41 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
       u.segments.map(x=>h("section",{class:"issue"},h("blockquote",{lang:"en"},x.quote),p(x.meaning_it),p(x.why))),
       h("h3",{},"Le parole nel loro contesto"),u.terms.map(t=>h("section",{class:"issue"},h("h4",{},t.expression),p(t.meaning_it),h("blockquote",{lang:"en"},t.quote),p(t.why),p("Registro: "+t.register),p("Confronto: "+t.alternative),p("Esempio originale: "+t.example),button("Salva nel dizionario personale",async()=>{await change(s=>addTerm(s,{...t,topic:"lettura",source_text:t.quote,source_url:snapshot.source,explanation:t.why,ai_generated:true}));notify("Parola salvata nel dizionario personale e nel ripasso.");},"secondary"))),
       h("h3",{},"Ora ricostruisci il senso"),p("Scrivi una risposta, poi confrontala con la spiegazione. Questa attività non certifica un livello."),u.questions.map((q,i)=>h("section",{class:"issue"},p(q.question),field("La tua risposta "+(i+1),"reading-answer-"+i,r.understanding_answers?.[i]||"",value=>autosave(s=>{const x=s.readings.find(x=>x.id===r.id);(x.understanding_answers??={})[i]=value;}),{area:true,max:1200}),h("details",{},h("summary",{},"Mostra la risposta ragionata"),p(q.answer),h("blockquote",{lang:"en"},q.quote)))),link("Apri il dizionario personale","review","text-link")));
+  }
+  function splitParagraphs(text) {
+    const out=[];
+    for(const block of String(text).split(/\n\s*\n/).map(t=>t.replace(/\s+/g," ").trim()).filter(Boolean)) {
+      if(block.length<=3000){out.push(block);continue;}
+      let part="";for(const sentence of block.split(/(?<=[.!?])\s+/)){if(part&&(part+" "+sentence).length>3000){out.push(part);part="";}part=part?part+" "+sentence:sentence.slice(0,3000);}if(part)out.push(part);
+    }
+    return out;
+  }
+  function translationChunks(paragraphs) {
+    const chunks=[];let current=[],size=0;
+    for(const para of paragraphs){if(current.length&&(size+para.length>3000||current.length>=40)){chunks.push(current);current=[];size=0;}current.push(para);size+=para.length;}
+    if(current.length)chunks.push(current);
+    return chunks;
+  }
+  function translatePanes(r) {
+    const auto=r.auto_translation,stale=auto&&auto.source_text!==r.text;
+    const source=h("textarea",{id:"reading-text",lang:"en",maxlength:8000,spellcheck:"false",value:r.text,placeholder:"Incolla qui il testo inglese",oninput:e=>autosave(s=>{s.readings.find(x=>x.id===r.id).text=e.target.value;})});
+    const output=h("div",{class:"pane-output",id:"auto-translation",lang:"it",tabindex:"0","aria-labelledby":"auto-translation-label"},auto?auto.translations.map(t=>h("p",{},t)):p("La traduzione comparirà qui, paragrafo per paragrafo.","muted"));
+    let syncing=false;const sync=(from,to)=>()=>{if(syncing)return;syncing=true;const max=from.scrollHeight-from.clientHeight;to.scrollTop=max>0?from.scrollTop/max*(to.scrollHeight-to.clientHeight):0;requestAnimationFrame(()=>{syncing=false;});};
+    source.addEventListener("scroll",sync(source,output));output.addEventListener("scroll",sync(output,source));
+    const translate=async()=>{
+      const current=repo.get().readings.find(x=>x.id===r.id),paragraphs=splitParagraphs(current.text);
+      if(!paragraphs.length)throw new Error("Incolla prima il testo inglese nel riquadro a sinistra.");
+      const chunks=translationChunks(paragraphs),translations=[];
+      for(const [k,chunk] of chunks.entries()){if(chunks.length>1)notify("Traduzione in corso: parte "+(k+1)+" di "+chunks.length+".");const result=await tutor(state.settings,"/tutor","translate",{paragraphs:chunk});translations.push(...result.translations);}
+      await change(s=>{const x=s.readings.find(x=>x.id===r.id);x.auto_translation={paragraphs,translations,source_text:current.text,created_at:now()};});
+      await refresh();
+    };
+    return h("section",{class:"translate"},
+      h("div",{class:"translate-panes"},
+        h("div",{class:"pane"},h("label",{for:"reading-text"},"Testo inglese"),source),
+        h("div",{class:"pane"},h("span",{class:"pane-label",id:"auto-translation-label"},"Traduzione italiana"),output)),
+      stale&&p("Hai modificato il testo: la traduzione si riferisce alla versione precedente. Traduci di nuovo per aggiornarla.","warning"),
+      h("div",{class:"actions"},button(auto?"Traduci di nuovo con Groq":"Traduci con Groq",translate),p("Traduzione automatica: utile per capire, non sostituisce lo studio del testo. Non incollare dati riservati.","small muted")));
   }
   const TEST_TYPES={main_idea:"Idea principale",detail:"Dettaglio",inference:"Inferenza",purpose:"Scopo e tono",vocabulary:"Lessico nel contesto"};
   function jfltTest(r) {
@@ -410,12 +446,15 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     const term=h("input",{id:"reading-term",maxlength:120,placeholder:"Es. account for"});
     const meaning=h("input",{id:"reading-meaning",maxlength:300,placeholder:"Significato nel passaggio"});
     return [link("← Letture salvate","reading","back"),title("LETTURA",r.title),
-      card(field("Titolo","reading-title",r.title,v=>bind("title",v),{max:200}),field("Fonte (facoltativa)","reading-source",r.source,v=>bind("source",v),{max:1000}),field("Passaggio inglese","reading-text",r.text,v=>bind("text",v),{area:true,max:8000}),field("La tua traduzione italiana (facoltativa)","translation",r.translation,v=>bind("translation",v),{area:true,max:12000}),button("Confronta la traduzione con Groq",async()=>{const current=repo.get().readings.find(x=>x.id===id);if(countWords(current.text)<10||countWords(current.translation)<5)throw new Error("Inserisci un passaggio e una tua traduzione.");const result=await tutor(state.settings,"/tutor","reading_review",{text:current.text,translation:current.translation});await change(s=>{const x=s.readings.find(x=>x.id===id);x.feedback={...result,segments:result.segments.filter(v=>current.text.includes(v.quote)),terms:result.terms.filter(v=>normal(current.text).includes(normal(v.expression)))};x.feedback_source={text:current.text,translation:current.translation};});await refresh();})),
+      card(field("Titolo","reading-title",r.title,v=>bind("title",v),{max:200}),field("Fonte (facoltativa)","reading-source",r.source,v=>bind("source",v),{max:1000}),
+        translatePanes(r),
+        h("details",{class:"own-translation"},h("summary",{},"Prova a tradurre tu e confronta"),field("La tua traduzione italiana (facoltativa)","translation",r.translation,v=>bind("translation",v),{area:true,max:12000}),button("Confronta la traduzione con Groq",async()=>{const current=repo.get().readings.find(x=>x.id===id);if(countWords(current.text)<10||countWords(current.translation)<5)throw new Error("Inserisci un passaggio e una tua traduzione.");const result=await tutor(state.settings,"/tutor","reading_review",{text:current.text,translation:current.translation});await change(s=>{const x=s.readings.find(x=>x.id===id);x.feedback={...result,segments:result.segments.filter(v=>current.text.includes(v.quote)),terms:result.terms.filter(v=>normal(current.text).includes(normal(v.expression)))};x.feedback_source={text:current.text,translation:current.translation};});await refresh();}))),
       comprehension(r),
       jfltTest(r),
       r.feedback&&card(h("h2",{},"Confronto ragionato"),(r.feedback_source.text!==r.text||r.feedback_source.translation!==r.translation)&&p("Hai modificato il testo: questo confronto si riferisce alla versione precedente.","warning"),p(r.feedback.summary),r.feedback.segments.map(v=>h("div",{class:"issue"},h("blockquote",{lang:"en"},v.quote),p(v.translation),p(v.explanation,"muted"))),r.feedback.terms.map(v=>h("div",{class:"word-row"},h("strong",{},v.expression),p(v.meaning_it),button("Aggiungi al ripasso",async()=>{await change(s=>addTerm(s,v,r.text.slice(0,1200)));notify("Termine aggiunto al recupero attivo.");},"quiet")))),
       card(h("h2",{},"Conserva una parola utile"),h("label",{for:"reading-term"},"Espressione"),term,h("label",{for:"reading-meaning"},"Significato"),meaning,h("div",{class:"actions"},button("Salva nel lessico",async()=>{if(!term.value.trim()||!meaning.value.trim())throw new Error("Inserisci espressione e significato.");await change(s=>addTerm(s,{expression:term.value.trim(),meaning_it:meaning.value.trim(),example:"",topic:"lettura"},r.text.slice(0,1200)));notify("Parola salvata nel ripasso.");},"secondary"),button("Spiega nel contesto",async()=>{if(!term.value.trim())throw new Error("Inserisci il termine da spiegare.");const known=VOCABULARY.find(v=>normal(v.expression)===normal(term.value));if(known){meaning.value=known.meaning_it;notify(known.example+" "+(PATTERNS[known.pattern]||""));return;}const result=await tutor(state.settings,"/tutor","clarify",{term:term.value.trim(),context:repo.get().readings.find(x=>x.id===id).text.slice(0,1200)});meaning.value=result.meaning_it;notify(result.explanation+" Esempio: "+result.example);},"quiet"))),
-      sourceNotes("","ARTICLE_FEEDBACK")];
+      sourceNotes("","ARTICLE_FEEDBACK"),
+      h("div",{class:"danger-zone"},button("Elimina questa lettura",async()=>{if(!window.confirm("Eliminare la lettura «"+r.title+"»? Testo, traduzioni e prove di comprensione verranno cancellati da questo dispositivo."))return;await change(s=>{s.readings=s.readings.filter(x=>x.id!==id);});notify("Lettura eliminata.");await goto("reading");},"quiet danger"))];
   }
   function progress() {
     const recent=state.attempts.filter(a=>a.source!=="legacy"&&!a.disputed),rows=recommendation(state).filter(l=>l.attempts>0),guided=state.writings.filter(w=>w.mode!=="exam"),independent=state.writings.filter(w=>w.mode==="exam");

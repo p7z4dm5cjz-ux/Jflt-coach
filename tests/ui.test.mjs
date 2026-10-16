@@ -24,6 +24,7 @@ const tutor=async(settings,path,task,data)=>{
   if(task==="writing_compare")return {summary:"Riscrittura più chiara.",resolved:["Cronologia chiarita."],remaining:[],transfer:Array.from({length:3},(_,i)=>({stem:"Completa la negativa: She ___ go yesterday. "+i,answer:"did not",accept:["didn't"],why:"Did richiede la forma base."}))};
   if(task==="exercises"){if(nextExerciseFailure){const error=nextExerciseFailure;nextExerciseFailure=null;throw error;}const serial=++aiSerial;return {items:Array.from({length:6},(_,i)=>({kind:["completion","transformation","error_correction"][i%3],stem:"Contesto "+serial+". Completa la negativa "+i+": They ___ leave yesterday.",options:[],answer:"did not",accept:["didn't"],why:"Forma: did not + verbo base. Perché: yesterday colloca l'azione nel passato. Evita did not went."}))};}
   if(task==="reading_understand")return structuredClone(SHAPES.reading_understand);
+  if(task==="translate")return {translations:data.paragraphs.map(p=>"IT: "+p.slice(0,40))};
   if(task==="reading_review")return {summary:"Significato ricostruito.",segments:[{quote:"The team carried out",translation:"Il gruppo ha svolto",explanation:"Carry out indica eseguire."},{quote:"Invented quote",translation:"inventata",explanation:"non valida"}],terms:[{expression:"carried out",meaning_it:"ha svolto",example:"The team carried out a routine check."}]};
   throw new Error("Unexpected task "+task);
 };
@@ -173,4 +174,33 @@ test("Comprensione senza traduzione, parola selezionata e dizionario personale p
  await visit("home");await visit("reading/"+id);assert.equal(document.querySelector("#reading-answer-0").value,"Il cancello");
  input("#reading-text","A different text.");await app.flush();await visit("home");await visit("reading/"+id);assert.ok(document.getElementById("view").textContent.includes("passaggio precedente"));
  await visit("word/"+word.id);assert.ok(document.getElementById("view").textContent.includes("Dal testo originale"));assert.ok(document.querySelector("#word-meaning"));
+});
+
+test("1.9.0: testo e traduzione affiancati, divisi in richieste brevi, e lettura eliminabile",async()=>{
+  await visit("reading");click("Nuova lettura");await until(()=>!!document.querySelector("#reading-text"));
+  const id=location.hash.split("/")[2];
+  const long=Array.from({length:40},(_,i)=>"Sentence number "+i+" describes the patrol and the gate in some detail.").join(" ");
+  const text="The officers checked the gate.\n\nThe report was filed at noon.\n\n"+long+"\n\n"+long;
+  input("#reading-text",text);await app.flush();
+  const before=calls.filter(c=>c.task==="translate").length;
+  click("Traduci con Groq");await until(()=>document.querySelector("#auto-translation")?.textContent.includes("IT: The officers"));
+  const sent=calls.filter(c=>c.task==="translate").slice(before);
+  assert.ok(sent.length>=2,"il testo lungo va diviso in più richieste");
+  assert.ok(sent.every(c=>c.data.paragraphs.join("").length<=3200&&c.data.paragraphs.length<=40));
+  const saved=repo.get().readings.find(r=>r.id===id).auto_translation;
+  assert.equal(saved.paragraphs.length,saved.translations.length);assert.equal(saved.source_text,text);
+  assert.ok(document.querySelector(".translate-panes .pane textarea#reading-text"));
+  input("#reading-text",text+" Changed.");await app.flush();await visit("reading/"+id);
+  assert.ok(document.getElementById("view").textContent.includes("la traduzione si riferisce alla versione precedente"));
+  const original=window.confirm;window.confirm=()=>false;click("Elimina questa lettura");await new Promise(r=>setTimeout(r,20));
+  assert.ok(repo.get().readings.some(r=>r.id===id));
+  window.confirm=()=>true;click("Elimina questa lettura");await until(()=>!repo.get().readings.some(r=>r.id===id));
+  window.confirm=original;
+});
+test("1.9.0: un testo scritto si elimina e i piani non puntano più a esso",async()=>{
+  await visit("writing");click("Apri l'editor");await until(()=>!!document.querySelector("#draft"));
+  const id=location.hash.split("/")[2];
+  await repo.change(s=>{(s.daily_plans??=[]);});
+  const original=window.confirm;window.confirm=()=>true;click("Elimina questo testo");await until(()=>!repo.get().writings.some(w=>w.id===id));window.confirm=original;
+  assert.ok(!repo.get().daily_plans.some(p=>p.writing_id===id));
 });
