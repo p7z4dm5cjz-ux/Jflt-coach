@@ -3,6 +3,7 @@ import {recommendation,now} from "./engine.js";
 import {PATH_GROUPS,lessonMeta,lessonProgress,learningReason,checkPriorities,reviewNotice} from "./learning-path.js";
 import {CHECK_ITEMS,CHECK_LESSONS,newCheck,checkItems,checkResults} from "./grammar-checks.js";
 import {newCourse} from "./writing-course.js";
+import {answerHint} from "./answer-normal.js";
 export function learningUI(api){
  const {h,p,title,card,link,button,change,autosave,goto,refresh,getState}=api;
  async function begin(lessonId=null){
@@ -48,7 +49,7 @@ export function learningUI(api){
   const done=!!c.completed_at,items=checkItems(c),results=done?checkResults(c):[];
   const form=h("div",{},items.map((item,index)=>{
    const result=results.find(r=>r.id===item.id),l=LESSONS.find(l=>l.id===item.lesson_id);
-   return h("fieldset",{class:"exercise"},h("legend",{},(index+1)+". "+l.title),p(item.stem,"stem"),c.reused_ids.includes(item.id)&&p("Domanda già vista: ripasso, non nuovo contesto.","small muted"),h("label",{for:item.id},"La tua risposta"),h("input",{id:item.id,value:c.answers[item.id]||"",maxlength:600,disabled:done,autocomplete:"off",lang:"en",autocapitalize:"none",autocorrect:"off",spellcheck:"false",oninput:e=>{const value=e.target.value;autosave(s=>s.grammar_checks.find(c=>c.id===id).answers[item.id]=value);}}),!done&&button("Non lo so",async()=>{await change(s=>s.grammar_checks.find(c=>c.id===id).answers[item.id]="Non lo so");await refresh();},"quiet"),result&&h("div",{},p(result.correct?"Corretto":"Da ripassare",result.correct?"good":"warning"),p("Risposta: "+item.answer,"formula"),p(l.forms),link("Rivedi forma e significato","lesson/"+l.id,"text-link")));
+   return h("fieldset",{class:"exercise"},h("legend",{},(index+1)+". "+l.title),p(item.stem,"stem"),c.reused_ids.includes(item.id)&&p("Domanda già vista: ripasso, non nuovo contesto.","small muted"),h("label",{for:item.id},"La tua risposta"),answerHint(item)&&h("p",{class:"small muted answer-hint",id:item.id+"-hint"},answerHint(item)),h("input",{id:item.id,"aria-describedby":item.id+"-hint",value:c.answers[item.id]||"",maxlength:600,disabled:done,autocomplete:"off",lang:"en",autocapitalize:"none",autocorrect:"off",spellcheck:"false",oninput:e=>{const value=e.target.value;autosave(s=>s.grammar_checks.find(c=>c.id===id).answers[item.id]=value);}}),!done&&button("Non lo so",async()=>{await change(s=>s.grammar_checks.find(c=>c.id===id).answers[item.id]="Non lo so");await refresh();},"quiet"),result&&h("div",{},p(result.correct?"Corretto":"Da ripassare",result.correct?"good":"warning"),p("Risposta: "+item.answer,"formula"),p(l.forms),link("Rivedi forma e significato","lesson/"+l.id,"text-link")));
   }));
   return [link("← Studio","studio","back"),title("VERIFICA SENZA AIUTI",c.lesson_id?"Conferma breve della struttura":"Dieci domande per aggiornare le priorità",done?results.filter(r=>r.correct).length+"/"+items.length+" risposte corrette":"Risposte salvate mentre scrivi. Leggi le soluzioni dopo la consegna."),form,
    !done&&button("Consegna la verifica",async()=>{await change(s=>{const current=s.grammar_checks.find(c=>c.id===id);if(current.completed_at)return;if(current.item_ids.some(id=>!current.answers[id]?.trim()))throw new Error("Rispondi a tutte le domande oppure scegli Non lo so.");current.completed_at=now();});await refresh();}),

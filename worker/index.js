@@ -17,6 +17,16 @@ function correct(item,answer) {
   return [item.answer,...(item.accept||[])].filter(v=>typeof v==="string").some(v=>variants(v).some(value=>candidates.includes(value)));
 }
 
+// Indicazione mostrata sotto ogni risposta aperta: dice se scrivere solo le parole mancanti
+// o tutta la frase. Ricavata dall'esercizio, senza rivelare la soluzione.
+function answerHint(item) {
+  if(!item||item.options?.length)return null;
+  const stem=String(item.stem||item.question||""),answer=String(item.answer||"").trim(),gap=/_{2,}/.test(stem);
+  const sentence=answer.split(/\s+/).length>=3&&/^[A-Z]/.test(answer);
+  if(!gap||sentence&&["transformation","error_correction"].includes(item.kind))return "Scrivi tutta la frase.";
+  return "Scrivi solo ciò che va al posto di ___, non tutta la frase.";
+}
+
 // Controllo alla cieca degli esercizi generati: un secondo passaggio del modello risolve gli
 // esercizi senza vedere le soluzioni. Condiviso da Worker (incorporato) e test.
 

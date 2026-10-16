@@ -151,3 +151,4 @@ nav a[aria-current=page]{background:var(--soft);color:var(--ink);box-shadow:none
 .danger-zone{margin:28px 0 8px;padding-top:16px;border-top:1px solid var(--line)}
 .danger,.danger:hover{color:var(--error-ink);background:transparent}
 @media(max-width:760px){.translate-panes{gap:8px}.pane textarea,.pane-output{font-size:14px;line-height:1.5;padding:10px}.pane label,.pane-label{font-size:14px}}
+.answer-hint{margin:6px 0 6px;font-size:13px}

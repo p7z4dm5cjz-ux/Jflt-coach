@@ -5,6 +5,7 @@ import {bookContext} from "./bookshelf.js";
 import {QUESTIONS,orderedQuestions,orderedOptions,AREAS,PHRASAL_TARGETS} from "./placement.js";
 import {VERSION,now,uid,countWords,normal,correct,endpoint,newPlacement,placementProfile,recommendation,addTerm,recordReview,recoveryItems,phrasalItems,writingReady,sanitizeFeedback,GENRES,dailyPlan,dailyWritingTopic,localDay} from "./engine.js";
 import {grammarItems} from "./practice-bank.js";
+import {answerHint} from "./answer-normal.js";
 import {negativeItems} from "./negative-bank.js";
 import {PRACTICE_SIZE,BLOCK_SIZE,trainingRecord,practiceBlock,freshAiItems,exerciseRequest,negativeRule} from "./practice-flow.js";
 import {openRepository,parseBackup} from "./storage.js";
@@ -26,7 +27,7 @@ export function h(tag,attrs={},...children) {
   for(const child of children.flat(Infinity))if(child!==null&&child!==undefined&&child!==false)el.append(child instanceof Node?child:document.createTextNode(String(child)));
   return el;
 }
-const p=(text,cls="")=>h("p",{class:cls},text);
+const p=(text,cls="",id)=>h("p",{class:cls,id},text);
 const link=(text,path,cls="button")=>h("a",{href:"#/"+path,class:cls},text);
 const card=(...children)=>h("section",{class:"card"},children);
 const list=items=>h("ul",{},items.map(i=>h("li",{},i)));
@@ -230,7 +231,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
       const value=set.answers[item.id]||"",result=locked?results.find(a=>a.item_id===item.id):null;
       const block=h("fieldset",{class:"exercise"},h("legend",{},(flow.start+i+1)+". "+(item.kind==="retrieval"?"Recupero lessicale":item.skill==="recognise"?"Significato":"Uso della forma")),p(item.stem,"stem"),item.doubt&&p(item.check_note||"Il controllo automatico non ha confermato la soluzione: l'esercizio non conta nel punteggio.","small warning check-note"));
       if(item.options?.length)for(const [j,opt] of item.options.entries())block.append(h("label",{class:"option",for:item.id+"-"+j},h("input",{id:item.id+"-"+j,type:"radio",name:item.id,value:opt,checked:value===opt,disabled:locked,onchange:e=>{autosave(s=>{s.sessions.find(x=>x.id===id).answers[item.id]=e.target.value;});updateProgress();}}),h("span",{lang:"en"},opt)));
-      else block.append(h("label",{class:"sr-only",for:item.id},"Risposta "+(flow.start+i+1)),h("input",{id:item.id,value,disabled:locked,autocomplete:"off",lang:"en",autocapitalize:"none",autocorrect:"off",spellcheck:"false",maxlength:600,oninput:e=>{const v=e.target.value;autosave(s=>{s.sessions.find(x=>x.id===id).answers[item.id]=v;});updateProgress();}}));
+      else block.append(h("label",{class:"sr-only",for:item.id},"Risposta "+(flow.start+i+1)),answerHint(item)&&p(answerHint(item),"small muted answer-hint",item.id+"-hint"),h("input",{id:item.id,value,"aria-describedby":item.id+"-hint",disabled:locked,autocomplete:"off",lang:"en",autocapitalize:"none",autocorrect:"off",spellcheck:"false",maxlength:600,oninput:e=>{const v=e.target.value;autosave(s=>{s.sessions.find(x=>x.id===id).answers[item.id]=v;});updateProgress();}}));
       if(result)block.append(h("div",{class:"exercise-feedback"},p(result.correct?"Risposta corretta":result.disputed?"Da verificare":"Da rivedere",result.correct?"good":"warning"),p("Risposta di riferimento: "+item.answer,"formula"),item.formula&&h("h3",{},"La forma"),item.formula&&p(item.formula,"small"),h("h3",{},"Perché"),p(item.why)));
       if(result&&!result.correct&&set.source==="groq"&&item.kind!=="retrieval")block.append(result.disputed?p("Risposta segnalata: esclusa dalle priorità finché resta da verificare.","small warning"):button("La mia risposta potrebbe essere valida",async()=>{await change(s=>s.attempts.find(a=>a.id===result.id).disputed=true);await refresh();},"quiet"));
       form.append(block);
@@ -281,7 +282,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     form.append(h("fieldset",{},h("legend",{},"Domanda "+(test.position+1)+" di 45 · "+AREAS[item.area]),p(item.stem,"stem")));
     const box=form.querySelector("fieldset");
     if(item.options)for(const [i,opt] of orderedOptions(item,test.seed).entries())box.append(h("label",{class:"option"},h("input",{type:"radio",name:"placement-answer",value:opt,checked:answer?.value===opt}),h("span",{},opt)));
-    else box.append(h("label",{for:"placement-answer",class:"sr-only"},"La tua risposta"),h("input",{id:"placement-answer",name:"placement-answer",maxlength:350,value:answer?.value||"",autocomplete:"off"}));
+    else box.append(h("label",{for:"placement-answer",class:"sr-only"},"La tua risposta"),answerHint(item)&&p(answerHint(item),"small muted answer-hint","placement-hint"),h("input",{id:"placement-answer","aria-describedby":"placement-hint",name:"placement-answer",maxlength:350,value:answer?.value||"",autocomplete:"off"}));
     const unsure=h("input",{type:"checkbox",id:"unsure",checked:answer?.confidence==="unsure"});form.append(h("label",{class:"inline-check"},unsure,"Ho un dubbio"));
     async function saveAnswer(value,advance=true) {
       await change(s=>{const a={id:item.id,value,confidence:unsure.checked?"unsure":"sure"},p=s.placement;p.answers=p.answers.filter(x=>x.id!==item.id);p.answers.push(a);if(advance)p.position=Math.min(44,p.position+1);});await refresh();
