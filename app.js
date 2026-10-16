@@ -3,7 +3,7 @@ import {LESSONS,PHRASALS,VOCABULARY,PATTERNS,STAGES} from "./catalog.js";
 import {PHRASAL_SCENARIOS} from "./phrasal-extension.js";
 import {bookContext} from "./bookshelf.js";
 import {QUESTIONS,orderedQuestions,orderedOptions,AREAS,PHRASAL_TARGETS} from "./placement.js";
-import {VERSION,now,uid,countWords,normal,correct,endpoint,newPlacement,placementProfile,recommendation,addTerm,recordReview,recoveryItems,phrasalItems,writingReady,sanitizeFeedback,GENRES,dailyPlan,dailyWritingTopic,localDay} from "./engine.js";
+import {VERSION,now,uid,countWords,normal,correct,endpoint,newPlacement,placementProfile,recommendation,learningPath,addTerm,recordReview,recoveryItems,phrasalItems,writingReady,sanitizeFeedback,GENRES,dailyPlan,dailyWritingTopic,localDay} from "./engine.js";
 import {grammarItems} from "./practice-bank.js";
 import {answerHint} from "./answer-normal.js";
 import {negativeItems} from "./negative-bank.js";
@@ -153,15 +153,8 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     return h("section",{class:"week-strip","aria-label":"Questa settimana"},h("ol",{},names.map((name,i)=>{const day=new Date(monday.getFullYear(),monday.getMonth(),monday.getDate()+i),key=localDay(day.getTime()),done=active.has(key),isToday=key===todayKey,future=day>today&&!isToday;
       return h("li",{class:[done&&"done",isToday&&"today",future&&"future"].filter(Boolean).join(" ")},h("span",{"aria-hidden":"true"},name),h("span",{class:"dot"},done?h("span",{class:"sr-only"},full[i]+": studio svolto"):h("span",{class:"sr-only"},full[i]+(isToday?": oggi":future?"":": nessuna attività"))));})));
   }
-  function priorityCard(){
-    const top=recommendation(state).slice(0,3);if(!top.length)return null;
-    return h("section",{class:"card priorities"},h("div",{class:"card-head"},h("h2",{},"Le tue priorità"),link("Percorso","studio","text-link")),
-      h("ul",{class:"priority-list"},top.map(l=>{const contexts=new Set(state.attempts.filter(a=>a.lesson_id===l.id&&a.correct&&!a.assisted&&!a.disputed&&a.source!=="legacy").map(a=>a.context_id||a.stem)).size,shown=Math.min(contexts,8);
-        return h("li",{},h("a",{href:"#/lesson/"+l.id},h("span",{class:"priority-title"},l.title),h("span",{class:"priority-meta"},shown+"/8 contesti corretti")),h("progress",{max:8,value:shown,"aria-label":l.title+": "+shown+" contesti corretti su 8"}));})),
-      p("Otto contesti diversi corretti senza aiuti sono uno dei criteri del mantenimento.","small muted"));
-  }
   function home() {
-    const plan=dailyPlan(state),planLesson=plan.lesson,next=recommendation(state)[0],profile=placementProfile(state.placement),due=dueTerms(),active=state.writings.findLast(w=>!w.comparison),activePractice=state.sessions.findLast(set=>!set.completed_at),activeCourse=state.writing_courses?.findLast(c=>!c.completed_at);
+    const plan=dailyPlan(state),planLesson=plan.lesson,next=learningPath(state)[0],profile=placementProfile(state.placement),due=dueTerms(),active=state.writings.findLast(w=>!w.comparison),activePractice=state.sessions.findLast(set=>!set.completed_at),activeCourse=state.writing_courses?.findLast(c=>!c.completed_at);
     const courseCard=card(h("h2",{},activeCourse?"Riprendi la scrittura passo passo":"Dal modello al saggio e al rapporto"),p("MISSION, TARGET e CAMPAIGN: comprensione, frasi, paragrafo, scaletta e nuove prove autonome."),link(activeCourse?"Riprendi · passo "+(activeCourse.stage+1)+" di 6":"Impara a scrivere",activeCourse?"course/"+activeCourse.id:"writing","secondary"));
     const attempts=state.attempts.filter(a=>!a.assisted&&!a.disputed&&a.source!=="legacy"),score=attempts.length?Math.round(attempts.filter(a=>a.correct).length/attempts.length*100):null;
     if(!profile)return [
@@ -183,7 +176,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
         button(plan.completed_steps===2?"Rivedi la breve scrittura":plan.id?"Riprendi il piano di oggi":"Inizia il piano di oggi",startDaily),
         h("details",{class:"today-more"},h("summary",{},"Come funziona il piano"),p((planLesson.id==="negatives"?"30 esercizi in cinque blocchi riprendibili su «":"Verifica breve offline su «")+planLesson.title+"»"+(plan.terms.length?" e recupero di "+plan.terms.length+" termini in scadenza.":". Nessun nuovo termine obbligatorio.")),p("Poi un breve rapporto con dati fittizi: revisione e riscrittura quando vuoi. Le attività svolte non certificano la padronanza; il piano parte offline e non invia richieste Groq."),link("Consulta la lezione","lesson/"+planLesson.id,"text-link"))),
       h("section",{class:"card current-priority"},h("h2",{},"Allenamento completo: 30 esercizi"),p("Priorità attuale: «"+next.title+"». Il tutor prepara cinque blocchi da sei; tra un blocco e l'altro verifichi, capisci e puoi riprovare gli errori."),button("Inizia 30 esercizi con Groq",()=>startAiPractice(next.id)),p("Puoi interrompere e riprendere. Il piano offline resta disponibile separatamente.","small muted")),
-      priorityCard(),
+      learning.pathCard(),
       learning.notice(),
       activePractice&&card(h("h2",{},"Riprendi gli esercizi"),p((LESSONS.find(l=>l.id===activePractice.lesson_id)?.title||"Pratica")+" · risposte e blocchi già verificati sono salvati."),link("Riprendi la sessione","practice/"+activePractice.id)),
       courseCard,
@@ -275,7 +268,8 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     const test=state.placement,profile=placementProfile(test);
     if(!test)return [title("PRETEST","Dove conviene iniziare?","45 domande senza aiuti, con una sola consegna finale. Non è una certificazione di livello."),card(h("h2",{},"Tempi, negazioni e phrasal verbs in primo piano"),p("Segna «Ho un dubbio» quando non sei sicuro. Puoi lasciare vuota una risposta scegliendo «Non so»: il percorso la considererà da ripassare."),button("Inizia il pretest",async()=>{await change(s=>{s.placement=newPlacement();});await refresh();}))];
     if(profile)return [title("PRETEST","Il tuo punto di partenza",profile.correct+"/45 corrette · "+profile.uncertain.length+" corrette da confermare"),
-      card(h("h2",{},"Aree da cui partire"),h("table",{},h("thead",{},h("tr",{},["Area","Corrette","Proposta"].map(v=>h("th",{},v)))),h("tbody",{},profile.areas.map(a=>h("tr",{},h("td",{},a.title),h("td",{},a.correct+"/"+a.total),h("td",{},statusLabels[a.status]))))),link("Apri il percorso personale","studio")),
+      learning.pathCard("Il tuo percorso consigliato"),
+      card(h("h2",{},"Risultato per area"),h("table",{},h("thead",{},h("tr",{},["Area","Corrette","Proposta"].map(v=>h("th",{},v)))),h("tbody",{},profile.areas.map(a=>h("tr",{},h("td",{},a.title),h("td",{},a.correct+"/"+a.total),h("td",{},statusLabels[a.status]))))),p("Priorità: meno del 70% di risposte corrette. Da confermare: almeno il 70%. Basi già controllate: almeno l'85% corrette e date con sicurezza. Con tre domande un solo errore porta sotto il 70%.","small muted")),
       card(h("h2",{},"Rivedi errori e dubbi"),profile.rows.filter(r=>!r.secure).map(r=>h("details",{},h("summary",{},r.item.stem),p("La tua risposta: "+(r.answer.value||"Non so")),p("Risposta di riferimento: "+r.item.answer,"formula"),p(r.item.why),p(r.item.ref,"muted")))),
       h("details",{},h("summary",{},"Ripetere il pretest"),p("Il risultato precedente sarà conservato nell'archivio; il percorso userà la nuova prova."),button("Inizia una nuova prova",async()=>{await change(s=>{s.legacy??={};s.legacy.placement_history??=[];s.legacy.placement_history.push(s.placement);s.placement=newPlacement();});await refresh();},"secondary"))];
     const questions=orderedQuestions(test.seed),item=questions[test.position],answer=test.answers.find(a=>a.id===item.id),form=h("form",{id:"placement-form"});

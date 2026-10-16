@@ -1,4 +1,9 @@
-# JFLT Coach 1.9.1
+# JFLT Coach 1.9.2
+
+## Novità della 1.9.2
+
+- **Il percorso lo propone l'app.** Dopo il pretest, nella pagina dei risultati, in Oggi e in Studio c'è «Il tuo percorso»: cinque tappe numerate, ognuna con il motivo («Nel pretest: 7 risposte sbagliate su 8 domande che riguardano questa struttura») e un solo pulsante «Inizia». La tappa 1 è la stessa del piano di oggi e dell'allenamento completo. Il catalogo delle lezioni resta aperto per chi vuole scegliere.
+- Sotto la tabella dei risultati è spiegato come nascono «Priorità», «Da confermare» e «Basi già controllate».
 
 ## Novità della 1.9.1
 

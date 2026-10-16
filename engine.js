@@ -5,7 +5,7 @@ const SAME_MEANING=new Map(MEANING_GROUPS.flatMap(group=>group.map(id=>[id,new S
 import {normal,correct} from "./answer-normal.js";
 import {lessonEvidence} from "./grammar-checks.js";
 export {normal,correct} from "./answer-normal.js";
-export const VERSION = "1.9.1";
+export const VERSION = "1.9.2";
 export const API_VERSION = 1;
 export const LEGACY_STORES = ["settings","diag_responses","diag_texts","profile","requests","grammar_sets","grammar_answers","tasks","texts","feedback","error_log","cards","transfer_checks","device_tests","to_verify"];
 export const now = () => new Date().toISOString();
@@ -61,6 +61,11 @@ export function recommendation(state) {
   });
   return scored.sort((a,b)=>b.score-a.score||a.index-b.index);
 }
+// Il percorso consigliato: le prime tappe della classifica, nello stesso ordine usato dal
+// piano di oggi e dall'allenamento completo, così la proposta è una sola.
+export function learningPath(state,size=5) {
+  return recommendation(state).slice(0,size);
+}
 export function localDay(timestamp=Date.now()) {
   const d=new Date(timestamp);
   return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
@@ -68,7 +73,7 @@ export function localDay(timestamp=Date.now()) {
 export function dailyPlan(state,timestamp=Date.now()) {
   const day=localDay(timestamp),saved=state.daily_plans?.find(p=>p.day===day);
   const minutes=saved?.minutes||([10,20,30].includes(state.settings.daily_minutes)?state.settings.daily_minutes:20);
-  const lesson=LESSONS.find(l=>l.id===saved?.lesson_id)||recommendation(state)[0];
+  const lesson=LESSONS.find(l=>l.id===saved?.lesson_id)||learningPath(state)[0];
   const termIds=saved?.term_ids||state.vocabulary.filter(v=>Date.parse(v.due)<=timestamp).sort((a,b)=>a.due.localeCompare(b.due)).slice(0,minutes===10?2:minutes===30?5:3).map(v=>v.id);
   const terms=termIds.map(id=>state.vocabulary.find(v=>v.id===id)).filter(Boolean);
   const practice=state.sessions.find(s=>s.id===saved?.practice_id),writing=state.writings.find(w=>w.id===saved?.writing_id);

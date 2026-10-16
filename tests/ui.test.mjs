@@ -204,3 +204,20 @@ test("1.9.0: un testo scritto si elimina e i piani non puntano più a esso",asyn
   const original=window.confirm;window.confirm=()=>true;click("Elimina questo testo");await until(()=>!repo.get().writings.some(w=>w.id===id));window.confirm=original;
   assert.ok(!repo.get().daily_plans.some(p=>p.writing_id===id));
 });
+
+test("1.9.2: dopo il pretest l'app propone un percorso numerato con un solo punto di partenza",async()=>{
+  await repo.change(s=>{s.placement=newPlacement();s.placement.answers=QUESTIONS.map(q=>({id:q.id,value:q.area==="negatives"||q.area==="patterns"?"":q.answer,confidence:"sure"}));s.placement.submitted_at=new Date().toISOString();s.daily_plans=[];s.attempts=[];s.grammar_checks=[];});
+  const first=recommendation(repo.get())[0];
+  await visit("placement");
+  const card=document.querySelector(".learning-path-card");
+  assert.ok(card,"manca il percorso nella pagina dei risultati");
+  assert.equal(card.querySelectorAll(".path-steps li").length,5);
+  assert.ok(card.querySelector(".path-steps li.current").textContent.includes(first.title));
+  assert.match(card.textContent,/Nel pretest: \d+ rispost[ae] sbagliat[ae] su \d+ domand[ae]/);
+  assert.ok([...card.querySelectorAll("a")].some(a=>a.textContent==="Inizia: "+first.title&&a.getAttribute("href")==="#/lesson/"+first.id));
+  await visit("home");
+  assert.ok(document.querySelector(".daily-card h2").textContent.includes(first.title),"il piano di oggi deve partire dalla stessa tappa");
+  assert.ok(document.querySelector(".learning-path-card .path-steps li.current").textContent.includes(first.title));
+  await visit("studio");
+  assert.ok(document.querySelector(".learning-path-card .path-steps li.current").textContent.includes(first.title));
+});

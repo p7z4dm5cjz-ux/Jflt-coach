@@ -33,7 +33,7 @@ export function learningReason(state,lesson,timestamp=Date.now()){
  if(ev.errors)return "Nell'ultima verifica breve sono emersi errori su questa struttura.";
  if(ev.due_now)return "È il momento di controllare se ricordi la struttura a distanza di giorni.";
  if(state.attempts.some(a=>a.lesson_id===lesson.id&&!a.correct&&!a.assisted&&!a.disputed))return "Negli esercizi senza aiuti hai incontrato difficoltà su questa struttura.";
- if(profile?.lessonStatus[lesson.id]==="review")return "Il pretest indica che questa base richiede ripasso.";
+ if(profile?.lessonStatus[lesson.id]==="review"){const rows=profile.rows.filter(r=>r.item.lessons.includes(lesson.id)),wrong=rows.filter(r=>!r.correct).length;return wrong?"Nel pretest: "+wrong+(wrong===1?" risposta sbagliata":" risposte sbagliate")+" su "+rows.length+(rows.length===1?" domanda":" domande")+" che riguardano questa struttura.":"Nel pretest le risposte su questa struttura erano giuste ma date con dubbio: da confermare.";}
  if(profile?.lessonStatus[lesson.id]==="skip")return "Il pretest consente di alleggerire questa base. Puoi verificarla brevemente prima di saltarla.";
  if(progress.independent)return "Hai risposto bene in più sessioni senza aiuti; il ripasso a distanza controlla la tenuta.";
  return "Segue la progressione del percorso. Puoi aprire liberamente anche le altre lezioni.";

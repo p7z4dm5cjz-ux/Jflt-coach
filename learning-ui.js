@@ -1,5 +1,5 @@
 import {LESSONS} from "./catalog.js";
-import {recommendation,now} from "./engine.js";
+import {recommendation,learningPath,now} from "./engine.js";
 import {PATH_GROUPS,lessonMeta,lessonProgress,learningReason,checkPriorities,reviewNotice} from "./learning-path.js";
 import {CHECK_ITEMS,CHECK_LESSONS,newCheck,checkItems,checkResults} from "./grammar-checks.js";
 import {newCourse} from "./writing-course.js";
@@ -18,9 +18,19 @@ export function learningUI(api){
    active?link("Riprendi la verifica","checkpoint/"+active.id):button("Mini-rivalutazione · 10 domande",()=>begin()),
    p("Banca locale di "+CHECK_ITEMS.length+" domande su "+CHECK_LESSONS.length+" strutture. Non è un test di livello completo. Quando una domanda è già stata usata, viene indicato.","small muted"));
  }
+ // Il percorso deciso dall'app: tappe numerate, il motivo di ognuna e un solo pulsante per partire.
+ function pathCard(heading="Il tuo percorso"){
+  const s=getState(),steps=learningPath(s,5),next=steps[0];
+  return h("section",{class:"card learning-path-card"},h("h2",{},heading),
+   p(s.placement?.submitted_at?"L'ordine lo decide l'app in base al pretest e ai tuoi esercizi. Parti dalla tappa 1: quando la consolidi, il percorso si aggiorna da solo.":"Senza pretest l'ordine segue le basi del JFLT. Il pretest lo adatta a te.","small muted"),
+   h("ol",{class:"path-steps"},steps.map((l,i)=>h("li",{class:i===0?"current":""},h("a",{href:"#/lesson/"+l.id},h("span",{class:"step-title"},(i===0?"Adesso · ":"")+l.title),h("span",{class:"step-reason small muted"},learningReason(s,l)))))),
+   link("Inizia: "+next.title,"lesson/"+next.id),
+   !s.placement?.submitted_at&&link("Prima fai il pretest di 45 domande","placement","text-link"),
+   p("Ogni lezione: spiegazione, poi 30 esercizi con il tutor. La proposta si aggiorna con le tue risposte; il catalogo resta aperto se vuoi scegliere tu.","small muted"));
+ }
  function overview(){
-  const s=getState(),ranked=recommendation(s),next=ranked[0];
-  return [card(h("h2",{},"Il prossimo passo: "+next.title),p(learningReason(s,next)),link("Apri la lezione","lesson/"+next.id),!s.placement?.submitted_at&&link("Prima fai il pretest di 45 domande","placement","text-link")),notice(),
+  const s=getState();
+  return [pathCard(),notice(),
    h("details",{class:"card",open:true},h("summary",{},"La mappa del percorso"),p("Le fasce A1–C1 orientano la difficoltà dei gruppi: non assegnano un livello. I prerequisiti sono consigli, senza blocchi d'accesso.","small muted"),
     PATH_GROUPS.map(group=>{
      const lessons=LESSONS.filter(l=>lessonMeta(l).group===group.id).sort((a,b)=>{const ia=group.ids.indexOf(a.id),ib=group.ids.indexOf(b.id);return (ia<0?1000:ia)-(ib<0?1000:ib);});
@@ -55,5 +65,5 @@ export function learningUI(api){
    !done&&button("Consegna la verifica",async()=>{await change(s=>{const current=s.grammar_checks.find(c=>c.id===id);if(current.completed_at)return;if(current.item_ids.some(id=>!current.answers[id]?.trim()))throw new Error("Rispondi a tutte le domande oppure scegli Non lo so.");current.completed_at=now();});await refresh();}),
    done&&card(h("h2",{},"Priorità aggiornate"),p("Gli errori riportano in evidenza le strutture da ripassare. Una verifica riuscita programma un nuovo controllo dopo 1, 3, 7, 14 o 30 giorni; ripetere la stessa domanda non conta come nuovo contesto."),link("Vedi il prossimo passo","studio"))];
  }
- return {overview,notice,lessonPanel,page};
+ return {overview,notice,lessonPanel,page,pathCard};
 }

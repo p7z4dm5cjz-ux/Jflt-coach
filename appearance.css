@@ -92,11 +92,14 @@ nav a[aria-current=page]{background:var(--soft);color:var(--ink);box-shadow:none
 .hero .today-count{margin:-6px 0 0}
 .today-more{margin:0}.today-more summary{color:var(--hero-ink);font-size:14px}.today-more p{font-size:14px}.today-more .text-link{color:var(--hero-ink)}
 .card-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.card-head h2{margin-bottom:10px}
-.priority-list{list-style:none;padding:0;margin:0 0 12px;display:grid;gap:14px}
-.priority-list li{margin:0;display:grid;gap:6px}
-.priority-list a{display:flex;justify-content:space-between;gap:10px;color:var(--ink);font-weight:600}
-.priority-meta{color:var(--muted);font-weight:400;font-size:14px;white-space:nowrap}
-.priority-list progress::-webkit-progress-value{background:var(--hero-bg)}.priority-list progress::-moz-progress-bar{background:var(--hero-bg)}
+.path-steps{list-style:none;counter-reset:step;padding:0;margin:4px 0 16px;display:grid;gap:8px}
+.path-steps li{counter-increment:step;margin:0}
+.path-steps a{display:grid;grid-template-columns:32px 1fr;column-gap:12px;align-items:start;padding:10px 12px;border:1px solid var(--line);border-radius:12px;color:var(--ink)}
+.path-steps a::before{content:counter(step);grid-row:span 2;width:32px;height:32px;border-radius:50%;background:var(--soft);color:var(--ink);font-weight:700;display:flex;align-items:center;justify-content:center}
+.path-steps li.current a{border:2px solid var(--accent)}
+.path-steps li.current a::before{background:var(--accent);color:var(--accent-ink)}
+.step-title{font-weight:650;line-height:1.35}
+.step-reason{line-height:1.4}
 .stats .card{text-align:left}.big{font-family:"Barlow Condensed",Barlow,sans-serif;font-weight:700}
 
 /* Esercizi */
