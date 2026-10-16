@@ -165,7 +165,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
       courseCard,
       h("div",{class:"stats"},card(p("Verifiche senza aiuti","muted"),h("strong",{class:"big"},score===null?"—":score+"%"),p(attempts.length+" risposte valutate","small")),card(p("Parole da recuperare","muted"),h("strong",{class:"big"},due.length),link("Apri Ripasso","review","text-link")),card(p("I tuoi scritti","muted"),h("strong",{class:"big"},state.writings.length),link(active?"Riprendi la bozza":"Prepara un testo",active?"writing/"+active.id:"writing","text-link"))),
       card(h("h2",{},"Il tuo punto di partenza"),p(profile.correct+"/45 risposte corrette. Una risposta data con dubbio resta da confermare."),link("Vedi risultati e priorità","placement","text-link")),
-      h("div",{class:"two-columns"},card(h("h2",{},"Phrasal verbs nel contesto"),p("Significato, particelle, ordine dei pronomi e registro. Una parola segnata come nota resta distinta da una risposta verificata."),link("Apri il laboratorio","phrasals")),card(h("h2",{},"Impara a comprendere"),p("Incolla un articolo: scopri il senso, le scelte linguistiche e salva le parole nel dizionario personale."),link("Impara a comprendere","reading"))),
+      h("div",{class:"two-columns"},card(h("h2",{},"Phrasal verbs nel contesto"),p("Significato, particelle, ordine dei pronomi e registro. Una parola segnata come nota resta distinta da una risposta verificata."),link("Apri il laboratorio","phrasals")),card(h("h2",{},"Impara a comprendere"),p("Incolla un articolo: scopri il senso, le scelte linguistiche e salva le parole nel dizionario personale."),link("Incolla e comprendi un articolo","reading"))),
       link("Consulta i progressi","progress","text-link")
     ];
   }
@@ -391,7 +391,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     const page=paths[route]||route;
     const pages={home,studio,lesson:()=>lesson(id,returnCourse),checkpoint:()=>learning.page(id),practice:()=>practice(id),placement,phrasals,word:()=>word(id),review,writing:()=>writing(id==="new"?undefined:id),course:()=>courses.page(id),reading:()=>reading(id==="new"?undefined:id),progress,settings};
     root.replaceChildren(...(pages[page]||home)().flat().filter(Boolean));
-    document.querySelectorAll("nav a").forEach(a=>{const section=a.dataset.section;const active=section===page||section==="writing"&&page==="course"||section==="studio"&&["lesson","practice","phrasals","word","placement","checkpoint","reading"].includes(page)||section==="home"&&page==="progress";a.setAttribute("aria-current",active?"page":"false");});
+    document.querySelectorAll("nav a").forEach(a=>{const section=a.dataset.section;const active=section===page||section==="writing"&&page==="course"||section==="studio"&&["lesson","practice","phrasals","word","placement","checkpoint"].includes(page)||section==="home"&&page==="progress";a.setAttribute("aria-current",active?"page":"false");});
     document.title=(root.querySelector("h1")?.textContent||"Studio")+" · JFLT Coach";
     window.scrollTo?.(0,0);
   }
