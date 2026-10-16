@@ -1,6 +1,6 @@
 # Scrittura con MISSION, TARGET e CAMPAIGN
 
-Implementato in JFLT Coach 1.5.0 · 15 ottobre 2026.
+Implementato in JFLT Coach 1.6.0 · 16 ottobre 2026.
 
 Il percorso prepara al **saggio e al rapporto**, con una successiva unità di confronto argomentato. Non parte dal presupposto che tu sappia già scrivere il testo completo e non imposta richieste di informazioni o racconti personali come obiettivi principali.
 
@@ -41,14 +41,14 @@ Le citazioni assenti dal testo vengono omesse e impediscono la conferma. Lo stil
 
 ## Collegamento con la grammatica
 
-Il pretest iniziale resta di 45 domande. Il catalogo contiene 113 lezioni e la mappa mostra perché viene proposta una struttura. Una mini-rivalutazione di dieci domande, una verifica breve e i ripassi aggiornano le priorità sui nuclei effettivamente campionati.
+Il pretest iniziale resta di 45 domande. Il catalogo contiene 117 lezioni e la mappa mostra perché viene proposta una struttura. Una mini-rivalutazione di dieci domande, una verifica breve e i ripassi aggiornano le priorità sui nuclei effettivamente campionati.
 
 Da ogni lezione puoi scegliere **Usala nel percorso di scrittura**: si apre un percorso dei libri con il riferimento grammaticale conservato. Dal percorso puoi consultare una regola e tornare alla bozza. Gli errori con categoria riconosciuta offrono un collegamento diretto alla lezione; i suggerimenti di stile non modificano le priorità.
 
-Per gli esercizi: 30 con Groq in cinque blocchi su tutte le lezioni; 30 offline per 17 lezioni, due o sei offline per le restanti. I nuovi esercizi di forma riutilizzano situazioni con operazioni diverse: il conteggio di attività non equivale a nuovi contesti o a padronanza.
+Per gli esercizi: 30 con Groq in cinque blocchi su tutte le lezioni; 30 offline per 21 lezioni, due o sei offline per le restanti. I nuovi esercizi di forma riutilizzano situazioni con operazioni diverse: il conteggio di attività non equivale a nuovi contesti o a padronanza.
 
 ## Salvataggi e limiti concreti
 
 Il dispositivo conserva bozze, riscritture, aiuti, revisioni e verifiche. Una modifica mentre Groq risponde rimane salvata; la revisione si riferisce al testo effettivamente inviato. I quattro vecchi percorsi di scrittura rimangono riprendibili nei salvataggi, ma non sono le nuove proposte principali. I backup precedenti restano importabili.
 
-Modelli, controlli iniziali e bozze sono disponibili offline. Le revisioni richiedono Groq: una chiamata per comando, nessun fallback a pagamento. Un errore non cancella il lavoro né fa avanzare la tappa. Le prove automatiche usano risposte simulate; non verificano l'inglese di tutte le future risposte AI. Dopo l'aggiornamento app e Worker devono entrambi indicare 1.5.0.
+Modelli, controlli iniziali e bozze sono disponibili offline. Le revisioni richiedono Groq: una chiamata per comando, nessun fallback a pagamento. Un errore non cancella il lavoro né fa avanzare la tappa. Le prove automatiche usano risposte simulate; non verificano l'inglese di tutte le future risposte AI. Dopo l'aggiornamento app e Worker devono entrambi indicare 1.6.0.

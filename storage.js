@@ -73,6 +73,11 @@ export function validateState(s) {
   }
   for(const r of s.readings) {
     if(typeof r.id!=="string"||typeof r.title!=="string"||typeof r.source!=="string"||typeof r.text!=="string"||typeof r.translation!=="string"||!validDate(r.created_at))throw new Error("Una lettura nel backup non è valida.");
+    if(r.understanding){
+      const u=r.understanding;validateReply("reading_understand",u);
+      const snap=r.understanding_source;if(typeof snap?.text!=="string"||typeof snap.source!=="string"||typeof snap.selection!=="string"||u.segments.some(x=>!snap.text.includes(x.quote))||u.terms.some(x=>!snap.text.includes(x.quote)||!x.quote.includes(x.expression))||u.questions.some(x=>!snap.text.includes(x.quote)))throw new Error("Analisi della lettura senza riscontro nel testo originale.");
+    }
+    if(r.understanding_answers&&(typeof r.understanding_answers!=="object"||Array.isArray(r.understanding_answers)||Object.entries(r.understanding_answers).some(([k,v])=>!/^\d$/.test(k)||Number(k)>2||typeof v!=="string"||v.length>1200)))throw new Error("Risposte di comprensione non valide.");
     if(r.feedback){validateReply("reading_review",r.feedback);if(typeof r.feedback_source?.text!=="string"||typeof r.feedback_source?.translation!=="string")throw new Error("Manca il passaggio confrontato.");}
   }
   for(const key of ["attempts","sessions","writings","readings","vocabulary"])if(new Set(s[key].map(x=>x.id)).size!==s[key].length)throw new Error("Il backup contiene identificatori ripetuti.");

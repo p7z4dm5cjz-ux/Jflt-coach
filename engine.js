@@ -4,7 +4,7 @@ import {PARTICLE_ALTERNATIVES,BASE_MEANING_DISTRACTORS} from "./phrasal-extensio
 import {normal,correct} from "./answer-normal.js";
 import {lessonEvidence} from "./grammar-checks.js";
 export {normal,correct} from "./answer-normal.js";
-export const VERSION = "1.5.0";
+export const VERSION = "1.6.0";
 export const API_VERSION = 1;
 export const LEGACY_STORES = ["settings","diag_responses","diag_texts","profile","requests","grammar_sets","grammar_answers","tasks","texts","feedback","error_log","cards","transfer_checks","device_tests","to_verify"];
 export const now = () => new Date().toISOString();
@@ -83,7 +83,7 @@ export function dailyWritingTopic(plan) {
 }
 export function addTerm(state, term, context="") {
   const existing=state.vocabulary.find(v=>v.id===term.id||normal(v.expression)===normal(term.expression)&&normal(v.meaning_it)===normal(term.meaning_it));
-  if(existing)return existing;
+  if(existing){if(term.source_text){for(const key of ["source_text","source_url","explanation","register","alternative","ai_generated"])if(term[key]!==undefined)existing[key]=term[key];}return existing;}
   const v={...term,id:term.id||uid("word"),context,added_at:now(),due:now(),streak:0,seen:0,last_correct:null};
   state.vocabulary.push(v);return v;
 }

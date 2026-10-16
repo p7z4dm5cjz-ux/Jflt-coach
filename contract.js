@@ -1,4 +1,4 @@
-export const TASKS=["exercises","grammar_explain","writing_coach","writing_review","writing_compare","reading_review","clarify"];
+export const TASKS=["exercises","grammar_explain","writing_coach","writing_review","writing_compare","reading_review","reading_understand","clarify"];
 const object=x=>x&&typeof x==="object"&&!Array.isArray(x);
 const str=(x,max=1600)=>typeof x==="string"&&x.trim().length>0&&x.length<=max;
 const arr=(x,max)=>Array.isArray(x)&&x.length<=max;
@@ -14,6 +14,7 @@ export function validateInput(task,d) {
   if(["writing_review","writing_coach"].includes(task)&&d.lesson_id!==undefined&&!str(d.lesson_id,100))throw new Error("Riferimento alla lezione non valido.");
   if(task==="writing_compare"&&!str(d.rewrite,12000))throw new Error("Manca la riscrittura.");
   if(task==="reading_review"&&(!str(d.text,8000)||!str(d.translation,12000)))throw new Error("Mancano testo o traduzione.");
+  if(task==="reading_understand"&&(!str(d.text,8000)||typeof d.selection!=="string"||d.selection.length>120||d.selection.trim()&&!d.text.includes(d.selection.trim())))throw new Error("Incolla un testo e scegli un'espressione presente nel passaggio (massimo 120 caratteri).");
   if(task==="clarify"&&(!str(d.term,120)||!str(d.context,1200)))throw new Error("Seleziona un termine e il suo contesto.");
   return d;
 }
@@ -81,6 +82,12 @@ export function validateReply(task,p) {
     needString(p.summary,"summary");needArray(p.segments,"segments",6);needArray(p.terms,"terms",5);
     for(const [n,s] of p.segments.entries()){const path="segments["+n+"]";needObject(s,path);needString(s.quote,path+".quote",800);needString(s.translation,path+".translation",1400);needString(s.explanation,path+".explanation");}
     for(const [n,t] of p.terms.entries()){const path="terms["+n+"]";needObject(t,path);needString(t.expression,path+".expression",120);needString(t.meaning_it,path+".meaning_it",300);needString(t.example,path+".example",500);}
+  } else if(task==="reading_understand") {
+    needString(p.summary,"summary");needArray(p.segments,"segments",3);needArray(p.terms,"terms",5);needArray(p.questions,"questions",3);
+    for(const [n,x] of p.segments.entries())for(const [k,max] of [["quote",800],["meaning_it",1400],["why",1600]])needString(x?.[k],"segments["+n+"]."+k,max);
+    for(const [n,x] of p.terms.entries())for(const [k,max] of [["expression",120],["meaning_it",300],["quote",800],["why",1200],["register",200],["alternative",500],["example",500]])needString(x?.[k],"terms["+n+"]."+k,max);
+    for(const [n,x] of p.questions.entries())for(const [k,max] of [["question",500],["answer",800],["quote",800]])needString(x?.[k],"questions["+n+"]."+k,max);
+
   } else if(task==="clarify") {
     needString(p.expression,"expression",120);needString(p.meaning_it,"meaning_it",300);needString(p.explanation,"explanation");needString(p.example,"example",500);
   } else bad("task","funzione non riconosciuta");
@@ -111,6 +118,7 @@ export const REPLY_SCHEMAS={
     issues:replyList(replyObject({quote:replyText(500),correction:replyText(800),explanation:replyText(),kind:{type:"string",enum:["error","style"]},category:replyText(100)}),"Da 0 a 8 osservazioni ancorate al testo.")}),
   writing_compare:replyObject({summary:replyText(),resolved:replyList(replyText(),"Da 0 a 8 errori risolti."),remaining:replyList(replyText(),"Da 0 a 8 errori ancora presenti."),transfer:replyList(replyObject(transferFields),"Esattamente 3 esercizi in nuovi contesti.")}),
   reading_review:replyObject({summary:replyText(),segments:replyList(replyObject({quote:replyText(800),translation:replyText(1400),explanation:replyText()}),"Da 0 a 6 passaggi, con citazioni esatte del testo inglese."),terms:replyList(replyObject({expression:replyText(120),meaning_it:replyText(300),example:replyText(500)}),"Da 0 a 5 termini presenti nel testo.")}),
+  reading_understand:replyObject({summary:replyText(),segments:replyList(replyObject({quote:replyText(800),meaning_it:replyText(1400),why:replyText()}),"Da 1 a 3 passaggi esatti, significato e costruzione."),terms:replyList(replyObject({expression:replyText(120),meaning_it:replyText(300),quote:replyText(800),why:replyText(1200),register:replyText(200),alternative:replyText(500),example:replyText(500)}),"Da 1 a 5 termini testuali; se selection è presente includila. Quote contiene expression esattamente."),questions:replyList(replyObject({question:replyText(500),answer:replyText(800),quote:replyText(800)}),"Da 1 a 3 domande in italiano sul senso con risposta e prova testuale esatta.")}),
   clarify:replyObject({expression:replyText(120),meaning_it:replyText(300),explanation:replyText(),example:replyText(500)})
 };
 export const SHAPES={
@@ -127,5 +135,13 @@ export const SHAPES={
   writing_review:{summary:"Valutazione italiana",priorities:["massimo tre priorità"],rubric:{grammar:"valutazione",content:"valutazione",cohesion:"valutazione",register:"valutazione"},issues:[{quote:"citazione esatta presente nel testo",correction:"correzione minima",explanation:"regola e motivo",kind:"error",category:"negatives"}]},
   writing_compare:{summary:"confronto concreto",resolved:["errore realmente risolto"],remaining:["errore ancora presente"],transfer:[1,2,3].map(n=>({stem:"Nuovo esercizio "+n+" con contesto diverso",answer:"risposta",accept:["risposta","variante"],why:"spiegazione"}))},
   reading_review:{summary:"valutazione della traduzione",segments:[{quote:"citazione inglese esatta",translation:"traduzione italiana",explanation:"spiegazione"}],terms:[{expression:"termine presente nel testo",meaning_it:"significato contestuale",example:"esempio inglese originale"}]},
+  reading_understand:{summary:"Il gruppo ha controllato il cancello; il testo presenta un risultato attuale.",segments:[{quote:"The officers have checked the gate.",meaning_it:"Gli agenti hanno controllato il cancello.",why:"Il present perfect collega il controllo al presente."}],terms:[{expression:"checked",meaning_it:"controllato",quote:"The officers have checked the gate.",why:"Checked indica un controllo, non necessariamente una riparazione.",register:"Neutro",alternative:"Inspected suggerisce spesso un esame più sistematico; non è sempre equivalente.",example:"The technician checked the cable."}],questions:[{question:"Che cosa hanno controllato gli agenti?",answer:"Il cancello.",quote:"The officers have checked the gate."}]},
   clarify:{expression:"termine richiesto",meaning_it:"significato contestuale",explanation:"spiegazione italiana della costruzione e del registro",example:"esempio inglese originale"}
 };
+
+export function anchorReading(result,text) {
+  const segments=result.segments.filter(x=>text.includes(x.quote));
+  const terms=result.terms.filter(x=>text.includes(x.quote)&&x.quote.includes(x.expression));
+  const questions=result.questions.filter(x=>text.includes(x.quote));
+  return {...result,segments,terms,questions,omitted:(Number.isInteger(result.omitted)?result.omitted:0)+result.segments.length+result.terms.length+result.questions.length-segments.length-terms.length-questions.length};
+}

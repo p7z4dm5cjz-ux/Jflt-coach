@@ -13,6 +13,7 @@ const inputs={
   exercises:{lesson_id:"present-perfect-simple",terms:[{expression:"carry out",meaning_it:"eseguire"}],recent_errors:[{stem:"Completa: She ___ the report. (write, present perfect)",answer:"has wrote"}]},
   writing_review:{type:"report",topic:"Fictional gate check",text:"The officers has checked the gate.",mode:"practice"},
   writing_compare:{type:"report",topic:"Fictional gate check",text:"The officers has checked the gate.",rewrite:"The officers have checked the gate.",issues:[]},
+  reading_understand:{text:"The officers have checked the gate.",selection:""},
   reading_review:{text:"The officers have checked the gate.",translation:"Gli agenti hanno controllato il cancello."},
   clarify:{term:"carry out",context:"The team will carry out a routine inspection."}
 };
@@ -35,7 +36,7 @@ test("Ogni richiesta manda lo schema del suo compito e conserva i dati dello stu
       return provider(SHAPES[task]);
     });
     assert.equal(response.status,200,task);assert.equal(calls,1);
-    const body=await response.json();assert.deepEqual(body.result,SHAPES[task]);assert.equal(body.prompt_revision,"groq-path-v6");
+    const body=await response.json();assert.deepEqual(body.result,task==="reading_understand"?{...SHAPES[task],omitted:0}:SHAPES[task]);assert.equal(body.prompt_revision,"groq-reading-v7");
   }
 });
 
@@ -74,6 +75,7 @@ test("Campi mancanti e tipi sbagliati vengono esclusi dallo schema di ogni compi
     exercises:[p=>delete p.items[3].options,p=>delete p.items[0].accept,p=>p.items[0].kind="multiple choice"],
     writing_review:[p=>delete p.issues,p=>p.rubric.grammar=7,p=>p.issues[0].kind="suggestion"],
     writing_compare:[p=>delete p.transfer[1].accept,p=>p.remaining="none"],
+    reading_understand:[p=>delete p.terms,p=>p.terms[0].why=null,p=>p.questions[0].quote=4],
     reading_review:[p=>delete p.terms,p=>p.segments[0].quote=null],
     clarify:[p=>delete p.example,p=>p.explanation=[]]
   };

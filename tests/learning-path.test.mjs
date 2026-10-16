@@ -31,8 +31,8 @@ test("Ripetere operazioni o cambiare il soggetto non certifica otto contesti",()
  const s=freshState();s.attempts=[0,1].flatMap(round=>grammarItems("past-simple",round).map(i=>({lesson_id:"past-simple",context_id:i.context_id,stem:i.stem,session_id:"s"+round,correct:true,assisted:false,source:"local"})));
  assert.equal(lessonProgress(s,"past-simple").independent,false);assert.notEqual(recommendation(s).find(l=>l.id==="past-simple").status,"maintain");
 });
-test("176 domande di verifica su 22 nuclei sono distinte da pretest e allenamento",()=>{
- assert.equal(CHECK_ITEMS.length,176);assert.equal(CHECK_LESSONS.length,22);assert.equal(new Set(CHECK_ITEMS.map(i=>i.id)).size,176);
+test("240 domande di verifica su 30 nuclei sono distinte da pretest e allenamento",()=>{
+ assert.equal(CHECK_ITEMS.length,240);assert.equal(CHECK_LESSONS.length,30);assert.equal(new Set(CHECK_ITEMS.map(i=>i.id)).size,240);
  const stems=new Set([...QUESTIONS,...LESSONS.flatMap(l=>grammarItems(l.id))].map(i=>i.stem));
  for(const item of CHECK_ITEMS){assert.ok(!stems.has(item.stem),item.id);for(const answer of item.accept)assert.ok(correct(item,answer));assert.equal(correct(item,"wrong answer"),false);}
 });
