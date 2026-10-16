@@ -1,7 +1,7 @@
 import {LESSONS} from "./catalog.js";
 import {recommendation,now} from "./engine.js";
 import {PATH_GROUPS,lessonMeta,lessonProgress,learningReason,checkPriorities,reviewNotice} from "./learning-path.js";
-import {CHECK_LESSONS,newCheck,checkItems,checkResults} from "./grammar-checks.js";
+import {CHECK_ITEMS,CHECK_LESSONS,newCheck,checkItems,checkResults} from "./grammar-checks.js";
 import {newCourse} from "./writing-course.js";
 export function learningUI(api){
  const {h,p,title,card,link,button,change,autosave,goto,refresh,getState}=api;
@@ -15,7 +15,7 @@ export function learningUI(api){
   return card(h("h2",{},review.recalibrate?"Ricalibra le priorità":review.due.length?"Ripasso grammaticale in scadenza":"Una verifica breve per orientarti"),
    p(review.recalibrate?"Sono passate almeno quattro settimane: dieci domande aggiornano le priorità senza ripetere tutto il pretest.":review.due.length?review.due.length+" strutture da riprendere dopo un intervallo. La verifica usa prima i contesti che non hai già visto.":"Dieci domande su cinque aree, separate dagli esercizi di allenamento. Gli approfondimenti non verificati restano da esplorare."),
    active?link("Riprendi la verifica","checkpoint/"+active.id):button("Mini-rivalutazione · 10 domande",()=>begin()),
-   p("Banca locale di 176 domande su 22 strutture. Non è un test di livello completo. Quando una domanda è già stata usata, viene indicato.","small muted"));
+   p("Banca locale di "+CHECK_ITEMS.length+" domande su "+CHECK_LESSONS.length+" strutture. Non è un test di livello completo. Quando una domanda è già stata usata, viene indicato.","small muted"));
  }
  function overview(){
   const s=getState(),ranked=recommendation(s),next=ranked[0];

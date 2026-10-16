@@ -1,0 +1,28 @@
+# Controlli automatici a ogni caricamento su GitHub: configurazione, test e prova nel browser.
+# Non pubblica nulla e non usa chiavi: Cloudflare e GitHub Pages restano invariati.
+name: Controlli JFLT Coach
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  controlli:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Configurazione, Worker e cache sincronizzati
+        run: npm run check
+      - name: Test automatici
+        run: npm test
+      - name: Browser Chromium per la prova
+        run: npx playwright install --with-deps chromium
+      - name: Prova nel browser (iPhone e computer, chiaro e scuro)
+        run: npm run smoke

@@ -21,6 +21,7 @@ assert.deepEqual(config.migrations,[{tag:"v1",new_sqlite_classes:["Budget"]}]);
 assert.equal(JSON.parse(await readFile(new URL("package.json",root),"utf8")).version,VERSION);
 assert.equal(JSON.parse(await readFile(new URL("package-lock.json",root),"utf8")).version,VERSION);
 assert.ok((await readFile(new URL("index.html",root),"utf8")).includes('content="'+VERSION+'"'));
+{const page=await readFile(new URL("index.html",root),"utf8");const stale=page.replace('content="'+VERSION+'"',"").match(/\b\d+\.\d+\.\d+\b/);assert.ok(!stale,"index.html contiene una versione scritta a mano: "+stale?.[0]+". Usa data-app-version.");}
 assert.ok((await readFile(new URL("sw.js",root),"utf8")).includes('VERSION="'+VERSION+'"'));
 assert.deepEqual(new Set(COVERED_LESSONS),new Set(LESSONS.map(l=>l.id)));
 const worker=await readFile(new URL("worker/index.js",root),"utf8");

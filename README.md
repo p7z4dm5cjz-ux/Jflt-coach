@@ -1,4 +1,27 @@
-# JFLT Coach 1.6.1
+# JFLT Coach 1.8.0
+
+## Novità della 1.8.0
+
+- **Esercizi controllati prima di arrivarti.** Dopo la generazione, il Worker chiede a Groq di risolvere gli esercizi senza vedere le soluzioni. Se il controllo conferma la soluzione, l'esercizio resta com'è; se trova altre risposte corrette, le aggiunge alle varianti accettate (massimo 8); se arriva a una soluzione diversa o trova l'esercizio ambiguo, l'esercizio resta visibile ma è segnato come dubbio ed escluso dal punteggio e dalle priorità. La soluzione originale non viene mai sostituita. Se il controllo non risponde, gli esercizi arrivano comunque, segnati come non controllati.
+- **Più margine sul piano gratuito.** Se `gpt-oss-120b` risponde «quota raggiunta» (HTTP 429), il Worker ripete la stessa richiesta con `openai/gpt-oss-20b`, che su Groq ha limiti propri. Un errore di formato dello schema rigido (`json_validate_failed`) viene ritentato una volta. Per disattivare il passaggio al modello piccolo: variabile `MODEL_FALLBACK=off` nel Worker; per il controllo: `VERIFY=off`.
+- **Prova di comprensione stile JFLT** (Comprendi → una lettura): 6 domande a scelta multipla in inglese su idea principale, dettagli, inferenze, scopo dell'autore e lessico nel contesto; ogni risposta è collegata a una frase letterale del testo (le domande senza riscontro vengono scartate) e passa dal controllo alla cieca. Risultato, tempo impiegato e storico delle prove restano nella lettura e nel backup. Allena il formato, non stima il livello.
+- **Menu:** «Comprendi» è una sezione propria anche su iPhone.
+- **Controlli automatici su GitHub** (`.github/workflows/ci.yml`): a ogni caricamento eseguono `npm run check`, `npm test` e una prova nel browser vero (`npm run smoke`: 8 pagine, iPhone e computer, tema chiaro e scuro; fallisce con errori in console, pagine che sbordano, versione sbagliata o cache offline non aggiornata). Non pubblicano nulla e non usano chiavi.
+
+Consumo: con il controllo ogni blocco di esercizi o prova di lettura usa 2 chiamate Groq invece di 1, conteggiate una sola volta nel limite personale del Worker (10/minuto, 80/giorno).
+
+## Nuova grafica (1.7.0)
+
+Direzione «Allenamento»: blu notte e arancio, carattere Barlow incluso nell'app (funziona anche offline; licenza SIL OFL in `fonts/OFL-Barlow.txt`).
+
+- **Oggi:** settimana a pallini (giorni con attività), piano del giorno in due blocchi con stato, priorità con i contesti corretti su 8.
+- **Intestazione compatta su iPhone:** marchio e accesso alle impostazioni; lo stato «Offline» compare solo quando serve. Il tema si sceglie in Impostazioni → Aspetto.
+- **Barra in basso:** cinque sezioni con icone vere (Oggi, Studio, Comprendi, Scrittura, Ripasso); Impostazioni passa all’icona in alto. Durante esercizi, pretest e verifiche la barra si nasconde.
+- **Esercizi:** schede più leggibili, opzioni grandi, barra di avanzamento spessa, verifica in evidenza.
+- Tema scuro ridisegnato con gli stessi criteri.
+- Corretti: versione «1.1.0» rimasta scritta a mano nella pagina (ora letta dall'app, con controllo automatico), voce «Oggi» non evidenziata all'apertura, conteggio delle domande di verifica non aggiornato.
+
+Nessuna modifica a contenuti, correzione delle risposte, salvataggi o Worker Groq rispetto alla 1.6.1.
 
 ## Correzioni della 1.6.1
 

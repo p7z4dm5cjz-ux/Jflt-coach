@@ -1,6 +1,6 @@
 import {freshState,migrate,LEGACY_STORES,VERSION,endpoint,validPlacement} from "./engine.js";
 import {validateBackup} from "./legacy/core.js";
-import {validateReply} from "./contract.js";
+import {validateReply,READING_TEST_TYPES} from "./contract.js";
 import {LESSONS} from "./catalog.js";
 import {BLOCK_SIZE} from "./practice-flow.js";
 import {WRITING_UNITS} from "./writing-curriculum.js";
@@ -59,6 +59,7 @@ export function validateState(s) {
   for(const a of s.attempts)if(typeof a.id!=="string"||typeof a.lesson_id!=="string"||typeof a.correct!=="boolean"||typeof a.answer!=="string"||typeof a.assisted!=="boolean"||!validDate(a.date))throw new Error("Un tentativo nel backup non è valido.");
   for(const set of s.sessions) {
     if(typeof set.id!=="string"||typeof set.lesson_id!=="string"||typeof set.assisted!=="boolean"||!set.answers||typeof set.answers!=="object"||Array.isArray(set.answers)||!Array.isArray(set.items)||!validDate(set.created_at)||set.completed_at!==null&&!validDate(set.completed_at))throw new Error("Una sessione nel backup non è valida.");
+    for(const it of set.items)if(it.doubt!==undefined&&typeof it.doubt!=="boolean"||it.check_note!==undefined&&typeof it.check_note!=="string")throw new Error("Un esercizio contiene un controllo non valido.");
     for(const it of set.items)if(typeof it.id!=="string"||typeof it.stem!=="string"||typeof it.answer!=="string"||!Array.isArray(it.options)||it.options.some(v=>typeof v!=="string")||!Array.isArray(it.accept)||it.accept.some(v=>typeof v!=="string")||typeof it.why!=="string")throw new Error("Un esercizio nel backup non è valido.");
     if(Object.values(set.answers).some(v=>typeof v!=="string"))throw new Error("Una risposta nel backup non è valida.");
     if(set.training!==undefined) {
@@ -78,6 +79,14 @@ export function validateState(s) {
       const snap=r.understanding_source;if(typeof snap?.text!=="string"||typeof snap.source!=="string"||typeof snap.selection!=="string"||u.segments.some(x=>!snap.text.includes(x.quote))||u.terms.some(x=>!snap.text.includes(x.quote)||!x.quote.includes(x.expression))||u.questions.some(x=>!snap.text.includes(x.quote)))throw new Error("Analisi della lettura senza riscontro nel testo originale.");
     }
     if(r.understanding_answers&&(typeof r.understanding_answers!=="object"||Array.isArray(r.understanding_answers)||Object.entries(r.understanding_answers).some(([k,v])=>!/^\d$/.test(k)||Number(k)>2||typeof v!=="string"||v.length>1200)))throw new Error("Risposte di comprensione non valide.");
+    if(r.test!==undefined&&r.test!==null){
+      const t=r.test;
+      if(typeof t!=="object"||typeof t.id!=="string"||typeof t.source_text!=="string"||!Array.isArray(t.questions)||t.questions.length<4||t.questions.length>6||!validDate(t.started_at)||t.completed_at!==null&&!validDate(t.completed_at)||!t.answers||typeof t.answers!=="object"||Array.isArray(t.answers))throw new Error("Prova di comprensione non valida.");
+      for(const q of t.questions)if(!READING_TEST_TYPES.includes(q?.type)||typeof q.question!=="string"||!Array.isArray(q.options)||q.options.length!==4||q.options.some(o=>typeof o!=="string")||!q.options.includes(q.answer)||typeof q.quote!=="string"||!t.source_text.includes(q.quote)||typeof q.why!=="string"||q.doubt!==undefined&&typeof q.doubt!=="boolean")throw new Error("Domanda di comprensione senza riscontro nel testo.");
+      if(Object.entries(t.answers).some(([k,v])=>!/^\d$/.test(k)||Number(k)>=t.questions.length||typeof v!=="string"||!t.questions[Number(k)].options.includes(v)))throw new Error("Risposte della prova non valide.");
+      if(t.completed_at&&(!Number.isInteger(t.score)||!Number.isInteger(t.total)||t.score<0||t.score>t.total||t.total>t.questions.length))throw new Error("Punteggio della prova non valido.");
+    }
+    if(r.test_history!==undefined&&(!Array.isArray(r.test_history)||r.test_history.length>20||r.test_history.some(x=>!Number.isInteger(x?.score)||!Number.isInteger(x?.total)||x.score>x.total||!validDate(x.completed_at))))throw new Error("Storico delle prove non valido.");
     if(r.feedback){validateReply("reading_review",r.feedback);if(typeof r.feedback_source?.text!=="string"||typeof r.feedback_source?.translation!=="string")throw new Error("Manca il passaggio confrontato.");}
   }
   for(const key of ["attempts","sessions","writings","readings","vocabulary"])if(new Set(s[key].map(x=>x.id)).size!==s[key].length)throw new Error("Il backup contiene identificatori ripetuti.");

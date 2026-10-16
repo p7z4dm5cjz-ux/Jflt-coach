@@ -1,4 +1,4 @@
-export const TASKS=["exercises","grammar_explain","writing_coach","writing_review","writing_compare","reading_review","reading_understand","clarify"];
+export const TASKS=["exercises","grammar_explain","writing_coach","writing_review","writing_compare","reading_review","reading_understand","reading_test","clarify"];
 const object=x=>x&&typeof x==="object"&&!Array.isArray(x);
 const str=(x,max=1600)=>typeof x==="string"&&x.trim().length>0&&x.length<=max;
 const arr=(x,max)=>Array.isArray(x)&&x.length<=max;
@@ -15,6 +15,7 @@ export function validateInput(task,d) {
   if(task==="writing_compare"&&!str(d.rewrite,12000))throw new Error("Manca la riscrittura.");
   if(task==="reading_review"&&(!str(d.text,8000)||!str(d.translation,12000)))throw new Error("Mancano testo o traduzione.");
   if(task==="reading_understand"&&(!str(d.text,8000)||typeof d.selection!=="string"||d.selection.length>120||d.selection.trim()&&!d.text.includes(d.selection.trim())))throw new Error("Incolla un testo e scegli un'espressione presente nel passaggio (massimo 120 caratteri).");
+  if(task==="reading_test"&&(!str(d.text,8000)||(d.text.match(/[A-Za-z]+(?:'[A-Za-z]+)?/g)||[]).length<120))throw new Error("Incolla un testo inglese di almeno 120 parole (massimo 8.000 caratteri).");
   if(task==="clarify"&&(!str(d.term,120)||!str(d.context,1200)))throw new Error("Seleziona un termine e il suo contesto.");
   return d;
 }
@@ -88,6 +89,18 @@ export function validateReply(task,p) {
     for(const [n,x] of p.terms.entries())for(const [k,max] of [["expression",120],["meaning_it",300],["quote",800],["why",1200],["register",200],["alternative",500],["example",500]])needString(x?.[k],"terms["+n+"]."+k,max);
     for(const [n,x] of p.questions.entries())for(const [k,max] of [["question",500],["answer",800],["quote",800]])needString(x?.[k],"questions["+n+"]."+k,max);
 
+  } else if(task==="reading_test") {
+    needArray(p.questions,"questions",6);if(p.questions.length!==6)bad("questions","sono richieste esattamente 6 domande");
+    const types=new Set();
+    for(const [n,x] of p.questions.entries()){
+      const path="questions["+n+"]";needObject(x,path);
+      if(!READING_TEST_TYPES.includes(x.type))bad(path+".type","tipo di domanda non riconosciuto");types.add(x.type);
+      needString(x.question,path+".question",400);needString(x.quote,path+".quote",500);needString(x.why,path+".why",1200);needString(x.answer,path+".answer",300);
+      needArray(x.options,path+".options",4);if(x.options.length!==4)bad(path+".options","servono 4 opzioni");strings(x.options,path+".options",300);
+      if(new Set(x.options).size!==4)bad(path+".options","le opzioni devono essere diverse");
+      if(!x.options.includes(x.answer))bad(path+".answer","la soluzione non coincide con una delle opzioni");
+    }
+    if(types.size<4)bad("questions.type","servono almeno 4 tipi di domanda diversi");
   } else if(task==="clarify") {
     needString(p.expression,"expression",120);needString(p.meaning_it,"meaning_it",300);needString(p.explanation,"explanation");needString(p.example,"example",500);
   } else bad("task","funzione non riconosciuta");
@@ -119,6 +132,7 @@ export const REPLY_SCHEMAS={
   writing_compare:replyObject({summary:replyText(),resolved:replyList(replyText(),"Da 0 a 8 errori risolti."),remaining:replyList(replyText(),"Da 0 a 8 errori ancora presenti."),transfer:replyList(replyObject(transferFields),"Esattamente 3 esercizi in nuovi contesti.")}),
   reading_review:replyObject({summary:replyText(),segments:replyList(replyObject({quote:replyText(800),translation:replyText(1400),explanation:replyText()}),"Da 0 a 6 passaggi, con citazioni esatte del testo inglese."),terms:replyList(replyObject({expression:replyText(120),meaning_it:replyText(300),example:replyText(500)}),"Da 0 a 5 termini presenti nel testo.")}),
   reading_understand:replyObject({summary:replyText(),segments:replyList(replyObject({quote:replyText(800),meaning_it:replyText(1400),why:replyText()}),"Da 1 a 3 passaggi esatti, significato e costruzione."),terms:replyList(replyObject({expression:replyText(120),meaning_it:replyText(300),quote:replyText(800),why:replyText(1200),register:replyText(200),alternative:replyText(500),example:replyText(500)}),"Da 1 a 5 termini testuali; se selection è presente includila. Quote contiene expression esattamente."),questions:replyList(replyObject({question:replyText(500),answer:replyText(800),quote:replyText(800)}),"Da 1 a 3 domande in italiano sul senso con risposta e prova testuale esatta.")}),
+  reading_test:replyObject({questions:replyList(replyObject({type:{type:"string",enum:["main_idea","detail","inference","purpose","vocabulary"]},question:replyText(400),options:replyList(replyText(300),"Esattamente 4 opzioni diverse, una sola corretta."),answer:replyText(300),quote:replyText(500),why:replyText(1200)}),"Esattamente 6 domande, almeno 4 tipi diversi.")}),
   clarify:replyObject({expression:replyText(120),meaning_it:replyText(300),explanation:replyText(),example:replyText(500)})
 };
 export const SHAPES={
@@ -136,9 +150,16 @@ export const SHAPES={
   writing_compare:{summary:"confronto concreto",resolved:["errore realmente risolto"],remaining:["errore ancora presente"],transfer:[1,2,3].map(n=>({stem:"Nuovo esercizio "+n+" con contesto diverso",answer:"risposta",accept:["risposta","variante"],why:"spiegazione"}))},
   reading_review:{summary:"valutazione della traduzione",segments:[{quote:"citazione inglese esatta",translation:"traduzione italiana",explanation:"spiegazione"}],terms:[{expression:"termine presente nel testo",meaning_it:"significato contestuale",example:"esempio inglese originale"}]},
   reading_understand:{summary:"Gli agenti hanno controllato il cancello; il testo presenta un risultato attuale.",segments:[{quote:"The officers have checked the gate.",meaning_it:"Gli agenti hanno controllato il cancello.",why:"Il present perfect collega il controllo al presente."}],terms:[{expression:"checked",meaning_it:"controllato",quote:"The officers have checked the gate.",why:"Checked indica un controllo, non necessariamente una riparazione.",register:"Neutro",alternative:"Inspected suggerisce spesso un esame più sistematico; non è sempre equivalente.",example:"The technician checked the cable."}],questions:[{question:"Che cosa hanno controllato gli agenti?",answer:"Il cancello.",quote:"The officers have checked the gate."}]},
+  reading_test:{questions:[{type:"main_idea",question:"What is the passage mainly about?",options:["A delayed depot inspection and its practical effects","A new delivery schedule for local residents","A complaint by the council about the depot","The results of the March inspection"],answer:"A delayed depot inspection and its practical effects",quote:"The inspection of the northern depot was postponed because two officers were unavailable.",why:"Il testo parte dal rinvio dell'ispezione e ne descrive le conseguenze pratiche; le altre opzioni riprendono dettagli secondari o non presenti."},{type:"detail",question:"Why was the inspection postponed?",options:["Deliveries were delayed.","Two officers were unavailable.","The council refused to approve it.","Drivers complained about the notice."],answer:"Two officers were unavailable.",quote:"The inspection of the northern depot was postponed because two officers were unavailable.",why:"La causa è esplicita: because two officers were unavailable. Le lamentele degli autisti riguardano l'avviso, non il rinvio."},{type:"inference",question:"What can be inferred about the notice sent to drivers?",options:["It was written by the council.","It cancelled all deliveries.","It was not as clear as it should have been.","It was sent in March."],answer:"It was not as clear as it should have been.",quote:"The manager accepted that the message could have been clearer and promised a written update by Friday.",why:"Could have been clearer implica che il messaggio non era abbastanza chiaro, senza dirlo direttamente."},{type:"purpose",question:"What is the manager's attitude to the drivers' complaints?",options:["He partly accepts them.","He rejects them completely.","He ignores them.","He blames the council."],answer:"He partly accepts them.",quote:"The manager accepted that the message could have been clearer and promised a written update by Friday.",why:"Accepted che il messaggio poteva essere più chiaro e promette un aggiornamento: riconosce in parte il problema."},{type:"vocabulary",question:"In the passage, 'vague' is closest in meaning to:",options:["late","official","unclear","short"],answer:"unclear",quote:"Several drivers complained that the notice arrived late, and one described the instructions as vague.",why:"Vague indica istruzioni poco precise; late riguarda il momento di arrivo dell'avviso, non il contenuto."},{type:"detail",question:"What must visitors do until the update?",options:["Park beside the depot.","Sign in at the main gate and wait to be escorted.","Call the duty manager.","Use the loading area."],answer:"Sign in at the main gate and wait to be escorted.",quote:"Until then, visitors must sign in at the main gate and wait to be escorted.",why:"Until then rimanda all'aggiornamento di venerdì; nel frattempo i visitatori devono registrarsi e attendere un accompagnatore."}]},
   clarify:{expression:"termine richiesto",meaning_it:"significato contestuale",explanation:"spiegazione italiana della costruzione e del registro",example:"esempio inglese originale"}
 };
 
+export const READING_TEST_TYPES=["main_idea","detail","inference","purpose","vocabulary"];
+// Tiene solo le domande la cui citazione è letterale nel testo inviato.
+export function anchorTest(result,text) {
+  const questions=result.questions.filter(x=>text.includes(x.quote));
+  return {...result,questions,omitted:result.questions.length-questions.length};
+}
 export function anchorReading(result,text) {
   const segments=result.segments.filter(x=>text.includes(x.quote));
   const terms=result.terms.filter(x=>text.includes(x.quote)&&x.quote.includes(x.expression));

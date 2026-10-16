@@ -36,10 +36,11 @@ async function loadHealth(settings,fetcher,token,address,force=false) {
   healthPending={address,token,fetcher,promise};
   return promise;
 }
+const VERIFY_TASKS=["exercises","reading_test"];
 async function send(settings,path,task,data,fetcher,token) {
-  const requestId=uid("req"),controller=new AbortController(),timer=setTimeout(()=>controller.abort(),45000);
+  const verify=VERIFY_TASKS.includes(task),requestId=uid("req"),controller=new AbortController(),timer=setTimeout(()=>controller.abort(),verify?90000:45000);
   try {
-    const response=await fetcher(endpoint(settings.endpoint)+path,{method:path==="/health"?"GET":"POST",headers:{Authorization:"Bearer "+token,...(path!=="/health"?{"Content-Type":"application/json"}:{})},body:path==="/health"?undefined:JSON.stringify({request_id:requestId,api_version:API_VERSION,task,data}),signal:controller.signal,cache:"no-store"});
+    const response=await fetcher(endpoint(settings.endpoint)+path,{method:path==="/health"?"GET":"POST",headers:{Authorization:"Bearer "+token,...(path!=="/health"?{"Content-Type":"application/json"}:{})},body:path==="/health"?undefined:JSON.stringify({request_id:requestId,api_version:API_VERSION,task,data,...(verify?{verify:true}:{})}),signal:controller.signal,cache:"no-store"});
     const raw=await response.text();let payload;
     try{payload=JSON.parse(raw);}catch{throw new Error("Il Worker non ha restituito JSON. Controlla l'indirizzo e la build Cloudflare.");}
     if(!response.ok) {
@@ -53,9 +54,10 @@ async function send(settings,path,task,data,fetcher,token) {
     if(path==="/health")return payload;
     if(payload.request_id!==requestId)throw new Error("La risposta non corrisponde alla richiesta inviata.");
     if(task)validateReply(task,payload.result);
+    if(task&&payload.verification)Object.defineProperty(payload.result,"verification",{value:payload.verification,enumerable:false});
     return task?payload.result:payload;
   }catch(error) {
-    if(error.name==="AbortError")throw new Error("Il tutor non ha risposto entro 45 secondi. Il lavoro resta salvato.");
+    if(error.name==="AbortError")throw new Error("Il tutor non ha risposto entro "+(verify?90:45)+" secondi. Il lavoro resta salvato.");
     if(error instanceof TypeError)throw new Error("Collegamento al Worker non riuscito. Verifica connessione, indirizzo e origine consentita su Cloudflare.");
     throw error;
   }finally{clearTimeout(timer);}

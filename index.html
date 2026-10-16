@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#f5f4ef">
+  <meta name="theme-color" content="#f2f5f9">
   <meta name="description" content="Il tuo percorso di inglese: grammatica mirata, phrasal verbs e scrittura.">
   <meta name="robots" content="noindex,nofollow">
-  <meta name="app-version" content="1.6.1">
+  <meta name="app-version" content="1.8.0">
   <meta name="color-scheme" content="light dark">
   <script>try{const theme=localStorage.getItem("jflt-coach-theme");document.documentElement.dataset.theme=["light","dark"].includes(theme)?theme:"auto";}catch{document.documentElement.dataset.theme="auto";}</script>
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -26,22 +26,22 @@
   <aside class="sidebar">
     <a class="brand" href="#/home"><span class="brand-icon" aria-hidden="true">J</span><span>JFLT Coach<small>IL TUO INGLESE, OGNI GIORNO</small></span></a>
     <nav aria-label="Sezioni">
-      <a href="#/home" data-section="home"><span aria-hidden="true">⌂</span><span>Oggi</span></a>
-      <a href="#/studio" data-section="studio"><span aria-hidden="true">Aa</span><span>Studio</span></a>
-      <a href="#/reading" data-section="reading" aria-label="Comprendi articoli e testi"><span aria-hidden="true">≡</span><span>Comprendi</span></a>
-      <a href="#/writing" data-section="writing"><span aria-hidden="true">✎</span><span>Scrittura</span></a>
-      <a href="#/review" data-section="review"><span aria-hidden="true">↻</span><span>Ripasso</span></a>
-      <a href="#/settings" data-section="settings"><span aria-hidden="true">⚙</span><span>Impostazioni</span></a>
+      <a href="#/home" data-section="home"><svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Oggi</span></a>
+      <a href="#/studio" data-section="studio"><svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg><span>Studio</span></a>
+      <a href="#/reading" data-section="reading" aria-label="Comprendi articoli e testi"><svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5c2.5-1 5.5-1 9 1v13c-3.5-2-6.5-2-9-1z"/><path d="M21 5.5c-2.5-1-5.5-1-9 1v13c3.5-2 6.5-2 9-1z"/></svg><span>Comprendi</span></a>
+      <a href="#/writing" data-section="writing"><svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg><span>Scrittura</span></a>
+      <a href="#/review" data-section="review"><svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11a8 8 0 0 1 14-4.5"/><path d="M19 3v4h-4"/><path d="M20 13a8 8 0 0 1-14 4.5"/><path d="M5 21v-4h4"/></svg><span>Ripasso</span></a>
+      <a href="#/settings" data-section="settings"><svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h9"/><path d="M17 7h3"/><circle cx="15" cy="7" r="2"/><path d="M4 17h3"/><path d="M11 17h9"/><circle cx="9" cy="17" r="2"/></svg><span>Impostazioni</span></a>
     </nav>
-    <div class="sidebar-note">Un po’ di pratica.<br>Una nuova capacità.<small>Release 1.1.0</small></div>
+    <div class="sidebar-note">Un po’ di pratica.<br>Una nuova capacità.<small>Versione <span data-app-version></span></small></div>
   </aside>
   <div class="workspace">
-    <header class="topbar"><span>IL TUO SPAZIO DI STUDIO</span><div><span id="connection">Online</span><span id="saved" role="status">Salvato sul dispositivo</span><button type="button" id="theme-toggle" class="theme-toggle" aria-label="Cambia tema">Tema: Automatico</button></div></header>
+    <header class="topbar"><span>IL TUO SPAZIO DI STUDIO</span><div><span id="connection" data-state="online">Online</span><span id="saved" role="status">Salvato sul dispositivo</span><a href="#/settings" class="settings-link" aria-label="Impostazioni"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h9"/><path d="M17 7h3"/><circle cx="15" cy="7" r="2"/><path d="M4 17h3"/><path d="M11 17h9"/><circle cx="9" cy="17" r="2"/></svg></a></div></header>
     <div id="update" class="update-banner" hidden><span>Aggiornamento pronto. Salva e passa alla nuova versione.</span><button type="button">Aggiorna l’app</button></div>
     <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
     <main id="view" tabindex="-1"><p>Preparazione del tuo percorso…</p></main>
     <noscript>Per usare JFLT Coach devi abilitare JavaScript nel browser.</noscript>
-    <footer>JFLT Coach · Materiali originali basati sui tuoi libri · 1.1.0</footer>
+    <footer>JFLT Coach · Materiali originali basati sui tuoi libri · <span data-app-version></span></footer>
   </div>
 </body>
 </html>
