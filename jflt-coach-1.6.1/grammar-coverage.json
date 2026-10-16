@@ -1,0 +1,3146 @@
+{
+  "date": "2026-10-13",
+  "release": "1.5.0",
+  "scope": "198 voci A1–C1 (indici ricontrollati il 15 ottobre) + 28 Grammar Shorts (inventario del 13 ottobre); ripetizioni fra livelli incluse. Non equivalenza CEFR o controllo integrale di tutte le soluzioni.",
+  "rows": [
+    {
+      "section": "A1",
+      "order": 1,
+      "topic_it": "Essere al presente",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "present-simple",
+        "questions",
+        "negatives"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 2,
+      "topic_it": "Dimostrativi",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "pronouns",
+        "demonstratives-plurals"
+      ],
+      "expanded_in_1_4": [
+        "demonstratives-plurals"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 3,
+      "topic_it": "Pronomi soggetto e possessivi",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "pronouns"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 4,
+      "topic_it": "Articoli e plurali",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "articles",
+        "nouns",
+        "demonstratives-plurals"
+      ],
+      "expanded_in_1_4": [
+        "demonstratives-plurals"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 5,
+      "topic_it": "Aggettivi di base",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "adjectives"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 6,
+      "topic_it": "Presente semplice",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "present-simple"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 7,
+      "topic_it": "Domande e interrogativi",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "questions"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 8,
+      "topic_it": "Frequenza degli avverbi",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "adjectives"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 9,
+      "topic_it": "Pronomi soggetto e oggetto",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "pronouns"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 10,
+      "topic_it": "Genitivo e interrogativo possessivo",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "possessives-compounds"
+      ],
+      "expanded_in_1_4": [
+        "possessives-compounds"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 11,
+      "topic_it": "Preposizioni temporali",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "prepositions"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 12,
+      "topic_it": "Preposizioni di luogo",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "prepositions"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 13,
+      "topic_it": "Capacità e permesso",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "ability",
+        "may-might",
+        "imperatives-requests"
+      ],
+      "expanded_in_1_4": [
+        "imperatives-requests"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 14,
+      "topic_it": "Presente progressivo",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "present-continuous"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 15,
+      "topic_it": "Confronto dei presenti",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "present"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 16,
+      "topic_it": "Imperativo",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "sentence",
+        "conditionals-real",
+        "imperatives-requests"
+      ],
+      "expanded_in_1_4": [
+        "imperatives-requests"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 17,
+      "topic_it": "Essere al passato",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "past-simple",
+        "past"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 18,
+      "topic_it": "Passato semplice",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "past-simple",
+        "past"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 19,
+      "topic_it": "Passato: negazioni e domande",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "past-simple",
+        "negatives",
+        "questions"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 20,
+      "topic_it": "Infinito e gerundio",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "verb-patterns"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 21,
+      "topic_it": "Desideri e offerte cortesi",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "some-any",
+        "imperatives-requests"
+      ],
+      "expanded_in_1_4": [
+        "imperatives-requests"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 22,
+      "topic_it": "Possesso con have got",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "have-forms"
+      ],
+      "expanded_in_1_4": [
+        "have-forms"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 23,
+      "topic_it": "Numerabilità e determinanti",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "nouns",
+        "some-any"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 24,
+      "topic_it": "Costruzioni esistenziali",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "there-it"
+      ],
+      "expanded_in_1_4": [
+        "there-it"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 25,
+      "topic_it": "Scelta tra there e it",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "there-it"
+      ],
+      "expanded_in_1_4": [
+        "there-it"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 26,
+      "topic_it": "Posizione nello spazio",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "prepositions",
+        "space-movement"
+      ],
+      "expanded_in_1_4": [
+        "space-movement"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 27,
+      "topic_it": "Quantità di base",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "quantifiers",
+        "some-any",
+        "quantifiers-of"
+      ],
+      "expanded_in_1_4": [
+        "quantifiers-of"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 28,
+      "topic_it": "Comparativo degli aggettivi",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "comparison"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 29,
+      "topic_it": "Superlativo degli aggettivi",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "comparison"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 30,
+      "topic_it": "Futuro con will e shall",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "future-will",
+        "imperatives-requests"
+      ],
+      "expanded_in_1_4": [
+        "imperatives-requests"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 31,
+      "topic_it": "Futuro intenzionale",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "future-going-to"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 32,
+      "topic_it": "Aggettivo oppure avverbio",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "adjectives"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 33,
+      "topic_it": "Scelta dell'articolo",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "articles"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 34,
+      "topic_it": "Congiunzioni di base",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "clauses",
+        "linkers",
+        "basic-connectors"
+      ],
+      "expanded_in_1_4": [
+        "basic-connectors"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 35,
+      "topic_it": "Ordine della frase",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "sentence",
+        "questions"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A1",
+      "order": 36,
+      "topic_it": "Riferimenti con this e it",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "pronouns",
+        "demonstratives-plurals"
+      ],
+      "expanded_in_1_4": [
+        "demonstratives-plurals"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 1,
+      "topic_it": "Forme interrogative",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "questions"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 2,
+      "topic_it": "Domande soggetto e preposizioni",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "questions",
+        "prepositions",
+        "advanced-prepositions",
+        "auxiliary-responses"
+      ],
+      "expanded_in_1_4": [
+        "advanced-prepositions",
+        "auxiliary-responses"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 3,
+      "topic_it": "Confronto dei presenti",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "present"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 4,
+      "topic_it": "Passato semplice",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "past-simple"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 5,
+      "topic_it": "Confronto dei passati",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "past"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 6,
+      "topic_it": "Scopo con to e for",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "clauses",
+        "verb-patterns",
+        "discourse-contrasts"
+      ],
+      "expanded_in_1_4": [
+        "discourse-contrasts"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 7,
+      "topic_it": "Connettivi e collegamenti temporali",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "clauses",
+        "linkers"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 8,
+      "topic_it": "Confronto dei futuri",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "future"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 9,
+      "topic_it": "Accordi futuri",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "future-arrangements"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 10,
+      "topic_it": "Relative identificative",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "relatives"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 11,
+      "topic_it": "Perfetto presente",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "present-perfect-simple"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 12,
+      "topic_it": "Perfetto oppure passato",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "perfect-simple"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 13,
+      "topic_it": "Pronomi indefiniti",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "some-any",
+        "negatives"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 14,
+      "topic_it": "Confronti aggettivali e avverbiali",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "comparison",
+        "adjectives",
+        "comparative-patterns"
+      ],
+      "expanded_in_1_4": [
+        "comparative-patterns"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 15,
+      "topic_it": "Eccesso e sufficienza",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "quantifiers",
+        "too-enough"
+      ],
+      "expanded_in_1_4": [
+        "too-enough"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 16,
+      "topic_it": "Quantificatori",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "quantifiers",
+        "some-any",
+        "quantifiers-of"
+      ],
+      "expanded_in_1_4": [
+        "quantifiers-of"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 17,
+      "topic_it": "Most, most of, the most",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "quantifiers-of"
+      ],
+      "expanded_in_1_4": [
+        "quantifiers-of"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 18,
+      "topic_it": "Infinito e gerundio",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "verb-patterns"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 19,
+      "topic_it": "Costruzioni con go",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "get-go"
+      ],
+      "expanded_in_1_4": [
+        "get-go"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 20,
+      "topic_it": "Obbligo e divieto",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "obligation",
+        "negatives"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 21,
+      "topic_it": "Consiglio con should",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "obligation"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 22,
+      "topic_it": "Condizionale reale e tempo",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "conditionals-real",
+        "clauses"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 23,
+      "topic_it": "Pronomi e possessivi",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "pronouns"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 24,
+      "topic_it": "Condizionale irreale presente",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "conditionals-unreal"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 25,
+      "topic_it": "Passivo semplice",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "passive"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 26,
+      "topic_it": "Abitudini passate",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "used-to"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 27,
+      "topic_it": "Possibilità con might",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "may-might"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 28,
+      "topic_it": "Preposizioni di movimento",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "prepositions",
+        "space-movement"
+      ],
+      "expanded_in_1_4": [
+        "space-movement"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 29,
+      "topic_it": "Accordo con so/neither",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "auxiliary-responses"
+      ],
+      "expanded_in_1_4": [
+        "auxiliary-responses"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 30,
+      "topic_it": "Ripasso verbale A2",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "mixed",
+        "review-foundation"
+      ],
+      "expanded_in_1_4": [
+        "review-foundation"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 31,
+      "topic_it": "Anteriorità passata",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "past-perfect-simple"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 32,
+      "topic_it": "Discorso riferito",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "reported",
+        "indirect-questions"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 33,
+      "topic_it": "Verbi con due oggetti",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "causatives"
+      ],
+      "expanded_in_1_4": [
+        "causatives"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 34,
+      "topic_it": "Significati di get",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "get-go"
+      ],
+      "expanded_in_1_4": [
+        "get-go"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 35,
+      "topic_it": "Scelta tra do e make",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "do-make"
+      ],
+      "expanded_in_1_4": [
+        "do-make"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 36,
+      "topic_it": "Stato oppure azione",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "present",
+        "stative-dynamic"
+      ],
+      "expanded_in_1_4": [
+        "stative-dynamic"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 37,
+      "topic_it": "Sintassi dei phrasal",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "phrasal-basics"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 38,
+      "topic_it": "Cessazione: no longer/anymore",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "negatives"
+      ],
+      "expanded_in_1_4": [
+        "negatives"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 39,
+      "topic_it": "Espressioni temporali simili",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "time-contrasts"
+      ],
+      "expanded_in_1_4": [
+        "time-contrasts"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 40,
+      "topic_it": "Possibilità: may/might",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "may-might"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "A2",
+      "order": 41,
+      "topic_it": "Ausiliari principali",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "questions",
+        "negatives"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 1,
+      "topic_it": "Confronto dei presenti",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "present"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 2,
+      "topic_it": "Scelta del futuro",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "future"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 3,
+      "topic_it": "Passato oppure perfetto",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "perfect-simple"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 4,
+      "topic_it": "Perfetto: risultato o processo",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "perfect-continuous"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 5,
+      "topic_it": "Durata: during/for/while",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "prepositions",
+        "clauses",
+        "time-contrasts"
+      ],
+      "expanded_in_1_4": [
+        "time-contrasts"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 6,
+      "topic_it": "Confronti aggettivali e avverbiali",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "comparison",
+        "adjectives",
+        "comparative-patterns"
+      ],
+      "expanded_in_1_4": [
+        "comparative-patterns"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 7,
+      "topic_it": "Uso degli articoli",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "articles"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 8,
+      "topic_it": "Other e another",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "other-another"
+      ],
+      "expanded_in_1_4": [
+        "other-another"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 9,
+      "topic_it": "Capacità nei diversi tempi",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "ability"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 10,
+      "topic_it": "Obbligo e consiglio",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "obligation"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 11,
+      "topic_it": "Pronomi riflessivi",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "pronouns"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 12,
+      "topic_it": "Aggettivi in -ed/-ing",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "ed-ing-adjectives"
+      ],
+      "expanded_in_1_4": [
+        "ed-ing-adjectives"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 13,
+      "topic_it": "Tempi della narrazione",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "past",
+        "past-perfect"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 14,
+      "topic_it": "Ripasso verbale B1",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "mixed",
+        "review-narrative"
+      ],
+      "expanded_in_1_4": [
+        "review-narrative"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 15,
+      "topic_it": "Abitudini e adattamento",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "used-to"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 16,
+      "topic_it": "Forme passive",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "passive"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 17,
+      "topic_it": "Attivo oppure passivo",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "passive"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 18,
+      "topic_it": "Deduzioni modali",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "deduction"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 19,
+      "topic_it": "Condizione e tempo futuri",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "conditionals-real",
+        "clauses"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 20,
+      "topic_it": "Ipotesi irreali presenti",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "conditionals-unreal"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 21,
+      "topic_it": "Confronto dei condizionali",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "conditionals-real",
+        "conditionals-unreal"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 22,
+      "topic_it": "Ipotesi irreali passate",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "conditionals-unreal"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 23,
+      "topic_it": "Discorso riferito",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "reported",
+        "indirect-questions"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 24,
+      "topic_it": "Infinito oppure gerundio",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "verb-patterns"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 25,
+      "topic_it": "Quantificatori",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "quantifiers",
+        "some-any",
+        "quantifiers-of"
+      ],
+      "expanded_in_1_4": [
+        "quantifiers-of"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 26,
+      "topic_it": "Distribuzione: all/both",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "quantifiers",
+        "quantifiers-of"
+      ],
+      "expanded_in_1_4": [
+        "quantifiers-of"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 27,
+      "topic_it": "Alternative: both/either/neither",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "quantifiers",
+        "negatives",
+        "quantifiers-of"
+      ],
+      "expanded_in_1_4": [
+        "quantifiers-of"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 28,
+      "topic_it": "Quantità nulla o libera",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "some-any",
+        "quantifiers",
+        "negatives",
+        "quantifiers-of"
+      ],
+      "expanded_in_1_4": [
+        "quantifiers-of"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 29,
+      "topic_it": "Intensità con so/such",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "clauses",
+        "so-such"
+      ],
+      "expanded_in_1_4": [
+        "so-such"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 30,
+      "topic_it": "Relative identificative e aggiuntive",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "relatives"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 31,
+      "topic_it": "Domande di conferma",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "questions",
+        "question-tags"
+      ],
+      "expanded_in_1_4": [
+        "question-tags"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 32,
+      "topic_it": "Contrasto, scopo e causa",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "clauses",
+        "linkers"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 33,
+      "topic_it": "Verbo e preposizione",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "prepositions",
+        "verb-patterns",
+        "dependent-prepositions"
+      ],
+      "expanded_in_1_4": [
+        "dependent-prepositions"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 34,
+      "topic_it": "Aggettivo e preposizione",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "prepositions",
+        "dependent-prepositions"
+      ],
+      "expanded_in_1_4": [
+        "dependent-prepositions"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 35,
+      "topic_it": "Consigli urgenti e it's time",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "had-better-time"
+      ],
+      "expanded_in_1_4": [
+        "had-better-time"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 36,
+      "topic_it": "Durata e inizio del periodo",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "prepositions",
+        "time-contrasts"
+      ],
+      "expanded_in_1_4": [
+        "time-contrasts"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 37,
+      "topic_it": "Aggettivi numerici composti",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "possessives-compounds"
+      ],
+      "expanded_in_1_4": [
+        "possessives-compounds"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1",
+      "order": 38,
+      "topic_it": "Phrasal: gruppo 1",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "phrasal-basics",
+        "phrasal-scenarios"
+      ],
+      "expanded_in_1_4": [
+        "phrasal-scenarios"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": "Nuovi sensi e scenari; non parità dimostrata con tutti gli usi ed esercizi dei tre gruppi."
+    },
+    {
+      "section": "B1",
+      "order": 39,
+      "topic_it": "Phrasal: gruppo 2",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "phrasal-basics",
+        "phrasal-scenarios"
+      ],
+      "expanded_in_1_4": [
+        "phrasal-scenarios"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": "Nuovi sensi e scenari; non parità dimostrata con tutti gli usi ed esercizi dei tre gruppi."
+    },
+    {
+      "section": "B1",
+      "order": 40,
+      "topic_it": "Phrasal: gruppo 3",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "phrasal-basics",
+        "phrasal-scenarios"
+      ],
+      "expanded_in_1_4": [
+        "phrasal-scenarios"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": "Nuovi sensi e scenari; non parità dimostrata con tutti gli usi ed esercizi dei tre gruppi."
+    },
+    {
+      "section": "B1",
+      "order": 41,
+      "topic_it": "Preferenze con rather/sooner",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "preferences"
+      ],
+      "expanded_in_1_4": [
+        "preferences"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 1,
+      "topic_it": "Tipi di domanda",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "questions",
+        "indirect-questions",
+        "question-tags",
+        "auxiliary-responses",
+        "advanced-prepositions"
+      ],
+      "expanded_in_1_4": [
+        "question-tags",
+        "auxiliary-responses",
+        "advanced-prepositions"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 2,
+      "topic_it": "Domande indirette",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "indirect-questions"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 3,
+      "topic_it": "Funzioni degli ausiliari",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "questions",
+        "negatives",
+        "auxiliary-responses"
+      ],
+      "expanded_in_1_4": [
+        "auxiliary-responses"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 4,
+      "topic_it": "Comparativi correlativi",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "comparative-patterns"
+      ],
+      "expanded_in_1_4": [
+        "comparative-patterns"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 5,
+      "topic_it": "Perfetto: risultato o processo",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "perfect-continuous"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 6,
+      "topic_it": "Aggettivi usati come nomi",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "adjective-patterns"
+      ],
+      "expanded_in_1_4": [
+        "adjective-patterns"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 7,
+      "topic_it": "Ordine degli aggettivi",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "adjectives",
+        "adjective-patterns"
+      ],
+      "expanded_in_1_4": [
+        "adjective-patterns"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 8,
+      "topic_it": "Intensità con so/such",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "clauses",
+        "so-such"
+      ],
+      "expanded_in_1_4": [
+        "so-such"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 9,
+      "topic_it": "Tempi narrativi",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "past",
+        "past-perfect"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 10,
+      "topic_it": "Posizione degli avverbi",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "adjectives",
+        "adjective-patterns"
+      ],
+      "expanded_in_1_4": [
+        "adjective-patterns"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 11,
+      "topic_it": "Futuro progressivo e perfetto",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "future-perfect"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 12,
+      "topic_it": "Ripasso verbale B1+",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "mixed",
+        "review-perspective"
+      ],
+      "expanded_in_1_4": [
+        "review-perspective"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 13,
+      "topic_it": "Condizionali reali e tempo",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "conditionals-real",
+        "clauses"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 14,
+      "topic_it": "Condizionali irreali",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "conditionals-unreal"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 15,
+      "topic_it": "Desideri e rimpianti",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "wish"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 16,
+      "topic_it": "Aggettivi in -ed/-ing",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "ed-ing-adjectives"
+      ],
+      "expanded_in_1_4": [
+        "ed-ing-adjectives"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 17,
+      "topic_it": "Abitudini e adattamento",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "used-to"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 18,
+      "topic_it": "Abitudini: would/used to",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "used-to"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 19,
+      "topic_it": "Complementi verbali",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "verb-patterns"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 20,
+      "topic_it": "Deduzioni sul passato",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "deduction"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 21,
+      "topic_it": "Probabilità e avverbi",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "hedging",
+        "may-might",
+        "degree-adverbs",
+        "future-alternatives"
+      ],
+      "expanded_in_1_4": [
+        "degree-adverbs",
+        "future-alternatives"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 22,
+      "topic_it": "Preferenze verbali",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "preferences"
+      ],
+      "expanded_in_1_4": [
+        "preferences"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 23,
+      "topic_it": "Verbi di percezione",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "perception"
+      ],
+      "expanded_in_1_4": [
+        "perception"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 24,
+      "topic_it": "Passivo nei tempi",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "passive"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 25,
+      "topic_it": "Passivo di attribuzione",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "reporting-passive"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 26,
+      "topic_it": "Causativo di servizio",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "reporting-passive"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 27,
+      "topic_it": "Verbi per riferire",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "indirect-questions",
+        "verb-patterns",
+        "reporting-patterns"
+      ],
+      "expanded_in_1_4": [
+        "reporting-patterns"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 28,
+      "topic_it": "Contrasto e scopo",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "clauses"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 29,
+      "topic_it": "Relativi con -ever",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "ever-relatives"
+      ],
+      "expanded_in_1_4": [
+        "ever-relatives"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 30,
+      "topic_it": "Quantificatori estesi",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "quantifiers",
+        "some-any",
+        "quantifiers-of"
+      ],
+      "expanded_in_1_4": [
+        "quantifiers-of"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 31,
+      "topic_it": "Avverbi temporali del perfetto",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "present-perfect-simple",
+        "negatives",
+        "perfect-adverbs"
+      ],
+      "expanded_in_1_4": [
+        "perfect-adverbs"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 32,
+      "topic_it": "Necessità presente e passata",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "obligation",
+        "deduction",
+        "negatives",
+        "need-past"
+      ],
+      "expanded_in_1_4": [
+        "need-past"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 33,
+      "topic_it": "Grado degli avverbi",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "degree-adverbs"
+      ],
+      "expanded_in_1_4": [
+        "degree-adverbs"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 34,
+      "topic_it": "Tempo futuro: azione conclusa",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "clauses",
+        "future"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 35,
+      "topic_it": "Scelta tra do e make",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "do-make"
+      ],
+      "expanded_in_1_4": [
+        "do-make"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B1+",
+      "order": 36,
+      "topic_it": "Doppie negazioni",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "negatives"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 1,
+      "topic_it": "Have: verbo e ausiliare",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "negatives",
+        "present-perfect-simple",
+        "reporting-passive",
+        "have-forms"
+      ],
+      "expanded_in_1_4": [
+        "have-forms"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 2,
+      "topic_it": "Relazioni tra clausole",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "clauses",
+        "linkers"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 3,
+      "topic_it": "Pronomi generici",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "generic-reciprocal"
+      ],
+      "expanded_in_1_4": [
+        "generic-reciprocal"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 4,
+      "topic_it": "Riflessivi e reciproci",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "pronouns",
+        "generic-reciprocal"
+      ],
+      "expanded_in_1_4": [
+        "generic-reciprocal"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 5,
+      "topic_it": "Soggetti anticipatori",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "there-it"
+      ],
+      "expanded_in_1_4": [
+        "there-it"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 6,
+      "topic_it": "Narrazione e abitudini",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "past",
+        "past-perfect",
+        "used-to"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 7,
+      "topic_it": "Significati di get",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "get-go"
+      ],
+      "expanded_in_1_4": [
+        "get-go"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 8,
+      "topic_it": "Connettivi del discorso",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "linkers",
+        "cohesion"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 9,
+      "topic_it": "Speculazione e deduzione",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "deduction",
+        "hedging"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 10,
+      "topic_it": "Inversione negativa",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "inversion"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 11,
+      "topic_it": "Distanziamento e attribuzione",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "reporting-passive",
+        "hedging"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 12,
+      "topic_it": "Passato con significato irreale",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "wish",
+        "preferences",
+        "had-better-time"
+      ],
+      "expanded_in_1_4": [
+        "preferences",
+        "had-better-time"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 13,
+      "topic_it": "Verbo, oggetto e complemento",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "verb-patterns",
+        "indirect-questions",
+        "verb-object-patterns"
+      ],
+      "expanded_in_1_4": [
+        "verb-object-patterns"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 14,
+      "topic_it": "Alternative condizionali",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "wish",
+        "conditionals-real",
+        "mixed-conditionals"
+      ],
+      "expanded_in_1_4": [
+        "mixed-conditionals"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 15,
+      "topic_it": "Condizionali combinati",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "conditionals-unreal",
+        "inversion",
+        "wish",
+        "mixed-conditionals"
+      ],
+      "expanded_in_1_4": [
+        "mixed-conditionals"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 16,
+      "topic_it": "Condizionali misti",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "conditionals-unreal",
+        "mixed-conditionals"
+      ],
+      "expanded_in_1_4": [
+        "mixed-conditionals"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 17,
+      "topic_it": "Permesso e necessità avanzati",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "ability",
+        "may-might",
+        "obligation",
+        "need-past",
+        "advanced-ability-possibility"
+      ],
+      "expanded_in_1_4": [
+        "need-past",
+        "advanced-ability-possibility"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 18,
+      "topic_it": "Verbi di percezione",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "perception"
+      ],
+      "expanded_in_1_4": [
+        "perception"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 19,
+      "topic_it": "Infinito e gerundio complessi",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "verb-patterns",
+        "participles",
+        "reporting-passive",
+        "complex-verb-patterns"
+      ],
+      "expanded_in_1_4": [
+        "complex-verb-patterns"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 20,
+      "topic_it": "Scelta delle forme future",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "future",
+        "future-arrangements",
+        "future-perfect"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 21,
+      "topic_it": "Futuro imminente o previsto",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "hedging",
+        "future",
+        "future-alternatives"
+      ],
+      "expanded_in_1_4": [
+        "future-alternatives"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 22,
+      "topic_it": "Prospettiva futura dal passato",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "future-in-past"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 23,
+      "topic_it": "Ellissi e sostituzione",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "ellipsis"
+      ],
+      "expanded_in_1_4": [
+        "ellipsis"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 24,
+      "topic_it": "Nomi composti e possessivi",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "possessives-compounds"
+      ],
+      "expanded_in_1_4": [
+        "possessives-compounds"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 25,
+      "topic_it": "Enfasi con frasi scisse",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "clefts"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 26,
+      "topic_it": "Relative identificative e aggiuntive",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "relatives"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 27,
+      "topic_it": "Clausole participiali",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "participles"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 28,
+      "topic_it": "Passivo con due oggetti",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "causatives"
+      ],
+      "expanded_in_1_4": [
+        "causatives"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 29,
+      "topic_it": "Genitivo temporale",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "possessives-compounds"
+      ],
+      "expanded_in_1_4": [
+        "possessives-compounds"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 30,
+      "topic_it": "Aggettivi composti",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "possessives-compounds"
+      ],
+      "expanded_in_1_4": [
+        "possessives-compounds"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 31,
+      "topic_it": "Nome e preposizione",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "dependent-prepositions"
+      ],
+      "expanded_in_1_4": [
+        "dependent-prepositions"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": "Selezione di collocazioni, non tutte le 50 della fonte."
+    },
+    {
+      "section": "B2",
+      "order": 32,
+      "topic_it": "Modifica dei comparativi",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "comparison",
+        "comparative-patterns"
+      ],
+      "expanded_in_1_4": [
+        "comparative-patterns"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "B2",
+      "order": 33,
+      "topic_it": "Infinito ridotto",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "ellipsis"
+      ],
+      "expanded_in_1_4": [
+        "ellipsis"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "C1",
+      "order": 1,
+      "topic_it": "Presenti: usi avanzati",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "present",
+        "advanced-present"
+      ],
+      "expanded_in_1_4": [
+        "advanced-present"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": "Introduzione avanzata strutturata e sei controlli locali, non corso C1 certificato."
+    },
+    {
+      "section": "C1",
+      "order": 2,
+      "topic_it": "Passati: usi avanzati",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "past",
+        "past-perfect",
+        "advanced-past"
+      ],
+      "expanded_in_1_4": [
+        "advanced-past"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": "Introduzione avanzata strutturata e sei controlli locali, non corso C1 certificato."
+    },
+    {
+      "section": "C1",
+      "order": 3,
+      "topic_it": "Modali: will/would/should avanzati",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "future-will",
+        "used-to",
+        "deduction",
+        "subjunctive",
+        "advanced-will-would-should"
+      ],
+      "expanded_in_1_4": [
+        "advanced-will-would-should"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": "Introduzione avanzata strutturata e sei controlli locali, non corso C1 certificato."
+    },
+    {
+      "section": "C1",
+      "order": 4,
+      "topic_it": "Modali: capacità e possibilità avanzate",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "ability",
+        "may-might",
+        "deduction",
+        "advanced-ability-possibility"
+      ],
+      "expanded_in_1_4": [
+        "advanced-ability-possibility"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": "Introduzione avanzata strutturata e sei controlli locali, non corso C1 certificato."
+    },
+    {
+      "section": "C1",
+      "order": 5,
+      "topic_it": "Congiuntivo presente e passato",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "subjunctive",
+        "wish",
+        "conditionals-unreal",
+        "advanced-subjunctive"
+      ],
+      "expanded_in_1_4": [
+        "advanced-subjunctive"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": "Introduzione avanzata strutturata e sei controlli locali, non corso C1 certificato."
+    },
+    {
+      "section": "C1",
+      "order": 6,
+      "topic_it": "Perfetti: usi avanzati",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "perfect-simple",
+        "perfect-continuous",
+        "past-perfect",
+        "future-perfect",
+        "advanced-perfect"
+      ],
+      "expanded_in_1_4": [
+        "advanced-perfect"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": "Introduzione avanzata strutturata e sei controlli locali, non corso C1 certificato."
+    },
+    {
+      "section": "C1",
+      "order": 7,
+      "topic_it": "Participiali avanzate",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "participles",
+        "advanced-participles"
+      ],
+      "expanded_in_1_4": [
+        "advanced-participles"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": "Introduzione avanzata strutturata e sei controlli locali, non corso C1 certificato."
+    },
+    {
+      "section": "C1",
+      "order": 8,
+      "topic_it": "Ordine avanzato",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "inversion",
+        "clefts",
+        "advanced-word-order"
+      ],
+      "expanded_in_1_4": [
+        "advanced-word-order"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": "Introduzione avanzata strutturata e sei controlli locali, non corso C1 certificato."
+    },
+    {
+      "section": "C1",
+      "order": 9,
+      "topic_it": "Preposizioni avanzate",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "prepositions",
+        "indirect-questions",
+        "advanced-prepositions"
+      ],
+      "expanded_in_1_4": [
+        "advanced-prepositions"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": "Introduzione avanzata strutturata e sei controlli locali, non corso C1 certificato."
+    },
+    {
+      "section": "C1",
+      "order": 10,
+      "topic_it": "Accordo avanzato",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "sentence",
+        "quantifiers",
+        "relatives",
+        "advanced-agreement"
+      ],
+      "expanded_in_1_4": [
+        "advanced-agreement"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": "Introduzione avanzata strutturata e sei controlli locali, non corso C1 certificato."
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 1,
+      "topic_it": "Altezza: above/over",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "space-movement"
+      ],
+      "expanded_in_1_4": [
+        "space-movement"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 2,
+      "topic_it": "Contrasto: although/however",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "clauses",
+        "linkers"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 3,
+      "topic_it": "Quantità e numero",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "nouns",
+        "quantifiers",
+        "quantifiers-of"
+      ],
+      "expanded_in_1_4": [
+        "quantifiers-of"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 4,
+      "topic_it": "Evitare soggetti doppi",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "relatives",
+        "sentence",
+        "demonstratives-plurals"
+      ],
+      "expanded_in_1_4": [
+        "demonstratives-plurals"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 5,
+      "topic_it": "Distribuzione: between/among",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "space-movement"
+      ],
+      "expanded_in_1_4": [
+        "space-movement"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 6,
+      "topic_it": "Direzione: bring/take",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "lexical-contrasts"
+      ],
+      "expanded_in_1_4": [
+        "lexical-contrasts"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 7,
+      "topic_it": "Pulizia: clean/wash",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "lexical-contrasts"
+      ],
+      "expanded_in_1_4": [
+        "lexical-contrasts"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 8,
+      "topic_it": "Direzione: come/go",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "lexical-contrasts"
+      ],
+      "expanded_in_1_4": [
+        "lexical-contrasts"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 9,
+      "topic_it": "Esperienza e assenza: been/gone",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "perfect-adverbs"
+      ],
+      "expanded_in_1_4": [
+        "perfect-adverbs"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 10,
+      "topic_it": "Scelta tra if/whether",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "indirect-questions",
+        "reporting-patterns"
+      ],
+      "expanded_in_1_4": [
+        "reporting-patterns"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 11,
+      "topic_it": "Sostituzione: instead/instead of",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "discourse-contrasts"
+      ],
+      "expanded_in_1_4": [
+        "discourse-contrasts"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 12,
+      "topic_it": "Possessivo oppure contrazione",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "demonstratives-plurals"
+      ],
+      "expanded_in_1_4": [
+        "demonstratives-plurals"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 13,
+      "topic_it": "Periodo: last/next e articolo",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "time-contrasts"
+      ],
+      "expanded_in_1_4": [
+        "time-contrasts"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 14,
+      "topic_it": "Posare oppure giacere",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "lexical-contrasts"
+      ],
+      "expanded_in_1_4": [
+        "lexical-contrasts"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 15,
+      "topic_it": "Quantità: less/fewer",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "quantifiers"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 16,
+      "topic_it": "Somiglianza e ruolo",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "discourse-contrasts"
+      ],
+      "expanded_in_1_4": [
+        "discourse-contrasts"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 17,
+      "topic_it": "Poche quantità e sufficienza",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "quantifiers"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 18,
+      "topic_it": "Guardare e vedere",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "perception",
+        "lexical-contrasts"
+      ],
+      "expanded_in_1_4": [
+        "perception",
+        "lexical-contrasts"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 19,
+      "topic_it": "Avverbio oppure modale",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "degree-adverbs"
+      ],
+      "expanded_in_1_4": [
+        "degree-adverbs"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 20,
+      "topic_it": "Esperienza: never/ever",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "negatives",
+        "present-perfect-simple",
+        "perfect-adverbs"
+      ],
+      "expanded_in_1_4": [
+        "perfect-adverbs"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 21,
+      "topic_it": "Contrasto e confutazione",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "discourse-contrasts"
+      ],
+      "expanded_in_1_4": [
+        "discourse-contrasts"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 22,
+      "topic_it": "Alzare e salire",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "lexical-contrasts"
+      ],
+      "expanded_in_1_4": [
+        "lexical-contrasts"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 23,
+      "topic_it": "Ricordare e dimenticare azioni",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "verb-patterns",
+        "verb-pattern-meaning"
+      ],
+      "expanded_in_1_4": [
+        "verb-pattern-meaning"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 24,
+      "topic_it": "Riferire: say/tell",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "reported"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 25,
+      "topic_it": "Provare e tentare",
+      "baseline_1_3": "Da aggiungere",
+      "lessons": [
+        "verb-pattern-meaning"
+      ],
+      "expanded_in_1_4": [
+        "verb-pattern-meaning"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 26,
+      "topic_it": "Limite: until/by",
+      "baseline_1_3": "Presente*",
+      "lessons": [
+        "future-perfect",
+        "clauses"
+      ],
+      "expanded_in_1_4": [],
+      "treatment": "Nucleo preesistente, non equivalenza integrale",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 27,
+      "topic_it": "Contrasto: whereas/while",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "clauses",
+        "discourse-contrasts"
+      ],
+      "expanded_in_1_4": [
+        "discourse-contrasts"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "Grammar shorts",
+      "order": 28,
+      "topic_it": "Desiderio, speranza, aspettativa",
+      "baseline_1_3": "Parziale",
+      "lessons": [
+        "wish",
+        "discourse-contrasts"
+      ],
+      "expanded_in_1_4": [
+        "discourse-contrasts"
+      ],
+      "treatment": "Ampliato con contenuti ed esercizi",
+      "limits": ""
+    },
+    {
+      "section": "C1",
+      "order": 11,
+      "topic_it": "Confronti avanzati: forma, quantità e qualità",
+      "baseline_1_3": "Non verificato nel precedente inventario",
+      "lessons": [
+        "comparison",
+        "comparative-patterns",
+        "advanced-comparatives"
+      ],
+      "expanded_in_1_4": [],
+      "expanded_in_1_5": [
+        "advanced-comparatives"
+      ],
+      "treatment": "Nuovo modulo originale con spiegazione ed esercizi",
+      "limits": "Sei esercizi controllati, non replica dell’intera lezione esterna",
+      "source": "https://test-english.com/grammar-points/c1/advanced-comparative-structures/",
+      "checked_at": "2026-10-15"
+    }
+  ],
+  "updated_at": "2026-10-15"
+}

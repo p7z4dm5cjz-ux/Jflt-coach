@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">JFLT Coach</title>
+  <desc id="desc">Monogramma JF bianco su fondo navy, righe blu e sottolineatura corallo.</desc>
+  <rect width="512" height="512" fill="#13233f"/>
+  <path d="M71 157H441M71 225H441M71 291H441M71 358H441M71 424H441" fill="none" stroke="#314a74" stroke-width="5"/>
+  <!-- Contorni vettoriali: nessun font esterno richiesto per esportare le icone. -->
+  <g fill="#f3f5fa" transform="translate(166.75 267) scale(.075 -.075)">
+    <path d="M-150 -358V-123H-20Q-14 -217 24.5 -261Q63 -305 139 -305Q236 -305 274.5 -230.5Q313 -156 313 49V1372H96V1493H891V1372H700V41Q700 -202 577.5 -314Q455 -426 188 -426Q105 -426 21 -409Q-63 -392 -150 -358Z"/>
+    <path transform="translate(969 0)" d="M96 0V121H287V1372H96V1493H1427V1141H1290V1356H674V877H1053V1067H1190V551H1053V741H674V121H909V0Z"/>
+  </g>
+  <path d="M112 372L399 352L400 367L113 387Z" fill="#e55146"/>
+</svg>
