@@ -41,3 +41,13 @@ test("1.9.1: indicazione automatica solo quando la consegna non dice già che co
   assert.match(answerHint({kind:"error_correction",stem:"Fix: She work here.",answer:"She works here."}),/tutta la frase/);
   assert.equal(answerHint({kind:"choice",stem:"x ___",answer:"a",options:["a","b"]}),null);
 });
+
+test("1.9.1: un Worker della stessa release con patch diversa non blocca il tutor",async()=>{
+  const {callTutor,saveToken}=await import("../tutor.js");const {VERSION}=await import("../engine.js");
+  saveToken("test-token-abcdefghijklmnopqrstuvwxyz");
+  const [major,minor]=VERSION.split(".");
+  const health=v=>async()=>Response.json({version:v,api_version:1,groq_configured:true,capabilities:["exercises"]});
+  const ok=await callTutor({endpoint:"https://patch.workers.dev"},"/health",null,null,health(major+"."+minor+".0"));
+  assert.equal(ok.version,major+"."+minor+".0");
+  await assert.rejects(callTutor({endpoint:"https://minor.workers.dev"},"/health",null,null,health(major+"."+(Number(minor)-1)+".9")),/Versioni diverse/);
+});
