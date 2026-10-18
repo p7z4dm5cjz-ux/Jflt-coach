@@ -1,4 +1,9 @@
-# JFLT Coach 1.10.0
+# JFLT Coach 1.10.1
+
+## Novità della 1.10.1
+
+- **Scegli il pretest:** adattivo (consigliato, circa 15 minuti) oppure classico (le stesse 45 domande per tutti, circa 20-25 minuti, con la possibilità di tornare indietro prima della consegna). La scelta compare all'inizio e in «Ripetere il pretest».
+- **Interrompere il pretest:** «Interrompi il pretest» propone «Salva e riprendi più tardi» (le risposte restano, riprendi da Oggi) oppure «Esci senza salvare e termina» (la prova in corso viene cancellata; se avevi un pretest completato messo da parte, torna quello).
 
 ## Novità della 1.10.0: pretest adattivo con diagnosi
 

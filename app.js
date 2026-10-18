@@ -265,6 +265,31 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
       done&&!set.training&&l&&card(h("h2",{},"Continua con una sessione completa"),button("Inizia 30 esercizi con il tutor",()=>startAiPractice(set.lesson_id)),set.lesson_id==="negatives"&&button("Inizia 30 negazioni offline",()=>makeSession("negatives",grammarItems("negatives",state.sessions.length)),"secondary"))
     ];
   }
+  // Scelta tra pretest adattivo (consigliato) e classico da 45 domande. Con again=true la prova
+  // attuale va nell'archivio, da cui si può ripristinare.
+  function pretestChoice(again=false){
+    const start=fresh=>async()=>{if(again&&!window.confirm("Il risultato attuale resta nell'archivio e potrai ripristinarlo da questa pagina. Iniziare una nuova prova?"))return;await change(s=>{if(again){s.legacy??={};s.legacy.placement_history??=[];s.legacy.placement_history.push(s.placement);}s.placement=fresh();});await refresh();};
+    return [card(h("h2",{},"Pretest adattivo · consigliato"),p("Circa 15 minuti, di solito 25-35 domande. Ogni area parte da poche domande: dove rispondi bene e con sicurezza si passa oltre, dove sbagli o hai un dubbio la stessa struttura viene ricontrollata, così un errore isolato non diventa una priorità. Le risposte confermate non si modificano."),button(again?"Inizia un nuovo pretest adattivo":"Inizia il pretest adattivo",start(()=>newAdaptivePlacement()))),
+      card(h("h2",{},"Pretest classico"),p("Le stesse 45 domande per tutti, circa 20-25 minuti. Puoi tornare indietro e cambiare le risposte prima della consegna. Utile per confrontare il risultato con una prova precedente."),button(again?"Inizia un nuovo pretest classico":"Inizia il pretest classico",start(()=>newPlacement()),"secondary")),
+      p("In entrambi: segna «Ho un dubbio» quando non sei sicuro; «Non so» lascia la risposta vuota e conta come da ripassare.","small muted")];
+  }
+  // Interrompere il pretest: salvare per riprendere più tardi, oppure uscire senza salvare.
+  // Uscendo senza salvare, la prova in corso viene cancellata e, se c'era, torna il pretest
+  // completato messo da parte quando questa prova è stata avviata.
+  function pretestExit(test){
+    const panel=h("section",{class:"card",id:"pretest-exit",hidden:true},h("h2",{},"Vuoi interrompere il pretest?"),
+      p("Hai dato "+test.answers.length+(test.answers.length===1?" risposta.":" risposte.")),
+      h("div",{class:"actions"},
+        button("Salva e riprendi più tardi",async()=>{await repo.flush();notify("Pretest salvato: lo riprendi da Oggi o da questa pagina quando vuoi.");await goto("");}),
+        button("Esci senza salvare e termina",async()=>{
+          if(!window.confirm("Le risposte di questa prova verranno cancellate. Uscire senza salvare?"))return;
+          await change(s=>{const history=s.legacy?.placement_history||[],i=history.findLastIndex(x=>placementProfile(x));s.placement=i>=0?history.splice(i,1)[0]:null;});
+          notify("Pretest terminato senza salvare.");await goto("");
+        },"secondary"),
+        button("Continua il pretest",async()=>{panel.hidden=true;opener.hidden=false;},"quiet")));
+    const opener=h("button",{type:"button",class:"quiet",onclick:()=>{panel.hidden=false;opener.hidden=true;panel.querySelector("button")?.focus();}},"Interrompi il pretest");
+    return [opener,panel];
+  }
   function finishPlacement(s){s.placement.submitted_at=now();const prof=placementProfile(s.placement);for(const row of prof?.errors||[]){const expression=PHRASAL_TARGETS[row.item.id],term=PHRASALS.find(t=>t.expression===expression);if(term)addTerm(s,term);}}
   function adaptivePlacementPage(test){
     const item=adaptiveNext(test),progress=adaptiveProgress(test);
@@ -279,7 +304,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     const save=async value=>{await change(s=>{s.placement.answers.push({id:item.id,value,confidence:unsure.checked?"unsure":"sure"});if(!adaptiveNext(s.placement))finishPlacement(s);});await refresh();};
     form.onsubmit=e=>{e.preventDefault();run(async()=>{const v=item.options?form.querySelector('input[name="placement-answer"]:checked')?.value:form.querySelector("#placement-answer").value.trim();if(!v)throw new Error("Inserisci una risposta oppure scegli «Non so».");await save(v);});};
     form.append(h("div",{class:"actions"},h("button",{type:"submit"},"Conferma e continua"),button("Non so",()=>save(""),"secondary")));
-    return [restoreCard(),head,h("progress",{max:progress.answered+progress.remaining,value:progress.answered,"aria-label":"Avanzamento del pretest"}),p("Risposte date: "+progress.answered+" · ne restano circa "+progress.remaining+" · aree completate: "+progress.areasDone+" di "+progress.areas,"muted"),form];
+    return [restoreCard(),head,h("progress",{max:progress.answered+progress.remaining,value:progress.answered,"aria-label":"Avanzamento del pretest"}),p("Risposte date: "+progress.answered+" · ne restano circa "+progress.remaining+" · aree completate: "+progress.areasDone+" di "+progress.areas,"muted"),form,...pretestExit(test)];
   }
   // Diagnosi del pretest: una parte locale (lezioni con errori, risposte vuote) e, su richiesta,
   // l'analisi del tutor sui tipi di errore. Una richiesta Groq, salvata per questa prova.
@@ -312,13 +337,13 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
   }
   function placement() {
     const test=state.placement,profile=placementProfile(test);
-    if(!test)return [restoreCard(),title("PRETEST","Dove conviene iniziare?","Pretest adattivo: circa 15 minuti, senza aiuti. Non è una certificazione di livello."),card(h("h2",{},"Si adatta alle tue risposte"),p("Ogni area parte da poche domande. Dove rispondi bene e con sicurezza si passa oltre; dove sbagli o hai un dubbio, la stessa struttura viene ricontrollata con un'altra domanda, così un errore isolato non diventa una priorità."),p("Segna «Ho un dubbio» quando non sei sicuro. «Non so» lascia la risposta vuota: conta come da ripassare. Di solito servono 25-35 domande."),button("Inizia il pretest",async()=>{await change(s=>{s.placement=newAdaptivePlacement();});await refresh();}))];
+    if(!test)return [restoreCard(),title("PRETEST","Dove conviene iniziare?","Due versioni, senza aiuti. Non è una certificazione di livello."),...pretestChoice()];
     if(profile)return [title("PRETEST","Il tuo punto di partenza",profile.correct+" risposte corrette su "+profile.total+" · "+profile.uncertain.length+" giuste ma date con dubbio"),
       learning.pathCard("Il tuo percorso consigliato"),
       diagnosisCard(profile),
       card(h("h2",{},"Risultato per area"),h("table",{},h("thead",{},h("tr",{},["Area","Corrette","Proposta"].map(v=>h("th",{},v)))),h("tbody",{},profile.areas.map(a=>h("tr",{},h("td",{},a.title),h("td",{},a.correct+"/"+a.total),h("td",{},statusLabels[a.status]))))),p("Priorità: meno del 70% di risposte corrette. Da confermare: almeno il 70%. Basi già controllate: almeno l'85% corrette e date con sicurezza. Con tre domande un solo errore porta sotto il 70%.","small muted")),
       card(h("h2",{},"Rivedi errori e dubbi"),profile.rows.filter(r=>!r.secure).map(r=>h("details",{},h("summary",{},r.item.stem),p("La tua risposta: "+(r.answer.value||"Non so")),p("Risposta di riferimento: "+r.item.answer,"formula"),p(r.item.why),p(r.item.ref,"muted")))),
-      h("details",{},h("summary",{},"Ripetere il pretest"),p("Il risultato precedente sarà conservato nell'archivio; il percorso userà la nuova prova."),button("Inizia una nuova prova",async()=>{if(!window.confirm("Il risultato attuale resta nell'archivio e potrai ripristinarlo da questa pagina. Iniziare una nuova prova?"))return;await change(s=>{s.legacy??={};s.legacy.placement_history??=[];s.legacy.placement_history.push(s.placement);s.placement=newAdaptivePlacement();});await refresh();},"secondary"))];
+      h("details",{},h("summary",{},"Ripetere il pretest"),p("Il risultato precedente sarà conservato nell'archivio; il percorso userà la nuova prova."),...pretestChoice(true))];
     if(test.version===2)return adaptivePlacementPage(test);
     const questions=orderedQuestions(test.seed),item=questions[test.position],answer=test.answers.find(a=>a.id===item.id),form=h("form",{id:"placement-form"});
     form.append(h("fieldset",{},h("legend",{},"Domanda "+(test.position+1)+" di 45 · "+AREAS[item.area]),p(item.stem,"stem")));
@@ -332,7 +357,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     form.onsubmit=e=>{e.preventDefault();run(async()=>{const v=item.options?form.querySelector('input[name="placement-answer"]:checked')?.value:form.querySelector("#placement-answer").value.trim();if(!v)throw new Error("Inserisci una risposta oppure scegli «Non so».");await saveAnswer(v);});};
     form.append(h("div",{class:"actions"},h("button",{type:"submit"},test.position===44?"Salva la risposta":"Salva e continua"),button("Non so",()=>saveAnswer(""),"secondary"),test.position>0&&button("Indietro",async()=>{await change(s=>s.placement.position--);await refresh();},"quiet")));
     return [restoreCard(),title("PRETEST","Una prova, un percorso.","Nessuna chiamata AI. Il risultato compare dopo tutte le 45 domande."),h("progress",{max:45,value:test.answers.length,"aria-label":"Domande salvate"}),p(test.answers.length+"/45 risposte salvate","muted"),form,
-      test.answers.length===45&&card(h("h2",{},"Pronto per la consegna"),p("Puoi tornare alle domande per modificarle; dopo la consegna vedrai le soluzioni."),button("Consegna il pretest",async()=>{await change(s=>{s.placement.submitted_at=now();const prof=placementProfile(s.placement);for(const row of prof.errors){const expression=PHRASAL_TARGETS[row.item.id],term=PHRASALS.find(t=>t.expression===expression);if(term)addTerm(s,term);}});await refresh();}))];
+      test.answers.length===45&&card(h("h2",{},"Pronto per la consegna"),p("Puoi tornare alle domande per modificarle; dopo la consegna vedrai le soluzioni."),button("Consegna il pretest",async()=>{await change(s=>{s.placement.submitted_at=now();const prof=placementProfile(s.placement);for(const row of prof.errors){const expression=PHRASAL_TARGETS[row.item.id],term=PHRASALS.find(t=>t.expression===expression);if(term)addTerm(s,term);}});await refresh();})),...pretestExit(test)];
   }
   function phrasals() {
     const search=h("input",{type:"search",id:"phrasal-search",placeholder:"Cerca espressione, significato o contesto…","aria-label":"Cerca nei phrasal verbs"}),rows=h("div",{class:"lesson-grid"});

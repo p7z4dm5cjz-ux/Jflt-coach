@@ -49,7 +49,7 @@ test("L'avvio propone il pretest; tutte le lezioni e la ricerca phrasal restano 
 test("Sessione AI valida con lessico omesso aggiunge tre recuperi locali",async()=>{await repo.change(s=>{s.vocabulary=PHRASALS.slice(0,3).map(t=>({...t,streak:0,seen:0,due:new Date(0).toISOString()}));});await visit("lesson/negatives");click("Genera 6 esercizi con il tutor");await until(()=>document.querySelectorAll(".exercise").length===9);const set=repo.get().sessions.at(-1);assert.equal(set.items.filter(i=>i.kind==="retrieval").length,3);assert.equal(calls.at(-1).task,"exercises");for(const i of set.items)input("#"+i.id,i.answer);await app.flush();document.querySelector("#practice-form").dispatchEvent(new window.Event("submit",{bubbles:true,cancelable:true}));await until(()=>!!repo.get().sessions.at(-1).completed_at);assert.equal(repo.get().attempts.filter(a=>a.correct).length,9);assert.ok(repo.get().vocabulary.every(v=>v.streak===1));});
 test("Autosave conserva la bozza attraversando una navigazione immediata",async()=>{await visit("writing");click("Apri l'editor");await until(()=>!!document.querySelector("#draft"));input("#draft","Yesterday the team inspected the site and recorded the damage. No one was injured. A witness described a noise but had not seen anyone near the building. The area was secured while further checks were arranged.");await visit("home");await visit("writing/"+repo.get().writings.at(-1).id);assert.ok(document.querySelector("#draft").value.startsWith("Yesterday"));});
 test("Revisione ancorata, testo ostile inerte e riscrittura con verifica",async()=>{click("Chiedi la revisione");await until(()=>!!document.querySelector("#rewrite"));assert.equal(document.querySelector("#view img"),null);assert.equal(repo.get().writings.at(-1).feedback.omitted,1);input("#rewrite",repo.get().writings.at(-1).draft);click("Confronta bozza e riscrittura");await until(()=>document.getElementById("notice").textContent.includes("modificare"));assert.equal(calls.at(-1).task,"writing_review");input("#rewrite",repo.get().writings.at(-1).draft+" The supervisor was informed at 09:10.");click("Confronta bozza e riscrittura");await until(()=>document.getElementById("view").textContent.includes("3. Confronto"));click("Verifica in un nuovo contesto");await until(()=>document.querySelectorAll(".exercise").length===3);const set=repo.get().sessions.at(-1);assert.ok(set.writing_id);for(const i of set.items)input("#"+i.id,"didn't");await app.flush();document.querySelector("#practice-form").dispatchEvent(new window.Event("submit",{bubbles:true,cancelable:true}));await until(()=>!!repo.get().sessions.at(-1).completed_at);await visit("writing/"+set.writing_id);assert.ok(document.getElementById("view").textContent.includes("3/3 corrette senza aiuti"));});
-test("Pretest adattivo: una domanda alla volta, nessuna soluzione prima della fine",async()=>{await visit("placement");click("Inizia il pretest");await until(()=>document.querySelector("#placement-form"));
+test("Pretest adattivo: una domanda alla volta, nessuna soluzione prima della fine",async()=>{await visit("placement");click("Inizia il pretest adattivo");await until(()=>document.querySelector("#placement-form"));
   let item,count=0;
   while((item=adaptiveNext(repo.get().placement))&&count<50){
     const f=document.querySelector("#placement-form");
@@ -229,9 +229,9 @@ test("1.9.2: dopo il pretest l'app propone un percorso numerato con un solo punt
 test("1.9.5: un pretest messo da parte con «Ripetere il pretest» si può ripristinare",async()=>{
   await repo.change(s=>{s.legacy=s.legacy||{};s.legacy.placement_history=[];s.placement=newPlacement();s.placement.answers=QUESTIONS.map(q=>({id:q.id,value:q.answer,confidence:"sure"}));s.placement.submitted_at=new Date().toISOString();});
   await visit("placement");
-  const original=window.confirm;window.confirm=()=>false;click("Inizia una nuova prova");await new Promise(r=>setTimeout(r,50));
+  const original=window.confirm;window.confirm=()=>false;click("Inizia un nuovo pretest adattivo");await new Promise(r=>setTimeout(r,50));
   assert.ok(repo.get().placement.submitted_at,"senza conferma la prova non si azzera");
-  window.confirm=()=>true;click("Inizia una nuova prova");await until(()=>!repo.get().placement.submitted_at);window.confirm=original;
+  window.confirm=()=>true;click("Inizia un nuovo pretest adattivo");await until(()=>!repo.get().placement.submitted_at);window.confirm=original;
   await visit("placement");
   assert.match(document.getElementById("view").textContent,/Hai già un pretest completato.*45 risposte corrette su 45/s);
   await visit("home");assert.match(document.getElementById("view").textContent,/Hai già un pretest completato/);
@@ -253,4 +253,36 @@ test("1.10.0: pretest adattivo con errori, diagnosi locale e diagnosi del tutor 
   assert.equal(repo.get().diagnoses.length,1);assert.equal(repo.get().diagnoses[0].placement_started_at,repo.get().placement.started_at);
   const backup=parseBackup(await repo.backup());assert.equal(backup.diagnoses.length,1);
   assert.ok(document.querySelector(".learning-path-card .path-steps li.current"),"il percorso resta proposto");
+});
+
+test("1.10.1: si sceglie tra pretest adattivo e classico da 45 domande",async()=>{
+  await repo.change(s=>{s.placement=null;});await visit("placement");
+  const view=()=>document.getElementById("view").textContent;
+  assert.match(view(),/Pretest adattivo · consigliato/);assert.match(view(),/Pretest classico/);
+  click("Inizia il pretest classico");await until(()=>!!repo.get().placement);
+  assert.equal(repo.get().placement.version,1);await until(()=>document.querySelector("legend")?.textContent.includes("di 45"));
+  await repo.change(s=>{s.placement=null;});await visit("placement");click("Inizia il pretest adattivo");await until(()=>repo.get().placement?.version===2);
+});
+
+test("1.10.1: il pretest si interrompe salvando o uscendo senza salvare",async()=>{
+  const view=()=>document.getElementById("view").textContent;
+  const answerOne=async()=>{const item=adaptiveNext(repo.get().placement),f=document.querySelector("#placement-form"),n=repo.get().placement.answers.length;
+    if(item.options)[...f.querySelectorAll('input[type="radio"]')].find(v=>v.value===item.answer).checked=true;else input("#placement-answer",item.answer);
+    f.dispatchEvent(new window.Event("submit",{bubbles:true,cancelable:true}));await until(()=>repo.get().placement.answers.length===n+1);};
+  // salva e riprendi
+  await repo.change(s=>{s.placement=null;s.legacy=s.legacy||{};s.legacy.placement_history=[];});await visit("placement");click("Inizia il pretest adattivo");await until(()=>document.querySelector("#placement-form"));
+  await answerOne();await answerOne();
+  click("Interrompi il pretest");assert.equal(document.getElementById("pretest-exit").hidden,false);
+  click("Salva e riprendi più tardi");await until(()=>view().includes("Riprendi il tuo pretest"));
+  assert.equal(repo.get().placement.answers.length,2);assert.equal(repo.get().placement.submitted_at,null);
+  // esci senza salvare: torna il pretest completato messo da parte
+  await repo.change(s=>{s.placement=newAdaptivePlacement("done");let it;while(it=adaptiveNext(s.placement))s.placement.answers.push({id:it.id,value:it.answer,confidence:"sure"});s.placement.submitted_at=new Date().toISOString();});
+  const doneStarted=repo.get().placement.started_at;
+  await visit("placement");const original=window.confirm;window.confirm=()=>true;
+  click("Inizia un nuovo pretest adattivo");await until(()=>!repo.get().placement.submitted_at);await until(()=>document.querySelector("#placement-form"));await answerOne();
+  click("Interrompi il pretest");click("Esci senza salvare e termina");await until(()=>!!repo.get().placement?.submitted_at);window.confirm=original;
+  assert.equal(repo.get().placement.started_at,doneStarted);assert.equal(repo.get().legacy.placement_history.length,0);
+  // senza pretest precedente non resta nulla
+  await visit("placement");await repo.change(s=>{s.placement=newAdaptivePlacement("x");});await visit("placement");window.confirm=()=>true;
+  click("Interrompi il pretest");click("Esci senza salvare e termina");await until(()=>repo.get().placement===null);window.confirm=original;
 });
