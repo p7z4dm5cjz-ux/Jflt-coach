@@ -2,7 +2,7 @@
 // Ogni capitolo esplicita significato, costruzione, contrasto e trasferimento.
 const index = stage => "https://test-english.com/grammar-points/" + ["a1", "b1", "b2", "c1"][stage] + "/";
 function lesson(id, stage, tool, title, when, forms, a, b, contrast, pitfall, sections, related) {
-  return {id,stage,tool,title,goal:when.split(". ")[0]+".",when,forms,examples:[a,b],contrast,pitfall,
+  return {id,stage,tool,title,goal:when.split(". ")[0].replace(/\.$/,"")+".",when,forms,examples:[a,b],contrast,pitfall,
     writing_type:["imperatives-requests","preferences","had-better-time","need-past","there-it","ellipsis"].includes(id)?"email":["comparative-patterns","mixed-conditionals","discourse-contrasts","degree-adverbs"].includes(id)?"argument":"report",
     sections:sections.map(([title,text])=>({title,text})),related,prerequisites:related.slice(0,2),
     references:[{label:"Test-English: indice degli argomenti (non esercizi incorporati)",url:index(stage)}],
@@ -465,7 +465,7 @@ export const GRAMMAR_EXTENSION = [
      ["Forma e registro","The person I spoke to è neutro; the person to whom I spoke è più formale. By introduce l'agente del passivo, non sostituisce la preposizione richiesta dal verbo."],
      ["Nello scritto","Trasforma una domanda neutra in formale, poi un verbo preposizionale in passivo. Conserva il complemento necessario e non chiamare errore una scelta di registro."]], ["prepositions","relatives"]),
   lesson("advanced-agreement",3,"word_order","Accordo avanzato: gruppi, quantità e collettivi",
-    "Trova il nucleo del soggetto, non il nome più vicino al verbo. Considera senso, varietà e struttura quando un accordo ammette alternative.",
+    "Trova il nome principale del soggetto, non il nome più vicino al verbo. Considera senso, varietà e struttura quando un accordo ammette alternative.",
     "the list of names is; a number of reports are / the number is; each ... is; police are; a pair ... is; 60% of the water is / of the files are.",
     "The number of missing forms has fallen.","The police are checking the entrance.",
     "The team is considera il gruppo come unità; the team are può considerare i membri, soprattutto in inglese britannico. Mantieni coerenti verbo e pronomi.",

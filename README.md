@@ -1,4 +1,16 @@
-# JFLT Coach 1.9.4
+# JFLT Coach 1.9.5
+
+## Novità della 1.9.5
+
+- **Pretest ripristinabile.** Se un pretest completato è stato messo da parte con «Ripetere il pretest», in Oggi e nella pagina del pretest compare «Hai già un pretest completato» con il pulsante per ripristinarlo. «Inizia una nuova prova» ora chiede conferma.
+- **Testi più chiari e coerenti** (revisione dell'interfaccia):
+  - i pulsanti dicono «con il tutor»; Groq resta nominato solo dove serve (Impostazioni, Comprendi);
+  - «Mini-rivalutazione» diventa «Inizia la verifica breve · 10 domande», lo stesso nome usato nel resto dell'app;
+  - in Oggi il riquadro con Groq si chiama «Allenamento con il tutor» e spiega che è un'alternativa al piano di oggi, che è offline; la casella del piano si chiama «Esercizi»;
+  - risultato del pretest scritto per esteso («25 risposte corrette su 45»); niente più «consegna» nel senso di invio;
+  - Studio si apre con «Percorso e lezioni»; la sezione Comprendi ha lo stesso nome ovunque;
+  - Impostazioni: «Importa un backup» (accetta anche i backup delle versioni attuali) e la spiegazione che su iPhone Safari e l'app sulla schermata Home hanno archivi separati;
+  - corretti i doppi punti finali in alcune descrizioni delle lezioni e il termine «nucleo del soggetto».
 
 ## Novità della 1.9.4 (verifica di coerenza)
 

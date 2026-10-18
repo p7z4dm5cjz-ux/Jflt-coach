@@ -45,7 +45,7 @@ async function answerBlock(set,{wrongFirst=false}={}){
 }
 function click(text){const el=[...document.querySelectorAll("#view button")].find(b=>b.textContent===text);assert.ok(el,text);el.click();}
 test("L'avvio propone il pretest; tutte le lezioni e la ricerca phrasal restano accessibili",async()=>{assert.ok(document.getElementById("view").textContent.includes("Prima capiamo da dove iniziare"));assert.ok(document.getElementById("view").textContent.includes("45 domande"));assert.equal(document.getElementById("view").textContent.includes("Negazioni senza cambiare"),false);await visit("studio");assert.equal(document.querySelectorAll(".lesson-card").length,117);input("#lesson-search","perfect");assert.ok(document.querySelectorAll(".lesson-card").length>5);await visit("phrasals");input("#phrasal-search","carry out");assert.equal(document.querySelectorAll(".lesson-card").length,1);});
-test("Sessione AI valida con lessico omesso aggiunge tre recuperi locali",async()=>{await repo.change(s=>{s.vocabulary=PHRASALS.slice(0,3).map(t=>({...t,streak:0,seen:0,due:new Date(0).toISOString()}));});await visit("lesson/negatives");click("Genera 6 esercizi con Groq");await until(()=>document.querySelectorAll(".exercise").length===9);const set=repo.get().sessions.at(-1);assert.equal(set.items.filter(i=>i.kind==="retrieval").length,3);assert.equal(calls.at(-1).task,"exercises");for(const i of set.items)input("#"+i.id,i.answer);await app.flush();document.querySelector("#practice-form").dispatchEvent(new window.Event("submit",{bubbles:true,cancelable:true}));await until(()=>!!repo.get().sessions.at(-1).completed_at);assert.equal(repo.get().attempts.filter(a=>a.correct).length,9);assert.ok(repo.get().vocabulary.every(v=>v.streak===1));});
+test("Sessione AI valida con lessico omesso aggiunge tre recuperi locali",async()=>{await repo.change(s=>{s.vocabulary=PHRASALS.slice(0,3).map(t=>({...t,streak:0,seen:0,due:new Date(0).toISOString()}));});await visit("lesson/negatives");click("Genera 6 esercizi con il tutor");await until(()=>document.querySelectorAll(".exercise").length===9);const set=repo.get().sessions.at(-1);assert.equal(set.items.filter(i=>i.kind==="retrieval").length,3);assert.equal(calls.at(-1).task,"exercises");for(const i of set.items)input("#"+i.id,i.answer);await app.flush();document.querySelector("#practice-form").dispatchEvent(new window.Event("submit",{bubbles:true,cancelable:true}));await until(()=>!!repo.get().sessions.at(-1).completed_at);assert.equal(repo.get().attempts.filter(a=>a.correct).length,9);assert.ok(repo.get().vocabulary.every(v=>v.streak===1));});
 test("Autosave conserva la bozza attraversando una navigazione immediata",async()=>{await visit("writing");click("Apri l'editor");await until(()=>!!document.querySelector("#draft"));input("#draft","Yesterday the team inspected the site and recorded the damage. No one was injured. A witness described a noise but had not seen anyone near the building. The area was secured while further checks were arranged.");await visit("home");await visit("writing/"+repo.get().writings.at(-1).id);assert.ok(document.querySelector("#draft").value.startsWith("Yesterday"));});
 test("Revisione ancorata, testo ostile inerte e riscrittura con verifica",async()=>{click("Chiedi la revisione");await until(()=>!!document.querySelector("#rewrite"));assert.equal(document.querySelector("#view img"),null);assert.equal(repo.get().writings.at(-1).feedback.omitted,1);input("#rewrite",repo.get().writings.at(-1).draft);click("Confronta bozza e riscrittura");await until(()=>document.getElementById("notice").textContent.includes("modificare"));assert.equal(calls.at(-1).task,"writing_review");input("#rewrite",repo.get().writings.at(-1).draft+" The supervisor was informed at 09:10.");click("Confronta bozza e riscrittura");await until(()=>document.getElementById("view").textContent.includes("3. Confronto"));click("Verifica in un nuovo contesto");await until(()=>document.querySelectorAll(".exercise").length===3);const set=repo.get().sessions.at(-1);assert.ok(set.writing_id);for(const i of set.items)input("#"+i.id,"didn't");await app.flush();document.querySelector("#practice-form").dispatchEvent(new window.Event("submit",{bubbles:true,cancelable:true}));await until(()=>!!repo.get().sessions.at(-1).completed_at);await visit("writing/"+set.writing_id);assert.ok(document.getElementById("view").textContent.includes("3/3 corrette senza aiuti"));});
 test("Pretest 45 risposte salvate, nessuna soluzione prima della consegna",async()=>{await visit("placement");click("Inizia il pretest");await until(()=>document.querySelector("#placement-form"));const seed=repo.get().placement.seed;
@@ -57,7 +57,7 @@ test("Pretest 45 risposte salvate, nessuna soluzione prima della consegna",async
     await until(()=>index===44?document.getElementById("view").textContent.includes("Pronto per la consegna"):document.querySelector("legend")?.textContent.startsWith("Domanda "+(index+2)+" "));
     assert.equal(document.getElementById("view").textContent.includes("Risposta di riferimento:"),false);
   }
-  click("Consegna il pretest");await until(()=>document.getElementById("view").textContent.includes("45/45 corrette"));assert.equal(repo.get().placement.answers.length,QUESTIONS.length);
+  click("Consegna il pretest");await until(()=>document.getElementById("view").textContent.includes("45 risposte corrette su 45"));assert.equal(repo.get().placement.answers.length,QUESTIONS.length);
 });
 test("Un piano già iniziato resta distinto dalla priorità aggiornata dopo il pretest",async()=>{
   await repo.change(s=>s.daily_plans=[{id:"older-plan",day:localDay(),minutes:20,lesson_id:"negatives",term_ids:[],practice_id:null,writing_id:null,created_at:new Date().toISOString()}]);
@@ -76,7 +76,7 @@ test("Piano quotidiano riprendibile e progresso live senza richieste AI",async()
 test("Piano e preferenze sopravvivono al backup e al ripristino",async()=>{const backup=parseBackup(await repo.backup());assert.equal(backup.settings.theme,"dark");assert.equal(backup.daily_plans.length,1);await repo.replace(backup);await visit("home");assert.ok(document.querySelector(".daily-card").textContent.includes("2 di 2"));assert.equal(document.documentElement.dataset.theme,"dark");});
 test("Sessione AI completa: trenta esercizi in cinque richieste esplicite, correzioni e ripresa",async()=>{
   await repo.change(s=>s.vocabulary.forEach(v=>v.due=new Date(Date.now()+86400000).toISOString()));await visit("lesson/past-simple");const before=calls.filter(c=>c.task==="exercises").length;
-  click("Inizia 30 esercizi con Groq");await until(()=>document.querySelector(".practice-step")?.textContent.startsWith("Blocco 1 di 5"));const id=repo.get().sessions.at(-1).id;
+  click("Inizia 30 esercizi con il tutor");await until(()=>document.querySelector(".practice-step")?.textContent.startsWith("Blocco 1 di 5"));const id=repo.get().sessions.at(-1).id;
   assert.equal(document.querySelectorAll(".exercise").length,6);assert.equal(document.querySelectorAll(".exercise-feedback").length,0);assert.equal(repo.get().sessions.at(-1).items.length,6);
   for(let page=0;page<5;page++){
     const current=repo.get().sessions.find(s=>s.id===id);await answerBlock(current,{wrongFirst:page===0});assert.ok(document.getElementById("view").textContent.includes("Forma: did not"));
@@ -88,7 +88,7 @@ test("Sessione AI completa: trenta esercizi in cinque richieste esplicite, corre
   await visit("practice/"+id);document.querySelector("#practice-form").dispatchEvent(new window.Event("submit",{bubbles:true,cancelable:true}));await app.flush();assert.equal(repo.get().attempts.filter(a=>a.session_id===id).length,30);
 });
 test("Quota sul blocco successivo conserva risposte e feedback: nessun retry automatico",async()=>{
-  await visit("lesson/present-perfect-simple");click("Inizia 30 esercizi con Groq");await until(()=>document.querySelector(".practice-step")?.textContent.startsWith("Blocco 1 di 5"));const id=repo.get().sessions.at(-1).id;await answerBlock(repo.get().sessions.at(-1));
+  await visit("lesson/present-perfect-simple");click("Inizia 30 esercizi con il tutor");await until(()=>document.querySelector(".practice-step")?.textContent.startsWith("Blocco 1 di 5"));const id=repo.get().sessions.at(-1).id;await answerBlock(repo.get().sessions.at(-1));
   const count=calls.length,error=new Error("Quota simulata: riprova più tardi.");error.status=429;nextExerciseFailure=error;click("Genera il blocco 2");await until(()=>document.getElementById("notice").textContent.includes("Quota simulata"));
   let saved=repo.get().sessions.find(s=>s.id===id);assert.equal(calls.length,count+1);assert.equal(saved.items.length,6);assert.equal(saved.training.page,0);assert.deepEqual(saved.training.checked,[0]);assert.equal(Object.keys(saved.answers).length,6);assert.equal(document.querySelectorAll(".exercise-feedback").length,6);
   await visit("home");await visit("practice/"+id);click("Genera il blocco 2");await until(()=>repo.get().sessions.find(s=>s.id===id).training.page===1);saved=repo.get().sessions.find(s=>s.id===id);assert.equal(saved.items.length,12);assert.equal(saved.completed_at,null);
@@ -100,7 +100,7 @@ test("Riprova offline dopo un errore cambia la frase, conserva il punteggio e pu
   click("Rifai gli errori con frasi diverse");await until(()=>repo.get().sessions.at(-1).training.parent_id===retry.id);assert.ok(repo.get().sessions.at(-1).items.every(it=>!retry.items.some(old=>old.stem===it.stem)));
 });
 test("Riprova Groq riceve l'errore e mantiene la distinzione dalla verifica autonoma",async()=>{
-  await visit("lesson/future-will");click("Genera 6 esercizi con Groq");await until(()=>document.querySelector(".practice-step")?.textContent.startsWith("Blocco 1 di 1"));const parent=repo.get().sessions.at(-1);await answerBlock(parent,{wrongFirst:true});click("Rifai gli errori con Groq");await until(()=>repo.get().sessions.at(-1).training.parent_id===parent.id);const retry=repo.get().sessions.at(-1),data=calls.at(-1).data;
+  await visit("lesson/future-will");click("Genera 6 esercizi con il tutor");await until(()=>document.querySelector(".practice-step")?.textContent.startsWith("Blocco 1 di 1"));const parent=repo.get().sessions.at(-1);await answerBlock(parent,{wrongFirst:true});click("Rifai gli errori con Groq");await until(()=>repo.get().sessions.at(-1).training.parent_id===parent.id);const retry=repo.get().sessions.at(-1),data=calls.at(-1).data;
   assert.equal(retry.items.length,6);assert.ok(retry.assisted);assert.equal(data.practice.total,6);assert.equal(data.recent_errors.length,1);assert.equal(data.recent_errors[0].answer,"wrong answer");assert.ok(data.already_seen.includes(parent.items[0].stem));await answerBlock(retry);assert.ok(repo.get().attempts.filter(a=>a.session_id===retry.id).every(a=>a.assisted));
 });
 test("Studia con Groq: la lezione e il dubbio vengono inviati e la spiegazione resta dopo la navigazione",async()=>{
@@ -155,12 +155,12 @@ test("Verifica breve offline riprendibile: risposte salvate, correzione e backup
   for(const item of items)input("#"+item.id,item.answer);click("Consegna la verifica");await until(()=>document.getElementById("view").textContent.includes("4/4 risposte corrette"));assert.equal(calls.length,before);parseBackup(await repo.backup());
 });
 test("Mini-rivalutazione da dieci domande usa cinque aree e non avvia Groq",async()=>{
-  await visit("studio");const before=calls.length;click("Mini-rivalutazione · 10 domande");await until(()=>document.querySelectorAll("fieldset.exercise").length===10);const c=repo.get().grammar_checks.at(-1);const {checkItems}=await import("../grammar-checks.js");const items=checkItems(c);assert.equal(new Set(items.map(i=>i.lesson_id)).size,5);
+  await visit("studio");const before=calls.length;click("Inizia la verifica breve · 10 domande");await until(()=>document.querySelectorAll("fieldset.exercise").length===10);const c=repo.get().grammar_checks.at(-1);const {checkItems}=await import("../grammar-checks.js");const items=checkItems(c);assert.equal(new Set(items.map(i=>i.lesson_id)).size,5);
   for(const item of items)input("#"+item.id,item.answer);click("Consegna la verifica");await until(()=>document.getElementById("view").textContent.includes("10/10 risposte corrette"));assert.equal(calls.length,before);parseBackup(await repo.backup());
 });
 test("Una risposta AI contestata resta in attesa e viene esclusa dal punteggio valutabile",async()=>{
   await repo.change(s=>s.vocabulary.forEach(t=>t.due=new Date(Date.now()+86400000).toISOString()));
-  await visit("lesson/past-simple");click("Genera 6 esercizi con Groq");await until(()=>document.querySelectorAll(".exercise").length===6);const set=repo.get().sessions.at(-1);await answerBlock(set,{wrongFirst:true});click("La mia risposta potrebbe essere valida");await until(()=>document.getElementById("view").textContent.includes("5/5 corrette nelle risposte valutabili"));const disputed=repo.get().attempts.find(a=>a.session_id===set.id&&a.disputed);assert.ok(disputed);assert.equal(disputed.correct,false);parseBackup(await repo.backup());
+  await visit("lesson/past-simple");click("Genera 6 esercizi con il tutor");await until(()=>document.querySelectorAll(".exercise").length===6);const set=repo.get().sessions.at(-1);await answerBlock(set,{wrongFirst:true});click("La mia risposta potrebbe essere valida");await until(()=>document.getElementById("view").textContent.includes("5/5 corrette nelle risposte valutabili"));const disputed=repo.get().attempts.find(a=>a.session_id===set.id&&a.disputed);assert.ok(disputed);assert.equal(disputed.correct,false);parseBackup(await repo.backup());
 });
 
 test("Comprensione senza traduzione, parola selezionata e dizionario personale persistente",async()=>{
@@ -220,4 +220,18 @@ test("1.9.2: dopo il pretest l'app propone un percorso numerato con un solo punt
   assert.ok(document.querySelector(".learning-path-card .path-steps li.current").textContent.includes(first.title));
   await visit("studio");
   assert.ok(document.querySelector(".learning-path-card .path-steps li.current").textContent.includes(first.title));
+});
+
+test("1.9.5: un pretest messo da parte con «Ripetere il pretest» si può ripristinare",async()=>{
+  await repo.change(s=>{s.legacy=s.legacy||{};s.legacy.placement_history=[];s.placement=newPlacement();s.placement.answers=QUESTIONS.map(q=>({id:q.id,value:q.answer,confidence:"sure"}));s.placement.submitted_at=new Date().toISOString();});
+  await visit("placement");
+  const original=window.confirm;window.confirm=()=>false;click("Inizia una nuova prova");await new Promise(r=>setTimeout(r,50));
+  assert.ok(repo.get().placement.submitted_at,"senza conferma la prova non si azzera");
+  window.confirm=()=>true;click("Inizia una nuova prova");await until(()=>!repo.get().placement.submitted_at);window.confirm=original;
+  await visit("placement");
+  assert.match(document.getElementById("view").textContent,/Hai già un pretest completato.*45\/45/s);
+  await visit("home");assert.match(document.getElementById("view").textContent,/Hai già un pretest completato/);
+  const button=[...document.querySelectorAll("button")].find(b=>b.textContent.startsWith("Ripristina il pretest del"));assert.ok(button);button.click();
+  await until(()=>!!repo.get().placement.submitted_at);
+  assert.equal(repo.get().legacy.placement_history.length,0,"la prova vuota appena avviata non va in archivio");
 });

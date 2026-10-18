@@ -15,7 +15,7 @@ export function learningUI(api){
   const s=getState(),review=reviewNotice(s),active=s.grammar_checks?.find(c=>!c.completed_at);
   return card(h("h2",{},review.recalibrate?"Ricalibra le priorità":review.due.length?"Ripasso grammaticale in scadenza":"Una verifica breve per orientarti"),
    p(review.recalibrate?"Sono passate almeno quattro settimane: dieci domande aggiornano le priorità senza ripetere tutto il pretest.":review.due.length?review.due.length+" strutture da riprendere dopo un intervallo. La verifica usa prima i contesti che non hai già visto.":"Dieci domande su cinque aree, separate dagli esercizi di allenamento. Gli approfondimenti non verificati restano da esplorare."),
-   active?link("Riprendi la verifica","checkpoint/"+active.id):button("Mini-rivalutazione · 10 domande",()=>begin()),
+   active?link("Riprendi la verifica","checkpoint/"+active.id):button("Inizia la verifica breve · 10 domande",()=>begin()),
    p("Banca locale di "+CHECK_ITEMS.length+" domande su "+CHECK_LESSONS.length+" strutture. Non è un test di livello completo. Quando una domanda è già stata usata, viene indicato.","small muted"));
  }
  // Il percorso deciso dall'app: tappe numerate, il motivo di ognuna e un solo pulsante per partire.
@@ -45,7 +45,7 @@ export function learningUI(api){
    const unitId=["argument","comparison","comparative-patterns","advanced-comparatives","hedging","linkers","cohesion"].includes(id)?"target-evaluation":["present-simple","conditionals-real","obligation"].includes(id)?"mission-essay":"mission-report";
    let c;await change(state=>{state.writing_courses??=[];c=state.writing_courses.find(c=>c.unit_id===unitId&&c.grammar_lesson_id===id&&!c.completed_at);if(!c){c=newCourse(unitId);c.grammar_lesson_id=id;state.writing_courses.push(c);}});await goto("course/"+c.id);
   };
-  return card(h("h2",{},"Il posto di questa lezione"),p(learningReason(s,l)),
+  return card(h("h2",{},"Perché questa lezione"),p(learningReason(s,l)),
    h("div",{class:"path-milestones"},[["Consultata",progress.read],["Praticata",progress.practised],["Senza aiuti",progress.independent],["Verifiche distanziate",progress.delayed]].map(([name,ok])=>h("span",{class:"pill "+(ok?"maintain":"confirm")},(ok?"✓ ":"○ ")+name))),
    meta.prerequisites.length>0&&p("Prima è utile conoscere:","small"),h("div",{class:"actions"},meta.prerequisites.map(id=>link(LESSONS.find(l=>l.id===id).title,"lesson/"+id,"text-link"))),
    !progress.read&&button("Ho studiato la spiegazione",async()=>{await change(state=>{state.lesson_reads??=[];state.lesson_reads.push({lesson_id:id,date:now()});});await refresh();},"quiet"),
