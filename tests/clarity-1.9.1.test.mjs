@@ -36,7 +36,7 @@ test("1.9.1: le soluzioni restano accettate dopo la riscrittura delle consegne",
 });
 
 test("1.9.1: indicazione automatica solo quando la consegna non dice già che cosa scrivere",()=>{
-  assert.equal(answerHint({kind:"completion",stem:"Scrivi solo la parola mancante: She ___ here. (work)",answer:"works"}),null);
+  assert.match(answerHint({kind:"completion",stem:"Scrivi solo la parola mancante: She ___ here. (work)",answer:"works"}),/al posto di ___/);
   assert.match(answerHint({kind:"completion",stem:"She ___ here. (work)",answer:"works"}),/al posto di ___/);
   assert.match(answerHint({kind:"error_correction",stem:"Fix: She work here.",answer:"She works here."}),/tutta la frase/);
   assert.equal(answerHint({kind:"choice",stem:"x ___",answer:"a",options:["a","b"]}),null);

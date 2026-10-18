@@ -214,14 +214,16 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     const form=h("form",{id:"practice-form"}),visibleIds=new Set(flow.items.map(it=>it.id));
     const results=state.attempts.filter(a=>a.session_id===id),blockResults=results.filter(a=>visibleIds.has(a.item_id));
     const mistakes=flow.items.filter(it=>it.kind!=="retrieval"&&blockResults.some(a=>a.item_id===it.id&&!a.correct&&!a.disputed));
-    const progressLabel=p("","small muted"),progressBar=h("progress",{max:flow.target,value:0,"aria-label":"Risposte compilate nella sessione"});
+    const answerTarget=flow.target-set.items.filter(it=>it.doubt).length;
+    const progressLabel=p("","small muted"),progressBar=h("progress",{max:answerTarget,value:0,"aria-label":"Risposte compilate nella sessione"});
     function updateProgress(){
       const current=repo.get().sessions.find(s=>s.id===id);
-      const other=current.items.filter(it=>!visibleIds.has(it.id)&&current.answers[it.id]?.trim()).length;
+      const other=current.items.filter(it=>!it.doubt&&!visibleIds.has(it.id)&&current.answers[it.id]?.trim()).length;
       const here=[...form.querySelectorAll(".exercise")].filter(block=>block.querySelector('input[type="radio"]:checked')||[...block.querySelectorAll('input:not([type="radio"])')].some(input=>input.value.trim())).length;
-      const filled=other+here;progressLabel.textContent=filled+" di "+flow.target+" risposte compilate"+(set.training?" · "+results.length+" verificate":"");progressBar.value=filled;
+      const filled=other+here;progressLabel.textContent=filled+" di "+answerTarget+" risposte compilate"+(set.training?" · "+results.length+" verificate":"");progressBar.value=filled;
     }
     for(const [i,item] of flow.items.entries()) {
+      if(item.doubt){form.append(h("section",{class:"exercise-excluded"},p("Esercizio "+(flow.start+i+1)+" escluso: il controllo automatico non ha confermato la soluzione. Non devi rispondere e non incide sul punteggio.","small warning check-note")));continue;}
       const value=set.answers[item.id]||"",result=locked?results.find(a=>a.item_id===item.id):null;
       const block=h("fieldset",{class:"exercise"},h("legend",{},(flow.start+i+1)+". "+(item.kind==="retrieval"?"Recupero lessicale":item.skill==="recognise"?"Significato":"Uso della forma")),p(item.stem,"stem"),item.doubt&&p(item.check_note||"Il controllo automatico non ha confermato la soluzione: l'esercizio non conta nel punteggio.","small warning check-note"));
       if(item.options?.length)for(const [j,opt] of item.options.entries())block.append(h("label",{class:"option",for:item.id+"-"+j},h("input",{id:item.id+"-"+j,type:"radio",name:item.id,value:opt,checked:value===opt,disabled:locked,onchange:e=>{autosave(s=>{s.sessions.find(x=>x.id===id).answers[item.id]=e.target.value;});updateProgress();}}),h("span",{lang:"en"},opt)));
@@ -233,9 +235,9 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     form.addEventListener("submit",e=>{e.preventDefault();run(async()=>{
       const latest=repo.get().sessions.find(s=>s.id===id),currentBlock=practiceBlock(latest);
       if(latest.completed_at||currentBlock.checked)return;
-      if(!currentBlock.items.length||currentBlock.items.some(it=>!latest.answers[it.id]?.trim()))throw new Error("Completa ogni risposta di questo blocco prima di verificare.");
+      if(!currentBlock.items.length||currentBlock.items.some(it=>!it.doubt&&!latest.answers[it.id]?.trim()))throw new Error("Completa ogni risposta di questo blocco prima di verificare.");
       await change(s=>{
-        const current=s.sessions.find(x=>x.id===id),items=practiceBlock(current).items;
+        const current=s.sessions.find(x=>x.id===id),items=practiceBlock(current).items.filter(it=>!it.doubt);
         for(const item of items) {
           const answer=current.answers[item.id],ok=correct(item,answer);
           s.attempts.push({id:uid("attempt"),session_id:id,item_id:item.id,lesson_id:item.kind==="retrieval"?"vocabulary":current.lesson_id,stem:item.stem,...(item.context_id?{context_id:item.context_id}:{}),...(item.doubt?{disputed:true}:{}),answer,correct:ok,assisted:current.assisted,source:current.source,date:now(),skill:item.skill||"form",term_id:item.term_id||null});

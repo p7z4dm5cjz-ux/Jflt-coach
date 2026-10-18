@@ -1,0 +1,30 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {JSDOM} from 'jsdom';
+import {IDBFactory} from 'fake-indexeddb';
+import {openRepository} from '../storage.js';
+import {answerHint} from '../answer-normal.js';
+const dom=new JSDOM(await readFile(new URL('../index.html',import.meta.url),'utf8'),{url:'https://example.com/#/practice/clarity',pretendToBeVisual:true});
+for(const key of ['window','document','location','Node','navigator','sessionStorage','localStorage'])Object.defineProperty(globalThis,key,{value:key==='window'?dom.window:dom.window[key],configurable:true});
+window.scrollTo=()=>{};
+const {mountApp}=await import('../app.js');
+const repo=await openRepository(new IDBFactory());
+const item={id:'gap',kind:'completion',stem:'Scrivi solo la parola mancante: She ___ going to call the supplier tomorrow. (usa be al present simple)',answer:'is',accept:[],why:'She richiede is.',options:[]};
+await repo.change(s=>s.sessions.push({id:'clarity',lesson_id:'be-going-to',source:'groq',items:[item,{...item,id:'doubt',doubt:true,check_note:'Soluzione segreta: is',stem:'The roof ___ going to collapse.'}],answers:{},assisted:false,created_at:new Date().toISOString(),completed_at:null}));
+const app=await mountApp(repo);
+test('Open answers have explicit instructions; doubtful items do not leak answers or block submission',async()=>{
+ const view=document.getElementById('view');assert.doesNotMatch(view.textContent,/null|Soluzione segreta|The roof/);
+ assert.match(document.querySelector('.answer-hint').textContent,/solo.*al posto di ___/);
+ assert.equal(document.getElementById('doubt'),null);assert.match(document.querySelector('.session-progress').textContent,/0 di 1/);
+ const input=document.getElementById('gap');input.value='is';input.dispatchEvent(new window.Event('input',{bubbles:true}));await app.flush();
+ document.getElementById('practice-form').dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));
+ for(let i=0;i<100&&!repo.get().sessions[0].completed_at;i++)await new Promise(r=>setTimeout(r,10));
+ assert.ok(repo.get().sessions[0].completed_at);assert.equal(repo.get().attempts.length,1);assert.equal(repo.get().attempts[0].correct,true);
+});
+test('Instructions distinguish gaps, full corrections and vocabulary without using the answer',()=>{
+ assert.match(answerHint({...item,answer:'SECRET'}),/solo/);
+ assert.match(answerHint({kind:'error_correction',stem:'Correggi: She work here.'}),/tutta la frase/);
+ assert.match(answerHint({kind:'retrieval',stem:'Come si dice indagare?'}),/espressione/);
+ assert.match(answerHint({kind:'transformation',stem:'Scrivi solo tre parole dopo will.'}),/soltanto/);
+});
