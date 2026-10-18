@@ -17,7 +17,8 @@ const inputs={
   translate:{paragraphs:["The officers have checked the gate."]},
   reading_test:{text:"The inspection of the northern depot was postponed because two officers were unavailable. A new date has not been confirmed. According to the duty manager, the delay will not affect deliveries this week. However, staff have been asked to keep the loading area clear at all times. Several drivers complained that the notice arrived late, and one described the instructions as vague. The manager accepted that the message could have been clearer and promised a written update by Friday. Until then, visitors must sign in at the main gate and wait to be escorted. The council, which owns the site, has not commented on the decision. Local residents, who often use the road beside the depot, were not informed directly, although the change is unlikely to affect them. The report on the previous inspection, published in March, had already recommended better communication with drivers and contractors."},
   reading_review:{text:"The officers have checked the gate.",translation:"Gli agenti hanno controllato il cancello."},
-  clarify:{term:"carry out",context:"The team will carry out a routine inspection."}
+  clarify:{term:"carry out",context:"The team will carry out a routine inspection."},
+  diagnosis:{areas:[{area:"Negazioni e domande",correct:1,total:8}],errors:[{area:"Negazioni e domande",lessons:["negatives","past-simple"],stem:"Frase negativa al passato. Scrivi solo le parole mancanti: We ___ the vehicle yesterday. (stop)",given:"not stopped",expected:"did not stop"}]}
 };
 const request=(task,path="/tutor")=>new Request("https://worker.test"+path,{method:"POST",headers:{Authorization:"Bearer "+token,Origin:env.ALLOWED_ORIGIN,"Content-Type":"application/json"},body:JSON.stringify({api_version:1,request_id:"req-format",task,data:inputs[task]})});
 const provider=result=>Response.json({choices:[{finish_reason:"stop",message:{content:JSON.stringify(result)}}]});
@@ -38,7 +39,7 @@ test("Ogni richiesta manda lo schema del suo compito e conserva i dati dello stu
       return provider(SHAPES[task]);
     });
     assert.equal(response.status,200,task);assert.equal(calls,1);
-    const body=await response.json();assert.deepEqual(body.result,["reading_understand","reading_test"].includes(task)?{...SHAPES[task],omitted:0}:SHAPES[task]);assert.equal(body.prompt_revision,"groq-clarity-v10");
+    const body=await response.json();assert.deepEqual(body.result,["reading_understand","reading_test"].includes(task)?{...SHAPES[task],omitted:0}:SHAPES[task]);assert.equal(body.prompt_revision,"groq-diagnosis-v11");
   }
 });
 
@@ -81,7 +82,8 @@ test("Campi mancanti e tipi sbagliati vengono esclusi dallo schema di ogni compi
     reading_review:[p=>delete p.terms,p=>p.segments[0].quote=null],
     translate:[p=>delete p.translations,p=>p.translations=[3]],
     reading_test:[p=>delete p.questions,p=>p.questions[0].type="opinion",p=>delete p.questions[2].quote],
-    clarify:[p=>delete p.example,p=>p.explanation=[]]
+    clarify:[p=>delete p.example,p=>p.explanation=[]],
+    diagnosis:[p=>delete p.advice,p=>p.patterns[0].lesson_ids="negatives"]
   };
   for(const task of TASKS){const valid=ajv.compile(REPLY_SCHEMAS[task]);for(const mutate of mutations[task]){const bad=structuredClone(SHAPES[task]);mutate(bad);assert.equal(valid(bad),false,task);}}
 });

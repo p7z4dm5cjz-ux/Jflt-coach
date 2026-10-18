@@ -1,4 +1,12 @@
-# JFLT Coach 1.9.6
+# JFLT Coach 1.10.0
+
+## Novità della 1.10.0: pretest adattivo con diagnosi
+
+- **Pretest adattivo (circa 15 minuti, di solito 25-35 domande, nessuna richiesta AI).** Ogni area parte da poche domande; dove rispondi bene e con sicurezza si passa oltre, dove sbagli o hai un dubbio la stessa struttura viene ricontrollata con un'altra domanda (dalle 45 del pretest e dalla banca delle verifiche). Un'area si chiude quando lo stato è abbastanza sicuro o raggiunge il massimo di domande (tempi 10, negazioni 7, phrasal 6, altre 4-5).
+- **Un errore isolato non diventa una priorità:** se una struttura sbagliata viene poi risolta, resta «da confermare» (a meno che l'intera area sia debole). Ogni domanda conta per la sua struttura principale: un errore di negazione al present simple non abbassa il present simple come tempo.
+- **Diagnosi nei risultati:** strutture sbagliate area per area, risposte lasciate vuote, e il pulsante «Chiedi la diagnosi al tutor» (una richiesta Groq) che raggruppa gli errori per tipo, cita le tue risposte e indica da dove partire. La diagnosi resta salvata con la prova e nel backup.
+- **Simulazione su 2.500 profili di studente** (stesso modello di risposta per entrambi i pretest): il pretest adattivo individua le aree da ripassare come quello da 45 domande (circa 78-79% contro 77-79%), con circa 30 domande invece di 45 e circa un terzo di falsi allarmi in meno sulle singole lezioni.
+- Il pretest da 45 domande già fatto resta valido e ripristinabile.
 
 ## Novità della 1.9.6
 

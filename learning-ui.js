@@ -25,7 +25,7 @@ export function learningUI(api){
    p(s.placement?.submitted_at?"L'ordine lo decide l'app in base al pretest e ai tuoi esercizi. Parti dalla tappa 1: quando la consolidi, il percorso si aggiorna da solo.":"Senza pretest l'ordine segue le basi del JFLT. Il pretest lo adatta a te.","small muted"),
    h("ol",{class:"path-steps"},steps.map((l,i)=>h("li",{class:i===0?"current":""},h("a",{href:"#/lesson/"+l.id},h("span",{class:"step-title"},(i===0?"Adesso · ":"")+l.title),h("span",{class:"step-reason small muted"},learningReason(s,l)))))),
    link("Inizia: "+next.title,"lesson/"+next.id),
-   !s.placement?.submitted_at&&link("Prima fai il pretest di 45 domande","placement","text-link"),
+   !s.placement?.submitted_at&&link("Prima fai il pretest (circa 15 minuti)","placement","text-link"),
    p("Ogni lezione: spiegazione, poi 30 esercizi con il tutor. La proposta si aggiorna con le tue risposte; il catalogo resta aperto se vuoi scegliere tu.","small muted"));
  }
  function overview(){

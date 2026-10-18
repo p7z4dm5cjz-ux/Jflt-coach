@@ -2,7 +2,7 @@ import {anchorReading,anchorTest} from "./contract.js";
 import {LESSONS,PHRASALS,VOCABULARY,PATTERNS,STAGES} from "./catalog.js";
 import {PHRASAL_SCENARIOS} from "./phrasal-extension.js";
 import {bookContext} from "./bookshelf.js";
-import {QUESTIONS,orderedQuestions,orderedOptions,AREAS,PHRASAL_TARGETS} from "./placement.js";
+import {QUESTIONS,orderedQuestions,orderedOptions,AREAS,PHRASAL_TARGETS,newAdaptivePlacement,adaptiveNext,adaptiveProgress} from "./placement.js";
 import {VERSION,now,uid,countWords,normal,correct,endpoint,newPlacement,placementProfile,recommendation,learningPath,addTerm,recordReview,recoveryItems,phrasalItems,writingReady,sanitizeFeedback,GENRES,dailyPlan,dailyWritingTopic,localDay} from "./engine.js";
 import {grammarItems} from "./practice-bank.js";
 import {answerHint} from "./answer-normal.js";
@@ -159,7 +159,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     const attempts=state.attempts.filter(a=>!a.assisted&&!a.disputed&&a.source!=="legacy"),score=attempts.length?Math.round(attempts.filter(a=>a.correct).length/attempts.length*100):null;
     if(!profile)return [
       restoreCard(),
-      title("IL TUO PUNTO DI PARTENZA","Prima capiamo da dove iniziare.","45 domande per scegliere gli argomenti da ripassare e le basi che puoi saltare."),
+      title("IL TUO PUNTO DI PARTENZA","Prima capiamo da dove iniziare.","Un pretest adattivo di circa 15 minuti sceglie gli argomenti da ripassare e le basi che puoi saltare."),
       h("section",{class:"hero"},h("div",{},p("PRETEST · PUOI INTERROMPERE E RIPRENDERE","eyebrow"),h("h2",{},state.placement?"Riprendi il tuo pretest":"Trova le tue priorità"),p("Tempi verbali, negazioni, phrasal verbs e altre strutture. Le risposte corrette date con dubbio restano da confermare."),link(state.placement?"Riprendi il pretest":"Inizia il pretest","placement")),h("span",{class:"hero-mark","aria-hidden":"true"},"Aa")),
       card(h("h2",{},"Un percorso basato sui risultati"),p("Alla fine del pretest l'app ti propone un percorso. Le risposte successive e gli errori degli scritti lo aggiornano."),p("Per ogni lezione puoi fare 30 esercizi con il tutor: cinque blocchi da sei, con correzione, spiegazione e nuova prova sugli errori."),link("Esplora le lezioni","studio","secondary")),
       activePractice&&card(h("h2",{},"Esercizi già iniziati"),link("Riprendi la sessione","practice/"+activePractice.id)),
@@ -182,7 +182,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
       activePractice&&card(h("h2",{},"Riprendi gli esercizi"),p((LESSONS.find(l=>l.id===activePractice.lesson_id)?.title||"Pratica")+" · risposte e blocchi già verificati sono salvati."),link("Riprendi la sessione","practice/"+activePractice.id)),
       courseCard,
       h("div",{class:"stats"},card(p("Verifiche senza aiuti","muted"),h("strong",{class:"big"},score===null?"—":score+"%"),p(attempts.length+" risposte valutate","small")),card(p("Parole da recuperare","muted"),h("strong",{class:"big"},due.length),link("Apri Ripasso","review","text-link")),card(p("I tuoi scritti","muted"),h("strong",{class:"big"},state.writings.length),link(active?"Riprendi la bozza":"Prepara un testo",active?"writing/"+active.id:"writing","text-link"))),
-      card(h("h2",{},"Il tuo punto di partenza"),p(profile.correct+"/45 risposte corrette. Una risposta data con dubbio resta da confermare."),link("Vedi risultati e priorità","placement","text-link")),
+      card(h("h2",{},"Il tuo punto di partenza"),p(profile.correct+" risposte corrette su "+profile.total+". Una risposta data con dubbio resta da confermare."),link("Vedi risultati e priorità","placement","text-link")),
       h("div",{class:"two-columns"},card(h("h2",{},"Phrasal verbs nel contesto"),p("Significato, particelle, ordine dei pronomi e registro. Una parola segnata come nota resta distinta da una risposta verificata."),link("Apri il laboratorio","phrasals")),card(h("h2",{},"Impara a comprendere"),p("Incolla un articolo: scopri il senso, le scelte linguistiche e salva le parole nel dizionario personale."),link("Incolla e comprendi un articolo","reading"))),
       link("Consulta i progressi","progress","text-link")
     ];
@@ -265,23 +265,61 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
       done&&!set.training&&l&&card(h("h2",{},"Continua con una sessione completa"),button("Inizia 30 esercizi con il tutor",()=>startAiPractice(set.lesson_id)),set.lesson_id==="negatives"&&button("Inizia 30 negazioni offline",()=>makeSession("negatives",grammarItems("negatives",state.sessions.length)),"secondary"))
     ];
   }
+  function finishPlacement(s){s.placement.submitted_at=now();const prof=placementProfile(s.placement);for(const row of prof?.errors||[]){const expression=PHRASAL_TARGETS[row.item.id],term=PHRASALS.find(t=>t.expression===expression);if(term)addTerm(s,term);}}
+  function adaptivePlacementPage(test){
+    const item=adaptiveNext(test),progress=adaptiveProgress(test);
+    const head=title("PRETEST ADATTIVO","Una domanda alla volta.","Le domande successive dipendono dalle tue risposte, quindi una risposta confermata non si modifica. Nessuna chiamata AI.");
+    if(!item)return [head,card(h("h2",{},"Pretest completato"),p(progress.answered+" risposte date."),button("Vedi il risultato",async()=>{await change(s=>finishPlacement(s));await refresh();}))];
+    const form=h("form",{id:"placement-form"});
+    form.append(h("fieldset",{},h("legend",{},"Domanda "+(progress.answered+1)+" · "+AREAS[item.area]),p(item.stem,"stem")));
+    const box=form.querySelector("fieldset");
+    if(item.options)for(const opt of orderedOptions(item,test.seed))box.append(h("label",{class:"option"},h("input",{type:"radio",name:"placement-answer",value:opt}),h("span",{},opt)));
+    else box.append(h("label",{for:"placement-answer",class:"sr-only"},"La tua risposta"),answerHint(item)&&p(answerHint(item),"small muted answer-hint","placement-hint"),h("input",{id:"placement-answer","aria-describedby":answerHint(item)?"placement-hint":null,name:"placement-answer",maxlength:350,value:"",autocomplete:"off",lang:"en",autocapitalize:"off",spellcheck:"false"}));
+    const unsure=h("input",{type:"checkbox",id:"unsure"});form.append(h("label",{class:"inline-check"},unsure,"Ho un dubbio"));
+    const save=async value=>{await change(s=>{s.placement.answers.push({id:item.id,value,confidence:unsure.checked?"unsure":"sure"});if(!adaptiveNext(s.placement))finishPlacement(s);});await refresh();};
+    form.onsubmit=e=>{e.preventDefault();run(async()=>{const v=item.options?form.querySelector('input[name="placement-answer"]:checked')?.value:form.querySelector("#placement-answer").value.trim();if(!v)throw new Error("Inserisci una risposta oppure scegli «Non so».");await save(v);});};
+    form.append(h("div",{class:"actions"},h("button",{type:"submit"},"Conferma e continua"),button("Non so",()=>save(""),"secondary")));
+    return [restoreCard(),head,h("progress",{max:progress.answered+progress.remaining,value:progress.answered,"aria-label":"Avanzamento del pretest"}),p("Risposte date: "+progress.answered+" · ne restano circa "+progress.remaining+" · aree completate: "+progress.areasDone+" di "+progress.areas,"muted"),form];
+  }
+  // Diagnosi del pretest: una parte locale (lezioni con errori, risposte vuote) e, su richiesta,
+  // l'analisi del tutor sui tipi di errore. Una richiesta Groq, salvata per questa prova.
+  function diagnosisCard(profile){
+    const test=state.placement,blank=profile.errors.filter(r=>!r.answer.value).length,lessonTitle=id=>LESSONS.find(l=>l.id===id)?.title||id;
+    const byArea=profile.areas.filter(a=>a.total&&a.correct<a.total).map(a=>{const rows=profile.rows.filter(r=>r.item.area===a.id),ids=[...new Set(rows.filter(r=>!r.correct).map(r=>r.item.lessons[0]))];
+      return h("li",{},h("strong",{},a.title+": "),ids.map(id=>{const mine=rows.filter(r=>r.item.lessons[0]===id),wrong=mine.filter(r=>!r.correct).length;return lessonTitle(id)+" ("+wrong+" su "+mine.length+")";}).join(", "));});
+    const saved=(state.diagnoses||[]).findLast(d=>d.placement_started_at===test.started_at);
+    const ask=async()=>{
+      const input={areas:profile.areas.filter(a=>a.total).map(a=>({area:a.title,correct:a.correct,total:a.total})),errors:profile.errors.slice(0,25).map(r=>({area:AREAS[r.item.area],lessons:r.item.lessons.slice(0,4),stem:r.item.stem,given:r.answer.value,expected:r.item.answer}))};
+      const result=await tutor(state.settings,"/tutor","diagnosis",input);
+      await change(s=>{s.diagnoses=[...(s.diagnoses||[]),{id:uid("diagnosis"),placement_started_at:test.started_at,created_at:now(),result}].slice(-10);});await refresh();
+    };
+    return card(h("h2",{},"Diagnosi"),
+      byArea.length?[p("Dove hai sbagliato, struttura per struttura:"),h("ul",{},byArea)]:p("Nessun errore: il percorso parte dagli approfondimenti."),
+      blank>0&&p("Hai lasciato vuote "+blank+(blank===1?" risposta":" risposte")+" con «Non so»: sono lacune da colmare, non sviste.","small"),
+      profile.adaptive&&p("Le strutture sbagliate sono state ricontrollate con un'altra domanda: un errore seguito da una risposta giusta resta «da confermare», non diventa una priorità.","small muted"),
+      saved?[h("h3",{},"L'analisi del tutor"),p(saved.result.summary),saved.result.patterns.map(x=>h("div",{class:"issue"},h("strong",{},x.title),p(x.explanation),p(x.evidence,"formula"),x.lesson_ids.filter(id=>LESSONS.some(l=>l.id===id)).length>0&&h("div",{class:"actions"},x.lesson_ids.filter(id=>LESSONS.some(l=>l.id===id)).map(id=>link(lessonTitle(id),"lesson/"+id,"text-link"))))),
+        h("h3",{},"Da dove partire"),h("ol",{},saved.result.advice.map(a=>h("li",{},a))),p("Analisi del "+new Date(saved.created_at).toLocaleDateString("it-IT",{day:"numeric",month:"long"})+". È un parere del tutor: il percorso resta calcolato dalle tue risposte.","small muted")]
+        :profile.errors.length>0&&[button("Chiedi la diagnosi al tutor",ask),p("Il tutor raggruppa gli errori per tipo (per esempio l'ausiliare nelle negative) e ti dice da dove partire. Una richiesta Groq.","small muted")]);
+  }
   // Pretest completati e messi da parte con «Ripetere il pretest»: si possono ripristinare.
   function savedPretests(){return (state.legacy?.placement_history||[]).map((p,i)=>({p,i,profile:placementProfile(p)})).filter(x=>x.profile);}
   function restoreCard(){
     if(placementProfile(state.placement))return null;
     const last=savedPretests().at(-1);if(!last)return null;
     const when=new Date(last.p.submitted_at).toLocaleDateString("it-IT",{day:"numeric",month:"long"});
-    return card(h("h2",{},"Hai già un pretest completato"),p("Prova del "+when+": "+last.profile.correct+"/45 risposte corrette. È rimasta nell'archivio quando è stata avviata una nuova prova."+(state.placement?.answers?.length?" La prova in corso ("+state.placement.answers.length+"/45 risposte) resterà a sua volta nell'archivio.":"")),
+    return card(h("h2",{},"Hai già un pretest completato"),p("Prova del "+when+": "+last.profile.correct+" risposte corrette su "+last.profile.total+". È rimasta nell'archivio quando è stata avviata una nuova prova."+(state.placement?.answers?.length?" La prova in corso ("+state.placement.answers.length+" risposte) resterà a sua volta nell'archivio.":"")),
       button("Ripristina il pretest del "+when,async()=>{await change(s=>{const history=s.legacy.placement_history,restored=history.splice(last.i,1)[0];if(s.placement?.answers?.length)history.push(s.placement);s.placement=restored;});await refresh();}));
   }
   function placement() {
     const test=state.placement,profile=placementProfile(test);
-    if(!test)return [restoreCard(),title("PRETEST","Dove conviene iniziare?","45 domande senza aiuti; il risultato arriva alla fine. Non è una certificazione di livello."),card(h("h2",{},"Tempi, negazioni e phrasal verbs in primo piano"),p("Segna «Ho un dubbio» quando non sei sicuro. Puoi lasciare vuota una risposta scegliendo «Non so»: il percorso la considererà da ripassare."),button("Inizia il pretest",async()=>{await change(s=>{s.placement=newPlacement();});await refresh();}))];
-    if(profile)return [title("PRETEST","Il tuo punto di partenza",profile.correct+" risposte corrette su 45 · "+profile.uncertain.length+" giuste ma date con dubbio"),
+    if(!test)return [restoreCard(),title("PRETEST","Dove conviene iniziare?","Pretest adattivo: circa 15 minuti, senza aiuti. Non è una certificazione di livello."),card(h("h2",{},"Si adatta alle tue risposte"),p("Ogni area parte da poche domande. Dove rispondi bene e con sicurezza si passa oltre; dove sbagli o hai un dubbio, la stessa struttura viene ricontrollata con un'altra domanda, così un errore isolato non diventa una priorità."),p("Segna «Ho un dubbio» quando non sei sicuro. «Non so» lascia la risposta vuota: conta come da ripassare. Di solito servono 25-35 domande."),button("Inizia il pretest",async()=>{await change(s=>{s.placement=newAdaptivePlacement();});await refresh();}))];
+    if(profile)return [title("PRETEST","Il tuo punto di partenza",profile.correct+" risposte corrette su "+profile.total+" · "+profile.uncertain.length+" giuste ma date con dubbio"),
       learning.pathCard("Il tuo percorso consigliato"),
+      diagnosisCard(profile),
       card(h("h2",{},"Risultato per area"),h("table",{},h("thead",{},h("tr",{},["Area","Corrette","Proposta"].map(v=>h("th",{},v)))),h("tbody",{},profile.areas.map(a=>h("tr",{},h("td",{},a.title),h("td",{},a.correct+"/"+a.total),h("td",{},statusLabels[a.status]))))),p("Priorità: meno del 70% di risposte corrette. Da confermare: almeno il 70%. Basi già controllate: almeno l'85% corrette e date con sicurezza. Con tre domande un solo errore porta sotto il 70%.","small muted")),
       card(h("h2",{},"Rivedi errori e dubbi"),profile.rows.filter(r=>!r.secure).map(r=>h("details",{},h("summary",{},r.item.stem),p("La tua risposta: "+(r.answer.value||"Non so")),p("Risposta di riferimento: "+r.item.answer,"formula"),p(r.item.why),p(r.item.ref,"muted")))),
-      h("details",{},h("summary",{},"Ripetere il pretest"),p("Il risultato precedente sarà conservato nell'archivio; il percorso userà la nuova prova."),button("Inizia una nuova prova",async()=>{if(!window.confirm("Il risultato attuale resta nell'archivio e potrai ripristinarlo da questa pagina. Iniziare una nuova prova?"))return;await change(s=>{s.legacy??={};s.legacy.placement_history??=[];s.legacy.placement_history.push(s.placement);s.placement=newPlacement();});await refresh();},"secondary"))];
+      h("details",{},h("summary",{},"Ripetere il pretest"),p("Il risultato precedente sarà conservato nell'archivio; il percorso userà la nuova prova."),button("Inizia una nuova prova",async()=>{if(!window.confirm("Il risultato attuale resta nell'archivio e potrai ripristinarlo da questa pagina. Iniziare una nuova prova?"))return;await change(s=>{s.legacy??={};s.legacy.placement_history??=[];s.legacy.placement_history.push(s.placement);s.placement=newAdaptivePlacement();});await refresh();},"secondary"))];
+    if(test.version===2)return adaptivePlacementPage(test);
     const questions=orderedQuestions(test.seed),item=questions[test.position],answer=test.answers.find(a=>a.id===item.id),form=h("form",{id:"placement-form"});
     form.append(h("fieldset",{},h("legend",{},"Domanda "+(test.position+1)+" di 45 · "+AREAS[item.area]),p(item.stem,"stem")));
     const box=form.querySelector("fieldset");

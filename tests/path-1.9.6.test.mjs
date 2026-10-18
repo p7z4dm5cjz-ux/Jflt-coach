@@ -25,3 +25,21 @@ test("1.9.6: dopo il pretest le due aree più deboli si alternano nelle prime ta
   assert.ok(top.filter(id=>tenseLessons.has(id)).length>=2);
   assert.equal(placementProfile(s.placement).priorityIds.length,new Set(placementProfile(s.placement).priorityIds).size);
 });
+
+test("1.10.0: il pretest da 45 già fatto resta valido accanto a quello adattivo",async()=>{
+  const {newPlacement,validPlacement,newAdaptivePlacement,adaptiveNext}=await import("../placement.js");
+  const old=newPlacement("v1");old.answers=QUESTIONS.map(q=>({id:q.id,value:q.answer,confidence:"sure"}));old.position=44;old.submitted_at=new Date().toISOString();
+  assert.ok(validPlacement(old));assert.equal(placementProfile(old).total,45);
+  const p=newAdaptivePlacement("v2");assert.ok(validPlacement(p));let it,n=0;while((it=adaptiveNext(p))&&n<50){p.answers.push({id:it.id,value:it.answer,confidence:"sure"});n++;}
+  p.submitted_at=new Date().toISOString();const prof=placementProfile(p);
+  assert.equal(prof.total,n);assert.ok(prof.areas.every(a=>a.status==="skip"),"tutte giuste e sicure: basi controllate");assert.equal(prof.priorityIds.length,0);
+});
+
+test("1.10.0: una svista ricontrollata con una risposta giusta non diventa priorità",async()=>{
+  const {newAdaptivePlacement,adaptiveNext}=await import("../placement.js");
+  const p=newAdaptivePlacement("slip");let it,first=null;
+  while(it=adaptiveNext(p)){const slip=!first&&it.area==="tenses";if(slip)first=it;p.answers.push({id:it.id,value:slip?"":it.answer,confidence:"sure"});}
+  p.submitted_at=new Date().toISOString();const prof=placementProfile(p),lesson=first.lessons[0];
+  assert.ok(prof.rows.filter(r=>r.item.lessons.includes(lesson)).length>=2,"la struttura sbagliata viene ricontrollata");
+  assert.equal(prof.lessonStatus[lesson],"confirm");assert.ok(!prof.priorityIds.includes(lesson));
+});

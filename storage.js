@@ -13,6 +13,10 @@ export function validateState(s) {
   if(s.placement!==null&&!validPlacement(s.placement))throw new Error("Pretest non valido nel backup.");
   const validDate=v=>typeof v==="string"&&Number.isFinite(Date.parse(v));
   if(s.grammar_checks!==undefined)validateChecks(s.grammar_checks);
+  if(s.diagnoses!==undefined){
+    if(!Array.isArray(s.diagnoses)||s.diagnoses.length>10)throw new Error("Diagnosi del pretest non valide.");
+    for(const d of s.diagnoses){if(typeof d?.id!=="string"||!validDate(d.created_at)||!validDate(d.placement_started_at))throw new Error("Diagnosi del pretest non valida.");validateReply("diagnosis",d.result);}
+  }
   if(s.lesson_reads!==undefined&&(!Array.isArray(s.lesson_reads)||s.lesson_reads.some(r=>!LESSONS.some(l=>l.id===r.lesson_id)||!validDate(r.date))||new Set(s.lesson_reads.map(r=>r.lesson_id)).size!==s.lesson_reads.length))throw new Error("Lezioni consultate non valide.");
   for(const a of s.attempts)if(a.disputed!==undefined&&typeof a.disputed!=="boolean"||a.context_id!==undefined&&typeof a.context_id!=="string")throw new Error("Indicazione del contesto o segnalazione non valida.");
   if(s.lesson_studies!==undefined) {

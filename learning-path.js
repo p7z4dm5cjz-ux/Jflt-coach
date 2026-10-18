@@ -35,7 +35,7 @@ export function learningReason(state,lesson,timestamp=Date.now()){
  if(w.independent)return "Due sessioni diverse riuscite senza aiuti: resta in mantenimento, il ripasso a distanza controlla la tenuta.";
  if(w.goodSession)return "Ultima sessione riuscita ("+Math.round(w.latestRate*100)+"%): da confermare con una verifica a distanza di giorni.";
  if(w.errors)return "Nell'ultima sessione senza aiuti: "+w.errors+(w.errors===1?" errore":" errori")+" su "+w.latest.length+" risposte.";
- if(profile?.lessonStatus[lesson.id]==="review"){const rows=profile.rows.filter(r=>r.item.lessons.includes(lesson.id)),wrong=rows.filter(r=>!r.correct).length;return wrong?"Nel pretest: "+wrong+(wrong===1?" risposta sbagliata":" risposte sbagliate")+" su "+rows.length+(rows.length===1?" domanda":" domande")+" che riguardano questa struttura.":"Nel pretest le risposte su questa struttura erano giuste ma date con dubbio: da confermare.";}
+ if(profile?.lessonStatus[lesson.id]==="review"){const rows=profile.rows.filter(r=>profile.adaptive?r.item.lessons[0]===lesson.id:r.item.lessons.includes(lesson.id)),wrong=rows.filter(r=>!r.correct).length;return wrong?"Nel pretest: "+wrong+(wrong===1?" risposta sbagliata":" risposte sbagliate")+" su "+rows.length+(rows.length===1?" domanda":" domande")+" che riguardano questa struttura.":"Nel pretest le risposte su questa struttura erano giuste ma date con dubbio: da confermare.";}
  if(profile?.lessonStatus[lesson.id]==="skip")return "Il pretest consente di alleggerire questa base. Puoi verificarla brevemente prima di saltarla.";
  return "Segue la progressione del percorso. Puoi aprire liberamente anche le altre lezioni.";
 }

@@ -55,6 +55,7 @@ export const QUESTIONS = [
   q("R03","patterns","verb-patterns","choose","Il senso è «si è fermato per parlare». Scegli la forma corretta: The officer stopped ___ to the witness.",["to talk","talking","talk"],"to talk","Stop to talk descrive lo scopo della sosta; stop talking significa smettere di parlare.","OXFORD unità 77, p. 184")
 ];
 import {correct} from "./answer-normal.js";
+import {CHECK_ITEMS} from "./grammar-checks.js";
 export function isCorrect(item,value){return correct(item,value);}
 function hash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;}
 export function orderedQuestions(seed){return QUESTIONS.slice().sort((a,b)=>hash(seed+a.id)-hash(seed+b.id));}
@@ -63,30 +64,113 @@ export function newPlacement(seed=crypto.randomUUID(),now=new Date().toISOString
   return {version:1,bank_version:BANK_VERSION,seed,answers:[],position:0,started_at:now,submitted_at:null};
 }
 export function validPlacement(p){
+  if(p?.version===2)return validAdaptive(p);
   if(!p||p.version!==1||p.bank_version!==BANK_VERSION||typeof p.seed!=="string"||!p.seed||p.seed.length>100||!Array.isArray(p.answers)||p.answers.length>45||!Number.isInteger(p.position)||p.position<0||p.position>=45||!Number.isFinite(Date.parse(p.started_at))||(p.submitted_at!==null&&!Number.isFinite(Date.parse(p.submitted_at))))return false;
   if(Object.keys(p).some(k=>!["version","bank_version","seed","answers","position","started_at","submitted_at"].includes(k)))return false;
   const ids=new Set();for(const a of p.answers){const item=QUESTIONS.find(q=>q.id===a?.id);if(!item||ids.has(a.id)||typeof a.value!=="string"||a.value.length>350||!["sure","unsure"].includes(a.confidence)||Object.keys(a).some(k=>!["id","value","confidence"].includes(k))||(item.options&&a.value&&!item.options.includes(a.value)))return false;ids.add(a.id);}
   return p.submitted_at===null||p.answers.length===45;
 }
 export function placementProfile(p){
+  if(p?.version===2)return adaptiveProfile(p);
   if(!validPlacement(p)||!p.submitted_at)return null;
   const rows=QUESTIONS.map(item=>{const answer=p.answers.find(a=>a.id===item.id);return {item,answer,correct:isCorrect(item,answer.value),secure:answer.confidence==="sure"&&isCorrect(item,answer.value)};});
-  const areas=Object.entries(AREAS).map(([id,title])=>{const tests=rows.filter(r=>r.item.area===id),correct=tests.filter(r=>r.correct).length,secure=tests.filter(r=>r.secure).length;return {id,title,total:tests.length,correct,secure,unknown:tests.filter(r=>!r.answer.value).length,rate:correct/tests.length,status:secure/tests.length>=0.85?"skip":correct/tests.length>=0.7?"confirm":"review"};});
-  const lessons={};for(const row of rows)for(const id of row.item.lessons){(lessons[id]??=[]).push(row);}
-  const lessonStatus={};for(const [id,tests] of Object.entries(lessons)){const secure=tests.every(r=>r.secure);lessonStatus[id]=tests.some(r=>!r.correct)?"review":secure&&tests.length>=2&&new Set(tests.map(r=>r.item.skill)).size>=2?"skip":"confirm";}
+  return buildProfile(rows,false);
+}
+function buildProfile(rows,adaptive){
+  // Nel pretest adattivo ogni domanda conta per la sua struttura principale (la prima lezione):
+  // un errore di negazione al present simple non abbassa il present simple come tempo verbale.
+  const lessonsOf=r=>adaptive?r.item.lessons.slice(0,1):r.item.lessons;
+  const areas=Object.entries(AREAS).map(([id,title])=>{const tests=rows.filter(r=>r.item.area===id),correct=tests.filter(r=>r.correct).length,secure=tests.filter(r=>r.secure).length;
+    const status=!tests.length?"review":secure/tests.length>=0.85?"skip":correct/tests.length>=0.7?"confirm":"review";
+    return {id,title,total:tests.length,correct,secure,unknown:tests.filter(r=>!r.answer.value).length,rate:tests.length?correct/tests.length:0,status,confidence:adaptive&&tests.length?areaEstimate(tests).confidence:null};});
+  const lessons={};for(const row of rows)for(const id of lessonsOf(row)){(lessons[id]??=[]).push(row);}
+  const lessonStatus={};for(const [id,tests] of Object.entries(lessons)){
+    const wrong=tests.filter(r=>!r.correct).length,right=tests.length-wrong,secure=tests.every(r=>r.secure);
+    // Nel pretest adattivo una lezione sbagliata viene ricontrollata: un errore seguito da
+    // una risposta giusta resta «da confermare», due errori la mettono tra le priorità.
+    // A parità (un errore e una risposta giusta) decide l'area: se l'area è debole la lezione
+    // resta tra le priorità, altrimenti l'errore conta come svista da confermare.
+    const areaStatus=areas.find(x=>x.id===tests[0].item.area)?.status;
+    if(adaptive)lessonStatus[id]=wrong>right||wrong&&wrong===right&&areaStatus==="review"?"review":wrong?"confirm":secure&&tests.length>=2?"skip":"confirm";
+    else lessonStatus[id]=wrong?"review":secure&&tests.length>=2&&new Set(tests.map(r=>r.item.skill)).size>=2?"skip":"confirm";
+  }
   // Un controllo corretto di soggetto/oggetto permette di lasciare il corso base.
-  if(rows.filter(r=>r.item.area==="basics").every(r=>r.secure)){lessonStatus.sentence="skip";lessonStatus.pronouns="skip";}
+  const basics=rows.filter(r=>r.item.area==="basics");
+  if(basics.length&&basics.every(r=>r.secure)){lessonStatus.sentence="skip";lessonStatus.pronouns="skip";}
   const errors=rows.filter(r=>!r.correct);
   const areaWeight=area=>["tenses","negatives","phrasals"].includes(area)?2:1;
-  const weight=id=>errors.filter(r=>r.item.lessons.includes(id)).reduce((sum,r)=>sum+areaWeight(r.item.area),0);
+  const weight=id=>errors.filter(r=>lessonsOf(r).includes(id)).reduce((sum,r)=>sum+areaWeight(r.item.area),0);
   // Percorso per aree, in proporzione agli errori: ogni area riceve tappe come in una
   // ripartizione proporzionale (peso dell'area / posizione nell'area), così le due aree più
   // deboli si alternano e quelle con un solo errore arrivano dopo. Tempi, negazioni e phrasal
   // valgono doppio. Dentro l'area viene prima la lezione con più errori.
   const order=Object.keys(AREAS),candidates=[];
-  for(const area of order){const wrong=errors.filter(r=>r.item.area===area),score=wrong.length*areaWeight(area),count=id=>wrong.filter(r=>r.item.lessons.includes(id)).length;
-    [...new Set(wrong.flatMap(r=>r.item.lessons))].sort((a,b)=>count(b)-count(a)||weight(b)-weight(a)).forEach((id,rank)=>candidates.push({id,key:score/(rank+1),area:order.indexOf(area),rank}));}
+  for(const area of order){const wrong=errors.filter(r=>r.item.area===area&&lessonStatus[r.item.lessons[0]]!=="confirm"),score=wrong.length*areaWeight(area),count=id=>wrong.filter(r=>lessonsOf(r).includes(id)).length;
+    [...new Set(wrong.flatMap(lessonsOf))].filter(id=>lessonStatus[id]==="review").sort((a,b)=>count(b)-count(a)||weight(b)-weight(a)).forEach((id,rank)=>candidates.push({id,key:score/(rank+1),area:order.indexOf(area),rank}));}
   candidates.sort((a,b)=>b.key-a.key||a.area-b.area||a.rank-b.rank);
   const priorityIds=[...new Set(candidates.map(c=>c.id))];
-  return {correct:rows.filter(r=>r.correct).length,total:45,areas,lessonStatus,priorityIds,errors,uncertain:rows.filter(r=>r.correct&&!r.secure),rows};
+  return {correct:rows.filter(r=>r.correct).length,total:rows.length,areas,lessonStatus,priorityIds,errors,uncertain:rows.filter(r=>r.correct&&!r.secure),rows,adaptive};
+}
+
+// ---- Pretest adattivo (versione 2) ----
+// Parte da poche domande per area; aggiunge domande solo dove ci sono errori o dubbi, sulla
+// stessa struttura, finché ogni errore è stato ricontrollato o l'area raggiunge il massimo.
+// Usa le domande del pretest e quelle della banca delle verifiche; nessuna richiesta AI.
+export const ADAPTIVE_BANK="2026-10-18-a1";
+export const AREA_LIMITS={tenses:[4,10],negatives:[3,7],phrasals:[3,6],basics:[2,4],quantifiers:[2,4],modals:[2,4],clauses:[2,5],patterns:[2,5]};
+const AREA_OF_LESSON=(()=>{const map={};for(const area of Object.keys(AREAS))for(const q of QUESTIONS.filter(q=>q.area===area))for(const id of q.lessons)map[id]??=area;return map;})();
+export const ADAPTIVE_POOL=[...QUESTIONS.map(q=>({...q,source:"pretest"})),...CHECK_ITEMS.filter(i=>AREA_OF_LESSON[i.lesson_id]).map(i=>({id:i.id,area:AREA_OF_LESSON[i.lesson_id],lessons:[i.lesson_id],skill:"form",stem:i.stem,options:null,answer:i.answer,accept:i.accept,why:null,ref:null,source:"check"}))];
+const poolItem=id=>ADAPTIVE_POOL.find(i=>i.id===id);
+export function newAdaptivePlacement(seed=crypto.randomUUID(),now=new Date().toISOString()){
+  return {version:2,bank_version:ADAPTIVE_BANK,seed,answers:[],started_at:now,submitted_at:null};
+}
+function adaptiveRows(p){return p.answers.map(answer=>{const item=poolItem(answer.id),ok=isCorrect(item,answer.value);return {item,answer,correct:ok,secure:ok&&answer.confidence==="sure"};});}
+function areaState(area,rows){
+  const [min,max]=AREA_LIMITS[area],mine=rows.filter(r=>r.item.area===area),covered=id=>rows.filter(r=>r.item.lessons.includes(id)).length;
+  // Lezioni da ricontrollare: risposta sbagliata o data con dubbio, vista una sola volta.
+  const pending=[...new Set(mine.filter(r=>!r.secure).map(r=>r.item.lessons[0]))].filter(id=>covered(id)<2);
+  const asked=new Set(rows.map(r=>r.item.id)),left=ADAPTIVE_POOL.filter(i=>i.area===area&&!asked.has(i.id));
+  const est=areaEstimate(mine);
+  const perfect=mine.length>=min+1&&mine.every(r=>r.secure);
+  const done=!left.length||mine.length>=max||perfect||mine.length>=min&&!pending.length&&est.confidence>=0.7;
+  return {area,n:mine.length,min,max,pending,left,done,est};
+}
+// Stima dello stato di un'area con una distribuzione Beta (prior di Jeffreys): probabilità che
+// la quota di risposte sicure superi l'85% (basi controllate) o che le corrette restino sotto il
+// 70% (priorità). L'area si chiude quando lo stato più probabile supera il 75%.
+function betaAbove(x,a,b){let num=0,den=0;for(let i=0;i<400;i++){const t=(i+0.5)/400,d=Math.pow(t,a-1)*Math.pow(1-t,b-1);den+=d;if(t>=x)num+=d;}return num/den;}
+export function areaEstimate(rows){
+  const n=rows.length,right=rows.filter(r=>r.correct).length,secure=rows.filter(r=>r.secure).length;
+  if(!n)return {skip:0,confirm:0,review:0,status:"review",confidence:0};
+  const skip=betaAbove(0.85,secure+0.5,n-secure+0.5),review=1-betaAbove(0.7,right+0.5,n-right+0.5),confirm=Math.max(0,1-skip-review);
+  const status=skip>=confirm&&skip>=review?"skip":review>=confirm?"review":"confirm";
+  return {skip,confirm,review,status,confidence:Math.max(skip,confirm,review)};
+}
+export function adaptiveNext(p){
+  if(!p||p.version!==2)return null;
+  const rows=adaptiveRows(p),states=Object.keys(AREAS).map(a=>areaState(a,rows)).filter(st=>!st.done);
+  if(!states.length)return null;
+  const st=states.sort((a,b)=>a.n-b.n)[0],seen=new Set(rows.flatMap(r=>r.item.lessons)),skills=new Set(rows.filter(r=>r.item.area===st.area).map(r=>r.item.skill));
+  const rank=i=>{
+    if(st.pending.length&&i.lessons.some(id=>st.pending.includes(id)))return 0+(skills.has(i.skill)?0.5:0);
+    if(i.source==="pretest"&&!i.lessons.every(id=>seen.has(id)))return 2;
+    if(i.source==="pretest")return 3;
+    return i.lessons.every(id=>seen.has(id))?5:4;
+  };
+  return st.left.slice().sort((a,b)=>rank(a)-rank(b)||hash(p.seed+a.id)-hash(p.seed+b.id))[0];
+}
+export function adaptiveProgress(p){
+  const rows=adaptiveRows(p),states=Object.keys(AREAS).map(a=>areaState(a,rows));
+  const remaining=states.reduce((sum,st)=>sum+(st.done?0:Math.max(st.min-st.n,0)+st.pending.length||1),0);
+  return {answered:rows.length,remaining,areasDone:states.filter(st=>st.done).length,areas:states.length};
+}
+export function validAdaptive(p){
+  if(!p||p.version!==2||p.bank_version!==ADAPTIVE_BANK||typeof p.seed!=="string"||!p.seed||p.seed.length>100||!Array.isArray(p.answers)||p.answers.length>45||!Number.isFinite(Date.parse(p.started_at))||(p.submitted_at!==null&&!Number.isFinite(Date.parse(p.submitted_at))))return false;
+  if(Object.keys(p).some(k=>!["version","bank_version","seed","answers","started_at","submitted_at"].includes(k)))return false;
+  const ids=new Set();for(const a of p.answers){const item=poolItem(a?.id);if(!item||ids.has(a.id)||typeof a.value!=="string"||a.value.length>350||!["sure","unsure"].includes(a.confidence)||Object.keys(a).some(k=>!["id","value","confidence"].includes(k))||(item.options&&a.value&&!item.options.includes(a.value)))return false;ids.add(a.id);}
+  return true;
+}
+function adaptiveProfile(p){
+  if(!validAdaptive(p)||!p.submitted_at||!p.answers.length)return null;
+  return buildProfile(adaptiveRows(p),true);
 }
