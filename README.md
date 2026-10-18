@@ -1,4 +1,9 @@
-# JFLT Coach 1.9.5
+# JFLT Coach 1.9.6
+
+## Novità della 1.9.6
+
+- **La frase intera giusta conta come giusta.** Se in un esercizio con ___ scrivi tutta la frase invece delle sole parole mancanti, la risposta è accettata quando coincide con la frase completata correttamente. Vale per pretest, esercizi e verifiche; non per le scelte multiple. Il risultato del pretest già fatto si ricalcola da solo.
+- **Percorso per aree.** Le tappe dopo il pretest sono ripartite tra le aree in proporzione agli errori (tempi, negazioni e phrasal valgono doppio): le due aree più deboli si alternano invece di occupare da sole le prime tappe. Dentro ogni area viene prima la lezione con più errori.
 
 ## Novità della 1.9.5
 

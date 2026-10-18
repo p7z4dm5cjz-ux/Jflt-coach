@@ -77,8 +77,16 @@ export function placementProfile(p){
   // Un controllo corretto di soggetto/oggetto permette di lasciare il corso base.
   if(rows.filter(r=>r.item.area==="basics").every(r=>r.secure)){lessonStatus.sentence="skip";lessonStatus.pronouns="skip";}
   const errors=rows.filter(r=>!r.correct);
-  const priorityIds=[...new Set(errors.flatMap(r=>r.item.lessons))];
-  const weight=id=>rows.filter(r=>r.item.lessons.includes(id)&&!r.correct).reduce((sum,r)=>sum+(["tenses","negatives","phrasals"].includes(r.item.area)?2:1),0);
-  priorityIds.sort((a,b)=>weight(b)-weight(a));
+  const areaWeight=area=>["tenses","negatives","phrasals"].includes(area)?2:1;
+  const weight=id=>errors.filter(r=>r.item.lessons.includes(id)).reduce((sum,r)=>sum+areaWeight(r.item.area),0);
+  // Percorso per aree, in proporzione agli errori: ogni area riceve tappe come in una
+  // ripartizione proporzionale (peso dell'area / posizione nell'area), così le due aree più
+  // deboli si alternano e quelle con un solo errore arrivano dopo. Tempi, negazioni e phrasal
+  // valgono doppio. Dentro l'area viene prima la lezione con più errori.
+  const order=Object.keys(AREAS),candidates=[];
+  for(const area of order){const wrong=errors.filter(r=>r.item.area===area),score=wrong.length*areaWeight(area),count=id=>wrong.filter(r=>r.item.lessons.includes(id)).length;
+    [...new Set(wrong.flatMap(r=>r.item.lessons))].sort((a,b)=>count(b)-count(a)||weight(b)-weight(a)).forEach((id,rank)=>candidates.push({id,key:score/(rank+1),area:order.indexOf(area),rank}));}
+  candidates.sort((a,b)=>b.key-a.key||a.area-b.area||a.rank-b.rank);
+  const priorityIds=[...new Set(candidates.map(c=>c.id))];
   return {correct:rows.filter(r=>r.correct).length,total:45,areas,lessonStatus,priorityIds,errors,uncertain:rows.filter(r=>r.correct&&!r.secure),rows};
 }

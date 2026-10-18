@@ -6,7 +6,21 @@ export function correct(item,answer) {
   if(item.case_sensitive){const exact=v=>String(v??"").normalize("NFKC").replace(/[‘’]/g,"'").replace(/\s+/g," ").trim().replace(/[.!?]+$/,"");return [item.answer,...(item.accept||[])].some(v=>exact(v)===exact(answer));}
   const variants=value=>{const text=String(value??"").replace(/[‘’]/g,"'");return [text,text.replace(/\b(he|she|it|that|there)'s\b/gi,"$1 is"),text.replace(/\b(he|she|it|that|there)'s\b/gi,"$1 has"),text.replace(/\b(i|you|we|they|he|she|it)'d\b/gi,"$1 had"),text.replace(/\b(i|you|we|they|he|she|it)'d\b/gi,"$1 would")].map(normal);};
   const candidates=variants(answer);
-  return [item.answer,...(item.accept||[])].filter(v=>typeof v==="string").some(v=>variants(v).some(value=>candidates.includes(value)));
+  const keys=[item.answer,...(item.accept||[])].filter(v=>typeof v==="string");
+  if(keys.some(v=>variants(v).some(value=>candidates.includes(value))))return true;
+  // Frase intera al posto delle sole parole mancanti: è giusta se coincide con la frase
+  // dell'esercizio completata con una soluzione accettata. Non vale per le scelte multiple.
+  return gapSentences(item,keys).some(v=>variants(v).some(value=>candidates.includes(value)));
+}
+export function gapSentences(item,keys=[item.answer,...(item.accept||[])]){
+  if(!item||item.options?.length)return [];
+  const stem=String(item.stem??item.question??""),runs=stem.match(/_{2,}(?:\s+_{2,})*/g);
+  if(!runs||runs.length!==1)return [];
+  const at=stem.indexOf(runs[0]),colon=stem.lastIndexOf(": ",at);
+  let sentence=stem.slice(colon<0?0:colon+2).trim();
+  while(/\s*\([^()]*\)\s*$/.test(sentence))sentence=sentence.replace(/\s*\([^()]*\)\s*$/,"").trim();
+  if(!sentence.includes(runs[0])||sentence.split(/\s+/).length<3)return [];
+  return keys.filter(v=>typeof v==="string"&&v.trim()).map(v=>sentence.replace(runs[0],v.trim()));
 }
 
 // Indicazione mostrata sotto ogni risposta aperta: dice se scrivere solo le parole mancanti
