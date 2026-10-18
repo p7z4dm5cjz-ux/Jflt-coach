@@ -5,11 +5,14 @@ let memoryToken="";
 const HEALTH_TTL=60000;
 let healthCache=null,healthPending=null,healthGeneration=0;
 export function invalidateHealth(){healthCache=null;healthPending=null;healthGeneration++;}
-export function getToken(){try{return sessionStorage.getItem(KEY)||localStorage.getItem(KEY)||memoryToken;}catch{return memoryToken;}}
+const storedToken=storage=>{try{return globalThis[storage]?.getItem(KEY)||"";}catch{return "";}};
+export function getToken(){return storedToken("sessionStorage")||storedToken("localStorage")||memoryToken;}
+export function isTokenRemembered(){const value=getToken();return !!value&&storedToken("localStorage")===value;}
 export function saveToken(value,remember=false) {
   invalidateHealth();
   memoryToken=value.trim();
-  try{localStorage.removeItem(KEY);sessionStorage.removeItem(KEY);if(memoryToken)(remember?localStorage:sessionStorage).setItem(KEY,memoryToken);}catch{}
+  for(const storage of ["localStorage","sessionStorage"]){try{globalThis[storage]?.removeItem(KEY);}catch{}}
+  if(memoryToken){try{globalThis[remember?"localStorage":"sessionStorage"]?.setItem(KEY,memoryToken);}catch{}}
 }
 export async function callTutor(settings,path,task,data,fetcher=fetch) {
   const token=getToken();

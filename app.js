@@ -9,7 +9,7 @@ import {answerHint} from "./answer-normal.js";
 import {negativeItems} from "./negative-bank.js";
 import {PRACTICE_SIZE,BLOCK_SIZE,trainingRecord,practiceBlock,freshAiItems,exerciseRequest,negativeRule} from "./practice-flow.js";
 import {openRepository,parseBackup} from "./storage.js";
-import {callTutor,getToken,saveToken,invalidateHealth} from "./tutor.js";
+import {callTutor,getToken,isTokenRemembered,saveToken,invalidateHealth} from "./tutor.js";
 import {learningUI} from "./learning-ui.js";
 import {blockGoal} from "./block-goals.js";
 import {CORE_LESSONS} from "./core-practice.js";
@@ -43,7 +43,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
   const notify=(message,error=false)=>{notices.replaceChildren(p(message));notices.className="notice "+(error?"error":"success");notices.hidden=false;};
   async function change(fn) {state=await repo.change(fn);return state;}
   async function run(fn,button) {
-    if(busy)return;busy=true;root.setAttribute("aria-busy","true");
+    if(busy)return;notices.hidden=true;notices.replaceChildren();busy=true;root.setAttribute("aria-busy","true");
     if(button)button.disabled=true;
     saveStatus.textContent="Operazione in corso…";
     try{await repo.flush();state=repo.get();await fn();}
@@ -532,20 +532,29 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
       state.writing_courses?.length>0&&card(h("h2",{},"La scrittura passo passo"),state.writing_courses.map(c=>h("div",{},link((c.completed_at?"Percorso svolto":"Passo "+(c.stage+1)+" di 6")+" · "+c.checks.length+" tappe completate","course/"+c.id,"text-link"),p(c.completed_at?"Nuovi fatti affrontati senza aiuti anche in un'altra giornata.":c.stage===5?"Prima prova autonoma svolta; conferma in un altro giorno.":"Aiuti e tentativi sono salvati separatamente dalle prove autonome.","small muted")))),
       card(h("h2",{},"Gli errori da riprendere"),list(recent.filter(a=>!a.correct).slice(-8).reverse().map(a=>h("span",{},a.stem," → ",a.answer))),state.legacy&&p("L'archivio precedente è conservato nel backup. Le vecchie auto-valutazioni non diventano nuove prove di padronanza.","muted")),link("Continua a studiare","home")];
   }
-  async function checkHealth(){try{health=await tutor(state.settings,"/health");healthError="";}catch(e){health=null;healthError=e.message;}return health;}
+  let healthCheckGeneration=0;
+  async function checkHealth(){const generation=++healthCheckGeneration;try{const result=await tutor(state.settings,"/health");if(generation===healthCheckGeneration){health=result;healthError="";}return result;}catch(e){if(generation===healthCheckGeneration){health=null;healthError=e.message;}return null;}}
   function settings() {
     const theme=h("select",{id:"theme-preference"},Object.entries(themeNames).map(([value,label])=>h("option",{value,selected:value===(state.settings.theme||"auto")},label)));
     theme.onchange=()=>run(async()=>{await change(s=>s.settings.theme=theme.value);applyTheme();});
     const minutes=h("select",{id:"daily-minutes"},[10,20,30].map(value=>h("option",{value,selected:value===(state.settings.daily_minutes||20)},value+" minuti")));
     minutes.onchange=()=>run(async()=>{await change(s=>s.settings.daily_minutes=Number(minutes.value));});
-    const address=h("input",{id:"endpoint",type:"url",value:state.settings.endpoint,maxlength:200}),token=h("input",{id:"token",type:"password",autocomplete:"off",placeholder:getToken()?"Codice già presente sul dispositivo":"Codice personale APP_TOKEN",maxlength:300}),remember=h("input",{type:"checkbox",id:"remember"});
-    const statusBox=card(h("h2",{},"Stato del tutor"),h("dl",{},h("dt",{},"App"),h("dd",{},VERSION),h("dt",{},"Worker"),h("dd",{},health?health.version:"Da verificare"),h("dt",{},"Groq"),h("dd",{},groq?"Risposta verificata il "+new Date(groq).toLocaleTimeString("it-IT"):health?.groq_configured?"Chiave configurata; risposta non ancora verificata":"Da verificare")),healthError&&p(healthError,"warning"),h("div",{class:"actions"},button("Verifica collegamento Worker",async()=>{await checkHealth();await refresh();},"secondary"),button("Verifica Groq",async()=>{const result=await tutor(state.settings,"/check");if(result.provider_checked){groq=now();await checkHealth();}await refresh();})),p("Il collegamento al Worker non consuma una chiamata Groq. Il test Groq ne usa una.","small muted"));
+    const address=h("input",{id:"endpoint",type:"url",value:state.settings.endpoint,maxlength:200}),token=h("input",{id:"token",type:"password",autocomplete:"off",placeholder:getToken()?"Codice già presente sul dispositivo":"Codice personale APP_TOKEN",maxlength:300}),remember=h("input",{type:"checkbox",id:"remember",checked:isTokenRemembered()});
+    async function saveConnection(){
+      const value=endpoint(address.value),entered=token.value.trim(),keep=remember.checked;
+      invalidateHealth();healthCheckGeneration++;
+      if(entered)saveToken(entered,keep);
+      else if(getToken()&&keep!==isTokenRemembered())saveToken(getToken(),keep);
+      await change(s=>s.settings.endpoint=value);health=null;groq=null;
+    }
+    async function verifyConnection(){await saveConnection();const result=await checkHealth();notify(result?"Collegamento verificato. Il codice personale è presente." :healthError,!result);await refresh();}
+    const statusBox=card(h("h2",{},"Stato del tutor"),h("dl",{},h("dt",{},"App"),h("dd",{},VERSION),h("dt",{},"Worker"),h("dd",{},health?health.version:"Da verificare"),h("dt",{},"Groq"),h("dd",{},groq?"Risposta verificata il "+new Date(groq).toLocaleTimeString("it-IT"):health?.groq_configured?"Chiave configurata; risposta non ancora verificata":"Da verificare")),healthError&&p(healthError,"warning"),h("div",{class:"actions"},button("Verifica collegamento Worker",verifyConnection,"secondary"),button("Verifica Groq",async()=>{await saveConnection();const result=await tutor(state.settings,"/check");if(result.provider_checked){groq=now();await checkHealth();notify("Groq ha risposto correttamente. Collegamento verificato.");}await refresh();})),p("Il collegamento al Worker non consuma una chiamata Groq. Il test Groq ne usa una.","small muted"));
     const file=h("input",{type:"file",id:"backup-file",accept:".json,application/json"});
     const preview=h("div",{});let candidate=null;
     file.onchange=()=>run(async()=>{candidate=null;preview.replaceChildren();if(!file.files[0])return;const parsed=parseBackup(await file.files[0].text());candidate=parsed;preview.replaceChildren(p("Backup valido: "+parsed.writings.length+" scritti, "+parsed.attempts.length+" tentativi, "+parsed.vocabulary.length+" termini."),button("Importa questo backup",async()=>{if(!candidate)return;await repo.replace(candidate);state=repo.get();candidate=null;notify("Backup importato. Il token del tutor resta sul dispositivo.");await refresh();},"secondary"),p("L'importazione sostituisce i dati della nuova app. Esporta prima una copia dei progressi attuali.","warning"));});
     return [title("IMPOSTAZIONI","Ritmo, aspetto e tutor.","I progressi restano su questo dispositivo. Il tutor usa il tuo Worker Cloudflare e Groq."),
       card(h("h2",{},"Il tuo ritmo"),h("label",{for:"theme-preference"},"Aspetto"),theme,h("label",{for:"daily-minutes"},"Tempo indicativo del piano quotidiano"),minutes,p("Automatico segue il tema del dispositivo. Un piano già iniziato mantiene obiettivo e contenuti fino a fine giornata.","small muted")),
-      card(h("h2",{},"Collega il tutor"),h("label",{for:"endpoint"},"Indirizzo Worker"),address,h("label",{for:"token"},"Codice personale del tutor"),token,h("label",{class:"inline-check"},remember,"Ricorda il codice su questo dispositivo"),button("Salva collegamento",async()=>{const value=endpoint(address.value);invalidateHealth();await change(s=>s.settings.endpoint=value);if(token.value.trim())saveToken(token.value,remember.checked);health=null;groq=null;await checkHealth();await refresh();}),button("Rimuovi il codice dal dispositivo",async()=>{saveToken("");health=null;groq=null;await refresh();},"quiet"),p("La chiave Groq va nei secret Cloudflare. Qui si inserisce solo il codice personale APP_TOKEN; non viene incluso nei backup.","small muted")),
+      card(h("h2",{},"Collega il tutor"),h("label",{for:"endpoint"},"Indirizzo Worker"),address,h("label",{for:"token"},"Codice personale del tutor"),token,h("label",{class:"inline-check"},remember,"Ricorda il codice su questo dispositivo"),button("Salva collegamento",verifyConnection),button("Rimuovi il codice dal dispositivo",async()=>{saveToken("");healthCheckGeneration++;health=null;healthError="";groq=null;notify("Codice rimosso da questo dispositivo.");await refresh();},"quiet"),p("La chiave Groq va nei secret Cloudflare. Qui si inserisce solo il codice personale APP_TOKEN; non viene incluso nei backup.","small muted")),
       statusBox,card(h("h2",{},"Proteggi i tuoi progressi"),button("Esporta backup JSON",async()=>{const text=await repo.backup(),blob=new Blob([text],{type:"application/json"}),url=URL.createObjectURL(blob),a=h("a",{href:url,download:"jflt-progressi-"+now().slice(0,10)+".json"});document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);notify("Backup preparato. Conserva il file scaricato.");},"secondary"),h("label",{for:"backup-file"},"Importa un backup"),file,preview,p("Gli aggiornamenti dell'app conservano i tuoi dati. Il backup serve per cambiare dispositivo e per passare da Safari all'app sulla schermata Home: su iPhone le due hanno archivi separati.","muted")),
       card(h("h2",{},"Studio senza connessione"),p("Lezioni, pretest, esercizi originali, lessico e bozze funzionano offline dopo il primo caricamento. Le richieste Groq partono solo quando premi un comando del tutor."),button("Cerca aggiornamenti",async()=>{const reg=await navigator.serviceWorker?.getRegistration();if(!reg)throw new Error("Aggiornamenti disponibili dopo la pubblicazione HTTPS dell'app.");await reg.update();notify("Controllo avviato. Se arriva una nuova versione comparirà un avviso.");},"quiet")),link("Vedi i progressi","progress","text-link")];
   }
@@ -564,7 +573,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
   }
   window.addEventListener("hashchange",()=>render().catch(e=>notify(e.message,true)));
   await render();
-  if(getToken())checkHealth().then(()=>{if(location.hash==="#/settings")refresh();});
+  if(getToken())checkHealth(); // Non ricreare il modulo mentre lo studente sta digitando.
   return {render,goto,flush:()=>repo.flush(),get:()=>repo.get(),notify};
 }
 export async function start() {
