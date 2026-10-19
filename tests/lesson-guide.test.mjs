@@ -15,6 +15,7 @@ const repo=await openRepository(new IDBFactory());let calls=0;
 const app=await mountApp(repo,document.getElementById('view'),async()=>{calls++;throw new Error('Unexpected AI call');});
 const lesson=LESSONS.find(l=>l.id==='future-going-to');
 async function click(text){const b=[...document.querySelectorAll('button')].find(b=>b.textContent===text);assert.ok(b,text);b.click();for(let i=0;i<200;i++){await new Promise(r=>setTimeout(r,5));if(!document.getElementById('view').hasAttribute('aria-busy'))return;}throw new Error('timeout');}
+async function until(fn){for(let i=0;i<400;i++){if(fn())return;await new Promise(r=>setTimeout(r,5));}throw new Error('Navigation did not finish');}
 async function input(id,value){const el=document.getElementById(id);assert.ok(el,id);el.value=value;el.dispatchEvent(new window.Event('input',{bubbles:true}));await app.flush();}
 test('Every lesson has an answerable construction task and meaningful source content',()=>{
  for(const l of LESSONS){const t=guideTasks(l);assert.ok(t.example,l.id);assert.ok(l.when&&l.contrast,l.id);assert.ok(t.form,l.id);assert.ok(correct(t.form,t.form.answer),l.id);if(t.choice)assert.ok(t.choice.options.includes(t.choice.answer),l.id);}
@@ -27,7 +28,7 @@ test('Lesson flow connects explanation, exercises, sentences and writing with sa
  assert.match(document.getElementById('guide-feedback').textContent,/Forma corretta/);
  await input('guide-form','wrong');assert.equal(document.getElementById('guide-feedback').hidden,true);await click('Controlla la forma');assert.doesNotMatch(document.getElementById('guide-feedback').textContent,/Forma corretta/);
  await click('Confronta le alternative');assert.match(document.getElementById('view').textContent,/Tomorrow da solo/);
- const choice=guideTasks(lesson).choice,radio=[...document.querySelectorAll('input[name="guide-contrast"]')].find(el=>el.value===choice.answer);radio.checked=true;radio.dispatchEvent(new window.Event('change',{bubbles:true}));await app.flush();await click('Mostra il perché');await click('Continua agli esercizi');
+ const choice=guideTasks(lesson).choice,radio=[...document.querySelectorAll('input[name="guide-contrast"]')].find(el=>el.value===choice.answer);radio.checked=true;radio.dispatchEvent(new window.Event('change',{bubbles:true}));await app.flush();await click('Mostra il perché');await click('Continua agli esercizi');await until(()=>document.getElementById('practice-form'));
  const session=repo.get().sessions.at(-1);assert.equal(session.guide_lesson_id,lesson.id);
  for(let page=0;page<5;page++){
    const current=repo.get().sessions.find(s=>s.id===session.id);
@@ -41,11 +42,11 @@ test('Lesson flow connects explanation, exercises, sentences and writing with sa
    if(page<4)await click('Apri il blocco '+(page+2));
  }
  assert.ok(repo.get().sessions.find(s=>s.id===session.id).completed_at);
- await click('Continua: scrivi frasi tue');
+ await click('Continua: scrivi frasi tue');await until(()=>document.getElementById('guide-draft'));
 
  await input('guide-draft','We are going to inspect a new site. È un piano.');await app.render();assert.equal(document.getElementById('guide-draft').value,'We are going to inspect a new site. È un piano.');
  const backup=parseBackup(await repo.backup());assert.equal(backup.lesson_guides[0].step,4);assert.equal(backup.attempts.length,30);assert.ok(backup.attempts.some(a=>a.assisted));
- await click('Continua: prepara il breve testo');assert.equal(repo.get().writings.length,1);assert.equal(repo.get().writings[0].mode,'guided');assert.equal(repo.get().writings[0].grammar_lesson_id,lesson.id);assert.match(repo.get().writings[0].ideas,/È un piano/);assert.equal(repo.get().writings[0].draft,'');assert.equal(calls,0);
+ await click('Continua: prepara il breve testo');await until(()=>document.getElementById('draft'));assert.equal(repo.get().writings.length,1);assert.equal(repo.get().writings[0].mode,'guided');assert.equal(repo.get().writings[0].grammar_lesson_id,lesson.id);assert.match(repo.get().writings[0].ideas,/È un piano/);assert.equal(repo.get().writings[0].draft,'');assert.equal(calls,0);
  location.hash='#/lesson/future-going-to';await app.render();assert.ok(repo.get().lesson_guides[0].completed_at);assert.equal(repo.get().attempts.length,30);
  await click('Riapri la spiegazione passo passo');await click('Conosco già la regola: salta');assert.equal(repo.get().lesson_guides[0].skipped,true);assert.equal(repo.get().sessions.length,1);
 });
