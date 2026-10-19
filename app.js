@@ -1,4 +1,4 @@
-import {lessonGuideUI} from "./lesson-guide.js";
+import {lessonGuideUI,guideTasks} from "./lesson-guide.js";
 import {anchorReading,anchorTest} from "./contract.js";
 import {LESSONS,PHRASALS,VOCABULARY,PATTERNS,STAGES} from "./catalog.js";
 import {PHRASAL_SCENARIOS} from "./phrasal-extension.js";
@@ -81,7 +81,18 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
   async function refresh(){await render();}
   const courses=writingCourseUI({h,p,title,card,list,link,field,button,change,autosave,goto,refresh,repo,tutor,notify,getState:()=>state});
   const learning=learningUI({h,p,title,card,link,button,change,autosave,goto,refresh,getState:()=>state});
-  const lessonGuide=lessonGuideUI({h,p,card,button,link,change,autosave,refresh,goto,getState:()=>state});
+  const lessonGuide=lessonGuideUI({h,p,card,button,link,change,autosave,refresh,goto,startPractice:startGuidedPractice,getState:()=>state});
+  async function startGuidedPractice(lessonId){
+    const guide=state.lesson_guides?.find(g=>g.lesson_id===lessonId);
+    const previous=state.sessions.find(s=>s.id===guide?.practice_id);
+    if(previous){await goto("practice/"+previous.id);return;}
+    const lesson=LESSONS.find(l=>l.id===lessonId),tasks=guideTasks(lesson);
+    const items=grammarItems(lessonId,state.sessions.length);
+    const exposed=guide?.skipped?[]:[...(guide?.revealed.includes(2)?[tasks.form.stem]:[]),...(guide?.revealed.includes(3)&&tasks.choice?[tasks.choice.stem]:[])];
+    const set=sessionRecord(lessonId,items,"local",{guide_lesson_id:lessonId,hinted_items:items.filter(i=>exposed.includes(i.stem)).map(i=>i.id)});
+    await change(s=>{s.sessions.push(set);const g=s.lesson_guides.find(g=>g.lesson_id===lessonId);g.practice_id=set.id;g.step=4;});
+    await goto("practice/"+set.id);
+  }
   function sessionRecord(lessonId,items,source="local",extra={}) {
     const id=uid("session");
     const grammarCount=items.filter(it=>it.kind!=="retrieval").length;
@@ -158,7 +169,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
       return h("li",{class:[done&&"done",isToday&&"today",future&&"future"].filter(Boolean).join(" ")},h("span",{"aria-hidden":"true"},name),h("span",{class:"dot"},done?h("span",{class:"sr-only"},full[i]+": studio svolto"):h("span",{class:"sr-only"},full[i]+(isToday?": oggi":future?"":": nessuna attività"))));})));
   }
   function home() {
-    const plan=dailyPlan(state),planLesson=plan.lesson,next=learningPath(state)[0],profile=placementProfile(state.placement),due=dueTerms(),active=state.writings.findLast(w=>!w.comparison),activePractice=state.sessions.findLast(set=>!set.completed_at),activeCourse=state.writing_courses?.findLast(c=>!c.completed_at);
+    const plan=dailyPlan(state),planLesson=plan.lesson,next=learningPath(state)[0],profile=placementProfile(state.placement),due=dueTerms(),active=state.writings.findLast(w=>!w.comparison),activePractice=state.sessions.findLast(set=>!set.completed_at),activeCourse=state.writing_courses?.findLast(c=>!c.completed_at),activeGuide=state.lesson_guides?.findLast(g=>!g.completed_at);
     const courseCard=card(h("h2",{},activeCourse?"Riprendi la scrittura passo passo":"Dal modello al saggio e al rapporto"),p("MISSION, TARGET e CAMPAIGN: comprensione, frasi, paragrafo, scaletta e nuove prove autonome."),link(activeCourse?"Riprendi · passo "+(activeCourse.stage+1)+" di 6":"Impara a scrivere",activeCourse?"course/"+activeCourse.id:"writing","secondary"));
     const attempts=state.attempts.filter(a=>!a.assisted&&!a.disputed&&a.source!=="legacy"),score=attempts.length?Math.round(attempts.filter(a=>a.correct).length/attempts.length*100):null;
     if(!profile)return [
@@ -167,6 +178,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
       h("section",{class:"hero"},h("div",{},p("PRETEST · PUOI INTERROMPERE E RIPRENDERE","eyebrow"),h("h2",{},state.placement?"Riprendi il tuo pretest":"Trova le tue priorità"),p("Tempi verbali, negazioni, phrasal verbs e altre strutture. Le risposte corrette date con dubbio restano da confermare."),link(state.placement?"Riprendi il pretest":"Inizia il pretest","placement")),h("span",{class:"hero-mark","aria-hidden":"true"},"Aa")),
       card(h("h2",{},"Un percorso basato sui risultati"),p("Alla fine del pretest l'app ti propone un percorso. Le risposte successive e gli errori degli scritti lo aggiornano."),p("Per ogni lezione puoi fare 30 esercizi con il tutor: cinque blocchi da sei, con correzione, spiegazione e nuova prova sugli errori."),link("Esplora le lezioni","studio","secondary")),
       activePractice&&card(h("h2",{},"Esercizi già iniziati"),link("Riprendi la sessione","practice/"+activePractice.id)),
+      activeGuide&&card(h("h2",{},"Riprendi la lezione passo passo"),link("Continua la lezione","lesson/"+activeGuide.lesson_id)),
       courseCard,
       active&&card(h("h2",{},"La tua bozza"),link("Riprendi la scrittura","writing/"+active.id,"secondary"))
     ];
@@ -184,6 +196,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
       learning.pathCard(),
       learning.notice(),
       activePractice&&card(h("h2",{},"Riprendi gli esercizi"),p((LESSONS.find(l=>l.id===activePractice.lesson_id)?.title||"Pratica")+" · risposte e blocchi già verificati sono salvati."),link("Riprendi la sessione","practice/"+activePractice.id)),
+      activeGuide&&card(h("h2",{},"Riprendi la lezione passo passo"),link("Continua la lezione","lesson/"+activeGuide.lesson_id)),
       courseCard,
       h("div",{class:"stats"},card(p("Verifiche senza aiuti","muted"),h("strong",{class:"big"},score===null?"—":score+"%"),p(attempts.length+" risposte valutate","small")),card(p("Parole da recuperare","muted"),h("strong",{class:"big"},due.length),link("Apri Ripasso","review","text-link")),card(p("I tuoi scritti","muted"),h("strong",{class:"big"},state.writings.length),link(active?"Riprendi la bozza":"Prepara un testo",active?"writing/"+active.id:"writing","text-link"))),
       card(h("h2",{},"Il tuo punto di partenza"),p(profile.correct+" risposte corrette su "+profile.total+". Una risposta data con dubbio resta da confermare."),link("Vedi risultati e priorità","placement","text-link")),
@@ -271,7 +284,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     });});
     if(!locked)form.append(h("button",{type:"submit"},set.training?"Verifica questo blocco":"Verifica le risposte"));
     updateProgress();
-    const continueButton=set.daily_plan_id?button("Passa alla breve scrittura",()=>startDailyWriting(set.daily_plan_id)):link("Continua",set.writing_id?"writing/"+set.writing_id:"home");
+    const continueButton=set.guide_lesson_id?button("Continua: scrivi frasi tue",async()=>{await change(s=>{const g=s.lesson_guides?.find(g=>g.lesson_id===set.guide_lesson_id);if(g){g.skipped=false;g.completed_at=null;g.step=4;}});await goto("lesson/"+set.guide_lesson_id);}):set.daily_plan_id?button("Passa alla breve scrittura",()=>startDailyWriting(set.daily_plan_id)):link("Continua",set.writing_id?"writing/"+set.writing_id:"home");
     const nextNeedsAi=set.training&&set.source==="groq"&&set.items.filter(it=>it.kind!=="retrieval").length<Math.min(set.training.grammar_target,(flow.page+2)*BLOCK_SIZE);
     const blockNavigation=set.training&&h("div",{class:"actions practice-navigation"},flow.page>0&&button("Rivedi il blocco precedente",async()=>{await change(s=>s.sessions.find(x=>x.id===id).training.page--);await refresh();},"quiet"),flow.checked&&flow.page<flow.pages-1&&button((nextNeedsAi?"Genera":"Apri")+" il blocco "+(flow.page+2),()=>nextPracticeBlock(id)));
     return [link("← "+(l?.title||"Ripasso"),set.writing_id?"writing/"+set.writing_id:l?"lesson/"+set.lesson_id:"review","back"),title(set.source==="groq"?"ESERCIZI · GROQ":"ESERCIZI · OFFLINE",set.writing_id?"Verifica in un nuovo contesto":set.daily_plan_id?"Pratica breve e ripasso":l?.title||"Recupero del lessico"),
