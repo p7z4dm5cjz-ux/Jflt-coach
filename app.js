@@ -246,6 +246,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
       if(item.options?.length)for(const [j,opt] of item.options.entries())block.append(h("label",{class:"option",for:item.id+"-"+j},h("input",{id:item.id+"-"+j,type:"radio",name:item.id,value:opt,checked:value===opt,disabled:locked,onchange:e=>{autosave(s=>{s.sessions.find(x=>x.id===id).answers[item.id]=e.target.value;});updateProgress();}}),h("span",{lang:"en"},opt)));
       else block.append(h("label",{class:"sr-only",for:item.id},"Risposta "+(flow.start+i+1)),answerHint(item)&&p(answerHint(item),"small muted answer-hint",item.id+"-hint"),h("input",{id:item.id,value,"aria-describedby":answerHint(item)?item.id+"-hint":null,disabled:locked,autocomplete:"off",lang:"en",autocapitalize:"none",autocorrect:"off",spellcheck:"false",maxlength:600,oninput:e=>{const v=e.target.value;autosave(s=>{s.sessions.find(x=>x.id===id).answers[item.id]=v;});updateProgress();}}));
       if(!locked){
+        if(item.difficulty_label)block.append(p("Livello "+item.difficulty+" · "+item.difficulty_label,"small muted"));
         const steps=hintSteps(item,LESSONS.find(x=>x.id===item.focus_lesson)||l),hintId=item.id+"-reasoning-hint";
         let level=set.hint_levels?.[item.id]||(set.hinted_items?.includes(item.id)?1:0);
         const hintBox=h("div",{id:hintId,class:"exercise-hint",hidden:!level,role:"status"});

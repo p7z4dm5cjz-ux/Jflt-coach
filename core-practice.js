@@ -60,7 +60,7 @@ export function coreItems(id,variation=0){
  const when=time[0].toLowerCase()+time.slice(1);
  const contexts=verbs.map((v,i)=>({v,i,context:id+"-s"+(Math.abs(variation)%subjects.length)+"-v"+i}));
  const make=(x,page,stem,answer,kind="completion",options=[],accept=[answer])=>({id:x.context+"-task"+page,context_id:id+"-situation-"+x.i,kind,skill:page===0?"recognise":"form",stem,answer,accept:[...new Set(accept)],options,why,formula:name,origin:"local"});
- return [0,1,2,3,4].flatMap(page=>contexts.map(x=>{
+ const items=[1,0,2,3,4].flatMap(page=>contexts.map(x=>{
    const {v}=x,phrase=affirm(v),rest=v[4][page];
    const body=subject+" "+phrase+" "+rest,full=body+" "+when+".";
    if(page===0||page===4){
@@ -76,4 +76,19 @@ export function coreItems(id,variation=0){
    if(page===2){const neg=subject+" "+negative+" "+tail(v)+" "+rest+" "+when+".";return make(x,page,"Rendi negativa e riscrivi tutta la frase"+(id==="obligation"?" esprimendo un divieto, non l'assenza di obbligo":"")+": "+full,neg,"transformation");}
    if(page===3)return make(x,page,"Trasforma in domanda e riscrivi tutta la frase, iniziando con "+cap(aux)+": "+full,cap(aux)+" "+who+" "+tail(v)+" "+rest+" "+when+"?","transformation");
  }));
+ if(id==="future-going-to"){
+  const starts=[['I','am','check the equipment'],['She','is','write the summary'],['We','are','prepare the briefing'],['They','are','read the instructions'],['It','is','rain']];
+  starts.forEach(([subject,answer,tail],i)=>{items[i]={...items[i],stem:'Scrivi solo la forma di be mancante: '+subject+' ___ going to '+tail+'.',answer,accept:[answer],why:'Be going to richiede am con I, is con he/she/it, are con you/we/they. Qui il soggetto è '+subject+': serve '+answer+'. Going to e il verbo base sono già presenti: non riscriverli.'};});
+  const challenges=[
+   ['The team is going to inspect the site, but no appointment has been made. Che cosa puoi concludere?', ['È già fissato un appuntamento con un orario concordato.','La squadra ha intenzione di fare il controllo; un appuntamento non è ancora fissato.','La squadra sta eseguendo il controllo proprio ora.'],1,'future-going-to','Going to comunica qui un’intenzione. La seconda parte esclude un appuntamento già fissato; non descrive un’attività in corso.'],
+   ['The ladder is moving and one support has broken. It is going to fall. Perché il parlante presenta questa previsione?', ['Sta comunicando una decisione volontaria della scala.','Descrive una caduta già conclusa.','Sta interpretando indizi osservabili nel presente.'],2,'future-going-to','La scala instabile e il supporto rotto sono indizi presenti. Going to può esprimere una previsione, non soltanto un piano.'],
+   ['“The phone is ringing.” — “I’ll answer it.” Che cosa esprime la risposta in questo scambio?', ['Una decisione presa mentre si risponde alla situazione.','Un appuntamento concordato con chi telefona.','Un’azione completata prima che il telefono squillasse.'],0,'future-will','In questo scambio la risposta reagisce alla situazione e offre un’azione immediata. Will non significa sempre decisione spontanea: è il dialogo a rendere pertinente questa lettura.'],
+   ['I’m meeting the technician at 10; we confirmed the appointment yesterday. Quale dettaglio rende esplicito l’accordo futuro?', ['Il solo fatto che meeting termini in -ing.','La conferma dell’appuntamento e l’orario.','Il fatto che l’incontro sia già terminato.'],1,'future-arrangements','Il present continuous può presentare un accordo futuro: qui la conferma e l’orario lo rendono esplicito. La forma in -ing da sola non basta a collocare un evento nel futuro.'],
+   ['We are not going to inspect the warehouse; we are going to inspect the office. Quale frase conserva il piano comunicato?', ['We are going to inspect both buildings.','We are going to inspect neither building.','We intend to inspect the office, not the warehouse.'],2,'future-going-to','La negazione riguarda il magazzino, non tutte le ispezioni. Il piano positivo riguarda l’ufficio: entrambe le informazioni vanno conservate nella parafrasi.'],
+   ['The team ___ the site tomorrow. Senza altre informazioni, quale valutazione è corretta?', ['Will inspect, is going to inspect e is inspecting possono essere possibili, con contesti o punti di vista diversi.','Tomorrow impone sempre is going to inspect.','Is inspecting non può mai riferirsi al futuro.'],0,'future-arrangements','Tomorrow indica quando, ma non chiarisce da solo se si tratti di intenzione, previsione o accordo. Non è corretto dichiarare una sola forma obbligatoria senza un contesto sufficiente.']
+  ];
+  challenges.forEach(([stem,options,n,focus,explanation],i)=>{items[24+i]={...items[24+i],stem,options,answer:options[n],accept:[options[n]],focus_lesson:focus,why:explanation+' Le altre alternative modificano il significato o attribuiscono alla forma una regola troppo rigida.'};});
+ }
+ return items.map((item,i)=>({...item,difficulty:i<5?1:i<12?2:i<24?3:4,difficulty_label:i<5?'Base · costruisci la forma':i<12?'Comprendi forma e significato':i<24?'Applica · negazioni e domande':'Approfondisci · contesto e alternative'}));
+
 }
