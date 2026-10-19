@@ -50,9 +50,9 @@ test("1.6.1: core-practice non ripete la frase-soluzione e usa opzioni ben forma
       if(answer.split(" ").length>3)for(const earlier of items.filter(i=>i.context_id===item.context_id&&Number(i.id.slice(-1))<page))assert.ok(!earlier.stem.toLowerCase().includes(answer),item.id);
       if(page===0){assert.equal(new Set(item.options).size,item.options.length);assert.ok(item.options.every(o=>!/^(to |has \w+ing$)/.test(o)||o===item.answer),item.id);}
     }
-    const fix=items.find(i=>i.id.endsWith("task4"));
-    const full=fix.answer.replace(/\.$/,"");const body=fix.accept.find(x=>x!==fix.answer&&full.startsWith(x)&&x.length<full.length);
-    assert.ok(body&&correct(fix,body),fix.id);assert.ok(fix.accept.length>=4,fix.id);
+    const mixed=items.filter(i=>i.id.endsWith("task4"));
+    assert.equal(new Set(mixed.map(i=>i.focus_lesson)).size,3);
+    assert.ok(mixed.every(i=>i.options.includes(i.answer)&&i.why.includes("significato")));
   }
 });
 

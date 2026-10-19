@@ -6,7 +6,7 @@ import {QUESTIONS,orderedQuestions,orderedOptions,AREAS,PHRASAL_TARGETS,newAdapt
 import {VERSION,now,uid,countWords,normal,correct,endpoint,newPlacement,placementProfile,recommendation,learningPath,addTerm,recordReview,recoveryItems,phrasalItems,writingReady,sanitizeFeedback,GENRES,dailyPlan,dailyWritingTopic,localDay} from "./engine.js";
 import {grammarItems} from "./practice-bank.js";
 import {answerHint} from "./answer-normal.js";
-import {exerciseHint} from "./exercise-hints.js";
+import {hintSteps,assistedItem,answerFeedback} from "./practice-support.js";
 import {negativeItems} from "./negative-bank.js";
 import {PRACTICE_SIZE,BLOCK_SIZE,trainingRecord,practiceBlock,freshAiItems,exerciseRequest,negativeRule} from "./practice-flow.js";
 import {openRepository,parseBackup} from "./storage.js";
@@ -230,18 +230,21 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
       if(item.options?.length)for(const [j,opt] of item.options.entries())block.append(h("label",{class:"option",for:item.id+"-"+j},h("input",{id:item.id+"-"+j,type:"radio",name:item.id,value:opt,checked:value===opt,disabled:locked,onchange:e=>{autosave(s=>{s.sessions.find(x=>x.id===id).answers[item.id]=e.target.value;});updateProgress();}}),h("span",{lang:"en"},opt)));
       else block.append(h("label",{class:"sr-only",for:item.id},"Risposta "+(flow.start+i+1)),answerHint(item)&&p(answerHint(item),"small muted answer-hint",item.id+"-hint"),h("input",{id:item.id,value,"aria-describedby":answerHint(item)?item.id+"-hint":null,disabled:locked,autocomplete:"off",lang:"en",autocapitalize:"none",autocorrect:"off",spellcheck:"false",maxlength:600,oninput:e=>{const v=e.target.value;autosave(s=>{s.sessions.find(x=>x.id===id).answers[item.id]=v;});updateProgress();}}));
       if(!locked){
-        const opened=!!set.hinted_items?.includes(item.id),hintId=item.id+"-reasoning-hint";
-        const hintBox=h("div",{id:hintId,class:"exercise-hint",hidden:!opened,role:"status"},h("strong",{},"Come ragionare su questa domanda"),p(exerciseHint(item,l)),p("Aiuto usato: questa sessione è registrata come prova con aiuti.","small muted"));
-        const hintButton=button(opened?"Nascondi suggerimento":"Mostra un suggerimento",async()=>{
-          if(!hintBox.hidden){hintBox.hidden=true;hintButton.textContent="Mostra un suggerimento";hintButton.setAttribute("aria-expanded","false");return;}
-          await change(s=>{const current=s.sessions.find(x=>x.id===id);current.assisted=true;current.hinted_items??=[];if(!current.hinted_items.includes(item.id))current.hinted_items.push(item.id);});
-          hintBox.hidden=false;hintButton.textContent="Nascondi suggerimento";hintButton.setAttribute("aria-expanded","true");
+        const steps=hintSteps(item,LESSONS.find(x=>x.id===item.focus_lesson)||l),hintId=item.id+"-reasoning-hint";
+        let level=set.hint_levels?.[item.id]||(set.hinted_items?.includes(item.id)?1:0);
+        const hintBox=h("div",{id:hintId,class:"exercise-hint",hidden:!level,role:"status"});
+        const paint=()=>{hintBox.replaceChildren(...steps.slice(0,level).map(step=>h("section",{},h("strong",{},step.title),p(step.text))),p(set.assisted?"Questa sessione era già guidata e mantiene la valutazione con aiuti.":"Questa risposta sarà registrata con aiuto. Le altre restano autonome.","small muted"));};paint();
+        const hintButton=button(level?"Mostra il prossimo aiuto":"Mostra un suggerimento",async()=>{
+          level=Math.min(level+1,steps.length);
+          await change(s=>{const current=s.sessions.find(x=>x.id===id);current.hinted_items??=[];if(!current.hinted_items.includes(item.id))current.hinted_items.push(item.id);current.hint_levels??={};current.hint_levels[item.id]=level;});
+          hintBox.hidden=false;paint();hintButton.textContent=level===steps.length?"Tutti gli aiuti mostrati":"Mostra il prossimo aiuto";hintButton.setAttribute("aria-expanded","true");hintButton.hidden=level>=steps.length;
         },"quiet");
-        hintButton.setAttribute("aria-controls",hintId);hintButton.setAttribute("aria-expanded",String(opened));
+        hintButton.setAttribute("aria-controls",hintId);hintButton.setAttribute("aria-expanded",String(!!level));
         hintButton.setAttribute("aria-label","Suggerimento per la domanda "+(flow.start+i+1));
+        if(level>=steps.length)hintButton.hidden=true;
         block.append(hintButton,hintBox);
       }
-      if(result)block.append(h("div",{class:"exercise-feedback"},p(result.correct?"Risposta corretta":result.disputed?"Da verificare":"Da rivedere",result.correct?"good":"warning"),p("Risposta di riferimento: "+item.answer,"formula"),item.formula&&h("h3",{},"La forma"),item.formula&&p(item.formula,"small"),h("h3",{},"Perché"),p(item.why)));
+      if(result)block.append(h("div",{class:"exercise-feedback"},p(result.correct?"Risposta corretta":result.disputed?"Da verificare":"Da rivedere",result.correct?"good":"warning"),p("La tua risposta: "+result.answer,"small"),!result.correct&&p(answerFeedback(item,result.answer),"answer-diagnosis"),p(result.assisted?"Con aiuto":"Senza aiuti","small muted"),p("Risposta di riferimento: "+item.answer,"formula"),item.formula&&h("h3",{},"La forma"),item.formula&&p(item.formula,"small"),h("h3",{},"Perché"),p(item.why)));
       if(result&&!result.correct&&set.source==="groq"&&item.kind!=="retrieval")block.append(result.disputed?p("Risposta segnalata: esclusa dalle priorità finché resta da verificare.","small warning"):button("La mia risposta potrebbe essere valida",async()=>{await change(s=>s.attempts.find(a=>a.id===result.id).disputed=true);await refresh();},"quiet"));
       form.append(block);
     }
@@ -253,11 +256,11 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
         const current=s.sessions.find(x=>x.id===id),items=practiceBlock(current).items.filter(it=>!it.doubt);
         for(const item of items) {
           const answer=current.answers[item.id],ok=correct(item,answer);
-          s.attempts.push({id:uid("attempt"),session_id:id,item_id:item.id,lesson_id:item.kind==="retrieval"?"vocabulary":current.lesson_id,stem:item.stem,...(item.context_id?{context_id:item.context_id}:{}),...(item.doubt?{disputed:true}:{}),answer,correct:ok,assisted:current.assisted,source:current.source,date:now(),skill:item.skill||"form",term_id:item.term_id||null});
+          s.attempts.push({id:uid("attempt"),session_id:id,item_id:item.id,lesson_id:item.kind==="retrieval"?"vocabulary":current.lesson_id,stem:item.stem,...(item.context_id?{context_id:item.context_id}:{}),...(item.doubt?{disputed:true}:{}),answer,correct:ok,assisted:assistedItem(current,item),source:current.source,date:now(),skill:item.skill||"form",term_id:item.term_id||null});
         }
         for(const termId of new Set(items.map(it=>it.term_id).filter(Boolean))) {
           const word=s.vocabulary.find(v=>v.id===termId),termItems=items.filter(it=>it.term_id===termId);
-          if(word)recordReview(word,termItems.every(it=>correct(it,current.answers[it.id])),current.assisted);
+          if(word)recordReview(word,termItems.every(it=>correct(it,current.answers[it.id])),termItems.some(it=>assistedItem(current,it)));
         }
         if(current.training){current.training.checked.push(current.training.page);if(current.training.checked.length===Math.ceil(current.training.grammar_target/BLOCK_SIZE))current.completed_at=now();}
         else current.completed_at=now();
@@ -272,8 +275,9 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
       set.training&&p("Blocco "+(flow.page+1)+" di "+flow.pages+" · "+set.training.grammar_target+" esercizi di grammatica"+(set.training.recovery.length?" + "+set.training.recovery.length+" recuperi lessicali":""),"practice-step"),
       set.training&&set.source==="groq"&&card(h("h2",{},blockGoal(flow.page).title),p(blockGoal(flow.page).goal)),
       set.training?.parent_id&&card(p("Riprova guidata dopo la spiegazione: le frasi sono nuove. I risultati restano separati dalle verifiche senza aiuti."),link("Torna alla sessione precedente","practice/"+set.training.parent_id,"text-link")),
+      set.source==="local"&&set.items.some(it=>it.stem.startsWith("Scegli la forma corretta del verbo ("))&&card(p("Questa sessione conserva gli esercizi precedenti. È disponibile un nuovo allenamento con confronti di significato; le risposte già date restano salvate."),button("Apri il nuovo allenamento",()=>makeSession(set.lesson_id,[...grammarItems(set.lesson_id,state.sessions.length)]))),
       h("section",{class:"session-progress"},progressLabel,progressBar),
-      done?card(h("h2",{},results.filter(r=>r.correct&&!r.disputed).length+"/"+results.filter(r=>!r.disputed).length+" corrette nelle risposte valutabili"),p(set.assisted?"Sessione con aiuti o riprova guidata: esclusa dai risultati autonomi.":"Sessione senza suggerimenti, salvata nei tuoi progressi."),continueButton):flow.checked?card(h("h2",{},blockResults.filter(r=>r.correct&&!r.disputed).length+"/"+blockResults.filter(r=>!r.disputed).length+" corrette nel blocco"),p("Leggi la forma e il perché sotto ogni risposta. Poi prosegui oppure esercita di nuovo i punti da rivedere.")):h("div",{class:"actions"},p("Risposte salvate mentre scrivi. Forma, soluzione e spiegazione compaiono dopo la verifica.","muted"),p("Per un aiuto mirato usa il pulsante sotto la singola domanda. Usarlo rende questa sessione una prova con aiuti.","small muted")),
+      done?card(h("h2",{},results.filter(r=>r.correct&&!r.disputed).length+"/"+results.filter(r=>!r.disputed).length+" corrette nelle risposte valutabili"),p(results.some(r=>r.assisted)?results.filter(r=>!r.assisted).length+" risposte senza aiuti · "+results.filter(r=>r.assisted).length+" con aiuto. Solo le prime contribuiscono ai risultati autonomi.":"Sessione senza suggerimenti, salvata nei tuoi progressi."),continueButton):flow.checked?card(h("h2",{},blockResults.filter(r=>r.correct&&!r.disputed).length+"/"+blockResults.filter(r=>!r.disputed).length+" corrette nel blocco"),p("Leggi la forma e il perché sotto ogni risposta. Poi prosegui oppure esercita di nuovo i punti da rivedere.")):h("div",{class:"actions"},p("Risposte salvate mentre scrivi. Forma, soluzione e spiegazione compaiono dopo la verifica.","muted"),p("Per un aiuto mirato usa il pulsante sotto la singola domanda. Solo la risposta per cui chiedi aiuto sarà segnata come guidata.","small muted")),
       form,
       locked&&mistakes.length>0&&card(h("h2",{},"Capisci, poi riprova"),p("Una nuova prova da sei domande sulle regole di questo blocco che hai sbagliato. Il risultato originale resta salvato."),button(set.source==="local"&&set.lesson_id==="negatives"?"Rifai gli errori con frasi diverse":"Rifai gli errori con Groq",()=>retryMistakes(set,mistakes)),p("Puoi ripetere questo ciclo anche dopo la riprova.","small muted")),
       blockNavigation,

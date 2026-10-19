@@ -22,7 +22,7 @@ test("16 nuclei: trenta operazioni, sei situazioni e varianti che non fingono nu
  }
  assert.equal(grammarItems("past-simple")[12].answer,"The coordinator did not check the radios yesterday.");
  assert.equal(grammarItems("present-simple")[18].answer,"Does the coordinator check the door locks every Monday?");
- assert.equal(grammarItems("present-perfect-simple")[1].answer,"has written");
+ assert.equal(grammarItems("present-perfect-simple")[7].answer,"has written");
  assert.equal(grammarItems("obligation")[12].answer,"The coordinator must not check the radios before the meeting.");
  assert.ok(grammarItems("obligation")[12].stem.includes("divieto"));
  assert.equal(correct(grammarItems("past-simple")[12],"The coordinator didn't checked the radios yesterday"),false);

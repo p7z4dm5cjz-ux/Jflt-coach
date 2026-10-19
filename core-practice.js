@@ -33,26 +33,26 @@ const rules={
 export const CORE_LESSONS=Object.keys(rules);
 const cap=s=>s[0].toUpperCase()+s.slice(1);
 const third=v=>v[0]==="have"?"has":v[0]+(/(ch|sh|ss|x)$/.test(v[0])?"es":"s");
-// Wrong options are well-formed verb groups of another tense or meaning that the
-// stated time expression or instruction excludes, so the item tests the choice of form.
-const DISTRACTORS={
- "present-simple":v=>[v[0],"is "+v[3]],
- "present-continuous":v=>[third(v),"was "+v[3]],
- "past-simple":v=>["has "+v[2],third(v)],
- "past-continuous":v=>["is "+v[3],"has been "+v[3]],
- "present-perfect-simple":v=>["had "+v[2],"is "+v[3]],
- "present-perfect-continuous":v=>["is "+v[3],third(v)],
- "past-perfect-simple":v=>["has "+v[2],"will have "+v[2]],
- "past-perfect-continuous":v=>["has been "+v[3],"is "+v[3]],
- "future-will":v=>[v[1],"has "+v[2]],
- "future-going-to":v=>[v[1],"has "+v[2]],
- "future-arrangements":v=>[v[1],"has "+v[2]],
- "future-continuous":v=>[v[1],"has been "+v[3]],
- "future-perfect-simple":v=>["had "+v[2],v[1]],
- "future-perfect-continuous":v=>["had been "+v[3],"has been "+v[3]],
- "ability":v=>[v[1],"must "+v[0]],
- "obligation":v=>["can "+v[0],"may "+v[0]]
+// Contrasti di significato: tutte le alternative sono costruzioni grammaticali.
+const meanings={
+ "present-simple":"un’abitudine attuale", "present-continuous":"un’attività in corso adesso",
+ "past-simple":"un evento concluso ieri", "past-continuous":"un’attività in corso a un momento del passato",
+ "present-perfect-simple":"un risultato raggiunto nel periodo attuale ancora aperto", "present-perfect-continuous":"la durata di un’attività fino ad adesso",
+ "past-perfect-simple":"un risultato già raggiunto prima di un momento passato", "past-perfect-continuous":"la durata di un’attività fino a un momento passato",
+ "future-will":"una previsione personale, non un piano già deciso", "future-going-to":"un’intenzione futura già decisa",
+ "future-arrangements":"un accordo futuro già fissato", "future-continuous":"un’attività in corso a un momento futuro",
+ "future-perfect-simple":"un risultato già raggiunto entro un momento futuro", "future-perfect-continuous":"la durata raggiunta da un’attività a un momento futuro",
+ "ability":"una capacità attuale", "obligation":"un obbligo da rispettare"
 };
+const groups=[['present-simple','present-continuous','past-simple'],['present-perfect-simple','present-perfect-continuous','past-simple'],['past-perfect-simple','past-perfect-continuous','past-continuous'],['future-will','future-going-to','future-arrangements'],['future-continuous','future-perfect-simple','future-perfect-continuous'],['ability','obligation','future-will']];
+function contextSentence(id,subject,v,rest){
+ const r=rules[id],sentence=subject+" "+r[2](v)+" "+rest+" "+r[1].toLowerCase()+".";
+ if(id==="future-will")return "This is only my prediction, not an existing plan: "+sentence;
+ if(id==="future-going-to")return "A decision has already been made: "+sentence;
+ if(id==="future-arrangements")return "The appointment is confirmed: "+sentence;
+ return sentence;
+}
+function contrasts(id){return groups.find(g=>g.includes(id))||groups[0];}
 export function coreItems(id,variation=0){
  const r=rules[id];if(!r)return null;
  const [name,time,affirm,negative,aux,tail,why]=r;
@@ -63,13 +63,17 @@ export function coreItems(id,variation=0){
  return [0,1,2,3,4].flatMap(page=>contexts.map(x=>{
    const {v}=x,phrase=affirm(v),rest=v[4][page];
    const body=subject+" "+phrase+" "+rest,full=body+" "+when+".";
-   if(page===0){const options=[phrase,...DISTRACTORS[id](v).filter(o=>o!==phrase)];return make(x,page,"Scegli la forma corretta del verbo ("+name+"): "+time+", "+who+" ___ "+rest+".",phrase,"choice",options);}
+   if(page===0||page===4){
+     const cv=page===0?verbs[(x.i+3)%verbs.length]:v,crest=cv[4][page];
+     const group=contrasts(id),focus=group[(x.i+Math.abs(variation)+(page===4?1:0))%group.length],r2=rules[focus];
+     const sentence=contextSentence(focus,subject,cv,crest);
+     const options=page===0?group.map(k=>meanings[k]):group.map(k=>contextSentence(k,subject,cv,crest));
+     const answer=page===0?meanings[focus]:sentence;
+     const stem=page===0?"Scegli il significato espresso dalla frase: "+sentence:"Scegli la frase che presenta esplicitamente "+meanings[focus]+". Le altre frasi sono grammaticali, ma presentano situazioni diverse.";
+     return {...make(x,page,stem,answer,"choice",options),skill:"recognise",focus_lesson:focus,formula:r2[0],why:r2[6]+" Qui la frase presenta "+meanings[focus]+". Le altre alternative rappresentano: "+group.filter(k=>k!==focus).map(k=>meanings[k]).join("; ")+". La distinzione riguarda il significato espresso, non una regola che vieta ogni altra forma."};
+   }
    if(page===1)return make(x,page,(phrase.includes(" ")?"Scrivi solo le parole mancanti (":"Scrivi solo la parola mancante (")+name+"): "+time+", "+who+" ___ "+rest+". ("+v[0]+")",phrase);
    if(page===2){const neg=subject+" "+negative+" "+tail(v)+" "+rest+" "+when+".";return make(x,page,"Rendi negativa e riscrivi tutta la frase"+(id==="obligation"?" esprimendo un divieto, non l'assenza di obbligo":"")+": "+full,neg,"transformation");}
    if(page===3)return make(x,page,"Trasforma in domanda e riscrivi tutta la frase, iniziando con "+cap(aux)+": "+full,cap(aux)+" "+who+" "+tail(v)+" "+rest+" "+when+"?","transformation");
-   // Both the required tense and exactly one wrong verb group are specified; the
-   // time expression may stay at the end, move to the front, or be left out.
-   const front=time+" "+who+" "+phrase+" "+rest,frontComma=time+", "+who+" "+phrase+" "+rest;
-   return make(x,page,"Correggi l'errore e riscrivi tutta la frase ("+name+"): "+subject+" to "+v[0]+" "+rest+" "+when+".",full,"error_correction",[],[full,body,front,frontComma]);
  }));
 }
