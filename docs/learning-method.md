@@ -21,3 +21,13 @@ La ricerca sostiene il recupero attivo, la pratica distribuita, l'istruzione esp
 - Sangers et al. (2025), lettura estensiva: https://doi.org/10.1007/s10648-025-10068-6 — sostiene l'utilità della lettura, non un particolare analizzatore AI.
 
 Il controllo delle soluzioni AI resta limitato: nessun test automatico garantisce la correttezza linguistica di ogni risposta generata.
+
+## Adattamento del 19 ottobre
+
+Si considerano le risposte grammaticali valutabili del blocco: meno di tre non bastano per decidere. Con almeno l'80% corretto senza aiuti si propone l'avanzamento, fra il 50% e l'80% il consolidamento al livello attuale, sotto il 50% una pratica più semplice. Sono soglie operative, non livelli linguistici convalidati.
+
+Prima del blocco seguente, se emergono errori e sono disponibili frasi locali non viste, il percorso apre una sola riprova guidata per quel blocco. Il ritorno al blocco originale è esplicito; non si generano cicli infiniti né chiamate AI nascoste. Le banche finite possono esaurirsi. La riprova manuale resta disponibile; Groq viene chiamato soltanto dal pulsante che lo indica. Il tutor riceve la scelta di consolidare/mantenere/avanzare insieme agli errori precedenti.
+
+I nuovi esercizi AI dubbi vengono sostituiti, quando disponibile, con un esercizio locale pertinente non presente nelle sessioni salvate. La sostituzione è dichiarata e il contenuto originario resta nei dati per diagnosi. Se manca un sostituto, il dubbio resta escluso dal punteggio. La provenienza locale viene conservata nei risultati. Non è una verifica umana di ogni contenuto.
+
+Verifica automatica delle banche: 117 lezioni, quattro variazioni per lezione, 4.152 elementi esaminati (non necessariamente distinti). Controllati riconoscimento della soluzione e unicità delle opzioni normalizzate/accettate; nessun difetto rilevato da questi controlli. Questo non esclude ambiguità linguistiche o alternative valide non elencate.

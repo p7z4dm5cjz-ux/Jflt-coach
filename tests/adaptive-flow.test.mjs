@@ -1,0 +1,16 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';import {JSDOM} from 'jsdom';import {IDBFactory} from 'fake-indexeddb';
+import {openRepository,parseBackup} from '../storage.js';import {grammarItems} from '../practice-bank.js';import {trainingRecord} from '../practice-flow.js';
+const dom=new JSDOM(await readFile(new URL('../index.html',import.meta.url),'utf8'),{url:'https://example.com/#/practice/original',pretendToBeVisual:true});for(const key of ['window','document','location','Node','navigator','sessionStorage','localStorage'])Object.defineProperty(globalThis,key,{value:key==='window'?dom.window:dom.window[key],configurable:true});window.scrollTo=()=>{};
+const {mountApp}=await import('../app.js'),repo=await openRepository(new IDBFactory());let calls=0;
+await repo.change(s=>{const items=grammarItems('past-simple');s.sessions.push({id:'original',lesson_id:'past-simple',items,answers:Object.fromEntries(items.slice(0,6).map(i=>[i.id,'wrong'])),assisted:false,source:'local',created_at:new Date().toISOString(),completed_at:null,training:{...trainingRecord(30),checked:[0]}});s.attempts=items.slice(0,6).map(i=>({id:'a-'+i.id,session_id:'original',item_id:i.id,lesson_id:'past-simple',correct:false,assisted:false,answer:'wrong',date:new Date().toISOString(),source:'local'}));});
+const app=await mountApp(repo,document.getElementById('view'),async()=>{calls++;throw new Error('Unexpected AI call');});
+async function until(fn){for(let i=0;i<400;i++){if(fn())return;await new Promise(r=>setTimeout(r,5));}throw new Error('timeout');}
+function click(text){const b=[...document.querySelectorAll('button')].find(b=>b.textContent===text);assert.ok(b,text);b.click();}
+test('Weak block leads to one local guided consolidation, then returns to the original next block',async()=>{
+ click('Apri il blocco 2');await until(()=>repo.get().sessions.length===2);const drill=repo.get().sessions[1];await until(()=>document.getElementById(drill.items[0].id));
+ assert.equal(drill.remediation_parent,'original');assert.equal(drill.assisted,true);assert.match(document.getElementById('view').textContent,/Prima chiarisci/);assert.equal(calls,0);
+ for(const item of drill.items){const input=document.getElementById(item.id);input.value=item.answer;input.dispatchEvent(new window.Event('input',{bubbles:true}));}await app.flush();document.getElementById('practice-form').dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));await until(()=>repo.get().sessions[1].completed_at);
+ assert.ok(repo.get().attempts.filter(a=>a.session_id===drill.id).every(a=>a.assisted));const backup=parseBackup(await repo.backup());assert.equal(backup.sessions[0].remediation_blocks[0],drill.id);
+ location.hash='#/practice/original';await app.render();click('Apri il blocco 2');await until(()=>repo.get().sessions[0].training.page===1);assert.equal(repo.get().sessions.length,2);assert.equal(repo.get().attempts.filter(a=>a.session_id==='original').length,6);assert.equal(calls,0);
+ const invalid=structuredClone(backup);invalid.sessions[1].assisted=false;assert.throws(()=>parseBackup(JSON.stringify({format:'jflt-coach-backup/v2',state:invalid})),/guidata/);
+});
