@@ -16,7 +16,7 @@ const rows = [
   ["get-on-progress","get on","procedere o fare progressi","I","How are you getting on with the new course?",
    "progress"],
   ["get-rid-of","get rid of","liberarsi di qualcosa","U","We need to get rid of the duplicate copies.","remove"],
-  ["give-in-submit","give in","consegnare un elaborato","S","Please give in your answers before leaving the room.","submit"],
+  ["give-in-submit","give in","consegnare un elaborato","S","Please give in your answer sheets before leaving the room.","submit"],
   ["give-way","give way","cedere il passaggio","I","At the junction, give way to vehicles from the right.","yield"],
   ["go-for-choice","go for","scegliere un'opzione","U","We went for the simpler plan after reviewing the costs.","choose"],
   ["go-off-light","go off","spegnersi una luce","I","The lights went off during the power cut.","stop operating"],
@@ -46,8 +46,8 @@ const rows = [
   ["try-on","try on","provare un indumento","S","She tried on the jacket to check the size.","test the fit"],
   ["turn-down-volume","turn down","abbassare il volume o livello","S","Turn down the radio while the briefing is in progress.","reduce"],
   ["turn-up-volume","turn up","aumentare il volume o livello","S","Turn up the speaker so everyone can hear.","increase"],
-  ["wash-up-dishes","wash up","lavare le stoviglie","I","We washed up after dinner before reviewing the notes.","wash the dishes"],
-  ["wash-up-body","wash up","lavarsi mani o viso","I","He washed up before sitting down to eat.","wash oneself"],
+  ["wash-up-dishes","wash up","lavare le stoviglie","S","We washed up the plates after dinner before reviewing the notes.","wash the dishes","them"],
+  ["wash-up-body","wash up","lavarsi mani o viso","I","He washed his hands and face: he washed up before sitting down to eat.","wash oneself"],
   ["wear-out-object","wear out","consumare un oggetto con l'uso","S","Years of use wore out the protective cover.","use until unusable"],
   ["work-out-exercise","work out","fare esercizio fisico","I","We work out at the gym twice a week.","exercise"],
   ["wrap-up-object","wrap up","avvolgere un oggetto","S","Wrap up the fragile box before transport.","wrap"],
@@ -125,8 +125,650 @@ export const MEANING_GROUPS=[
   ["pv-126","phrasal-sense-tidy-up"]
 ];
 export const BASE_MEANING_DISTRACTORS={
-  "pv-110":["annullare definitivamente","anticipare un appuntamento"],
-  "pv-158":["iniziare immediatamente","interrompere per sempre"]
+  "pv-001": [
+    "smentire una conclusione",
+    "fare una copia di sicurezza"
+  ],
+  "pv-002": [
+    "insistere sulla propria posizione",
+    "tornare fisicamente indietro"
+  ],
+  "pv-003": [
+    "iniziare a funzionare",
+    "suddividere i dati"
+  ],
+  "pv-004": [
+    "uscire senza permesso",
+    "interrompere una conversazione"
+  ],
+  "pv-005": [
+    "uscire da un edificio",
+    "demolire un edificio"
+  ],
+  "pv-006": [
+    "spegnersi lentamente",
+    "essere rinviato"
+  ],
+  "pv-007": [
+    "riunire un gruppo",
+    "iniziare una relazione"
+  ],
+  "pv-008": [
+    "impedire un cambiamento",
+    "riportare un oggetto"
+  ],
+  "pv-009": [
+    "portare via definitivamente",
+    "anticipare una scadenza"
+  ],
+  "pv-010": [
+    "posticipare una data",
+    "annullare un appuntamento"
+  ],
+  "pv-011": [
+    "escludere una persona",
+    "riportare un oggetto al proprietario"
+  ],
+  "pv-012": [
+    "evitare un argomento",
+    "crescere un bambino"
+  ],
+  "pv-013": [
+    "interrompere una telefonata",
+    "annullare un incontro"
+  ],
+  "pv-014": [
+    "annullare una valutazione",
+    "telefonare a un esperto"
+  ],
+  "pv-015": [
+    "rimandare senza annullare",
+    "confermare lo svolgimento"
+  ],
+  "pv-016": [
+    "telefonare informalmente",
+    "esonerare da un compito"
+  ],
+  "pv-017": [
+    "interrompere",
+    "iniziare da zero"
+  ],
+  "pv-018": [
+    "rinviare un controllo",
+    "abbandonare un controllo"
+  ],
+  "pv-019": [
+    "restare ulteriormente indietro",
+    "aspettare senza lavorare"
+  ],
+  "pv-020": [
+    "superare e distanziare",
+    "allontanarsi da chi precede"
+  ],
+  "pv-021": [
+    "lasciare l'alloggio",
+    "verificare un documento"
+  ],
+  "pv-022": [
+    "lasciare un albergo",
+    "cancellare un indirizzo"
+  ],
+  "pv-023": [
+    "creare un equivoco",
+    "pulire una stanza"
+  ],
+  "pv-024": [
+    "aprire un'attività",
+    "trasferire un'attività senza chiuderla"
+  ],
+  "pv-025": [
+    "cercare senza trovare",
+    "creare un nuovo documento"
+  ],
+  "pv-026": [
+    "partire definitivamente",
+    "presentarsi per la prima volta"
+  ],
+  "pv-027": [
+    "essere irrilevante per",
+    "scendere fisicamente verso"
+  ],
+  "pv-028": [
+    "rifiutare di testimoniare",
+    "arretrare fisicamente"
+  ],
+  "pv-029": [
+    "rimanere segreto",
+    "essere ritirato dalla pubblicazione"
+  ],
+  "pv-030": [
+    "essere deliberatamente escluso",
+    "essere risolto definitivamente"
+  ],
+  "pv-031": [
+    "scartare una soluzione",
+    "copiare senza modifiche"
+  ],
+  "pv-032": [
+    "contare numericamente",
+    "diffidare di"
+  ],
+  "pv-033": [
+    "aumentare una spesa",
+    "eliminare ogni spostamento"
+  ],
+  "pv-034": [
+    "aumentare una quantità",
+    "interrompere un collegamento"
+  ],
+  "pv-035": [
+    "ripristinare un collegamento",
+    "ridurre una spesa"
+  ],
+  "pv-036": [
+    "evitare di affrontare",
+    "consegnare a un cliente"
+  ],
+  "pv-037": [
+    "mantenere una pratica",
+    "rimandare una decisione"
+  ],
+  "pv-038": [
+    "distruggere un piano",
+    "mettere in pratica un piano"
+  ],
+  "pv-039": [
+    "andare a prendere qualcuno",
+    "investire qualcuno"
+  ],
+  "pv-040": [
+    "iniziare intenzionalmente",
+    "uscire immediatamente"
+  ],
+  "pv-041": [
+    "anticipare il programma",
+    "recuperare il ritardo"
+  ],
+  "pv-042": [
+    "essere concluso con successo",
+    "essere anticipato"
+  ],
+  "pv-043": [
+    "non riuscire a capire",
+    "inventare dati falsi"
+  ],
+  "pv-044": [
+    "svuotare un modulo",
+    "consegnare senza compilare"
+  ],
+  "pv-045": [
+    "annullare una domanda",
+    "stampare senza compilare"
+  ],
+  "pv-046": [
+    "nascondere un dato",
+    "decidere un orario"
+  ],
+  "pv-047": [
+    "abbandonare una pista",
+    "inventare una pista"
+  ],
+  "pv-048": [
+    "ignorare una segnalazione",
+    "annullare una segnalazione"
+  ],
+  "pv-049": [
+    "nascondere un messaggio",
+    "attraversare fisicamente"
+  ],
+  "pv-050": [
+    "litigare con",
+    "incontrare per la prima volta"
+  ],
+  "pv-051": [
+    "rimanere sul posto",
+    "evitare una regola"
+  ],
+  "pv-052": [
+    "rimanere sul posto",
+    "avvicinarsi volontariamente"
+  ],
+  "pv-053": [
+    "essere punito per",
+    "confessare volontariamente"
+  ],
+  "pv-054": [
+    "partire",
+    "richiamare al telefono"
+  ],
+  "pv-055": [
+    "ignorare una richiesta",
+    "restituire un oggetto"
+  ],
+  "pv-056": [
+    "disporre di risorse illimitate",
+    "rinunciare per mancanza di mezzi"
+  ],
+  "pv-057": [
+    "salire su un mezzo",
+    "passare accanto a un mezzo"
+  ],
+  "pv-058": [
+    "scendere da un mezzo",
+    "sorpassare un mezzo"
+  ],
+  "pv-059": [
+    "abbandonare il lavoro",
+    "litigare con"
+  ],
+  "pv-060": [
+    "assumere un nuovo obbligo",
+    "portare a termine un obbligo"
+  ],
+  "pv-061": [
+    "peggiorare a causa di",
+    "passare fisicamente sopra"
+  ],
+  "pv-062": [
+    "interrompere una chiamata",
+    "superare un esame"
+  ],
+  "pv-063": [
+    "andare a dormire",
+    "alzare un oggetto"
+  ],
+  "pv-064": [
+    "nascondere un'informazione",
+    "regalare un oggetto"
+  ],
+  "pv-065": [
+    "trattenere un oggetto",
+    "buttare un oggetto"
+  ],
+  "pv-066": [
+    "resistere senza cedere",
+    "consegnare un elaborato"
+  ],
+  "pv-067": [
+    "raccogliere ciò che era stato distribuito",
+    "esaurirsi per stanchezza"
+  ],
+  "pv-068": [
+    "continuare una ricerca",
+    "distribuire materiali"
+  ],
+  "pv-069": [
+    "annullare",
+    "restare sospeso"
+  ],
+  "pv-070": [
+    "proseguire senza tornare",
+    "consegnare documenti"
+  ],
+  "pv-071": [
+    "smettere di suonare",
+    "andare a male"
+  ],
+  "pv-072": [
+    "terminare subito",
+    "tornare all'inizio"
+  ],
+  "pv-073": [
+    "ignorare i dettagli",
+    "saltare una procedura"
+  ],
+  "pv-074": [
+    "scartare senza leggere",
+    "distruggere i documenti"
+  ],
+  "pv-075": [
+    "educare un bambino",
+    "rimanere infantile"
+  ],
+  "pv-076": [
+    "trattenere un documento",
+    "distribuire copie"
+  ],
+  "pv-077": [
+    "raccogliere le copie",
+    "scrivere le istruzioni"
+  ],
+  "pv-078": [
+    "trattenere il controllo",
+    "distruggere gli oggetti"
+  ],
+  "pv-079": [
+    "interrompere definitivamente",
+    "riagganciare il telefono"
+  ],
+  "pv-080": [
+    "accelerare un progetto",
+    "dare inizio a un progetto"
+  ],
+  "pv-081": [
+    "riagganciare",
+    "richiamare il giorno dopo"
+  ],
+  "pv-082": [
+    "accelerare",
+    "annullare definitivamente"
+  ],
+  "pv-083": [
+    "smettere",
+    "iniziare a prepararsi"
+  ],
+  "pv-084": [
+    "rimanere indietro rispetto a",
+    "ridurre la domanda"
+  ],
+  "pv-085": [
+    "includere",
+    "evidenziare"
+  ],
+  "pv-086": [
+    "sostenere emotivamente",
+    "far scendere fisicamente"
+  ],
+  "pv-087": [
+    "chiudere una sessione",
+    "cancellare un account"
+  ],
+  "pv-088": [
+    "aprire una sessione",
+    "registrare un nuovo account"
+  ],
+  "pv-089": [
+    "ignorare i bisogni di",
+    "cercare una persona scomparsa"
+  ],
+  "pv-090": [
+    "ripensare soltanto al passato",
+    "ignorare i rischi futuri"
+  ],
+  "pv-091": [
+    "aspettare con piacere",
+    "evitare qualsiasi ricordo"
+  ],
+  "pv-092": [
+    "aver già trovato",
+    "rinunciare alla ricerca"
+  ],
+  "pv-093": [
+    "temere",
+    "guardare fisicamente davanti a"
+  ],
+  "pv-094": [
+    "ignorare una questione",
+    "guardare verso il futuro"
+  ],
+  "pv-095": [
+    "abbassare l'attenzione",
+    "cercare un'informazione"
+  ],
+  "pv-096": [
+    "cancellare un dato",
+    "ammirare una persona"
+  ],
+  "pv-097": [
+    "disprezzare",
+    "cercare in un dizionario"
+  ],
+  "pv-098": [
+    "inventare un numero",
+    "cancellare una targa"
+  ],
+  "pv-099": [
+    "verificare un racconto",
+    "compensare un danno"
+  ],
+  "pv-100": [
+    "aggravare",
+    "essere irrilevante per"
+  ],
+  "pv-101": [
+    "rimanere sullo stesso punto",
+    "tornare all'inizio"
+  ],
+  "pv-102": [
+    "trattenere un'informazione",
+    "respingere un'informazione"
+  ],
+  "pv-103": [
+    "prendere denaro in prestito",
+    "spendere denaro"
+  ],
+  "pv-104": [
+    "rivelarsi inutile",
+    "restituire un prestito"
+  ],
+  "pv-105": [
+    "ignorare tutte le alternative",
+    "andare a prendere qualcuno"
+  ],
+  "pv-106": [
+    "lasciare qualcuno alla destinazione",
+    "respingere un passeggero"
+  ],
+  "pv-107": [
+    "omettere un dettaglio",
+    "nascondere un limite"
+  ],
+  "pv-108": [
+    "lasciare fuori dopo l'uso",
+    "gettare definitivamente"
+  ],
+  "pv-109": [
+    "ritirare una proposta",
+    "respingere una proposta"
+  ],
+  "pv-110": [
+    "annullare definitivamente",
+    "anticipare un appuntamento"
+  ],
+  "pv-111": [
+    "togliersi un indumento",
+    "aumentare di peso"
+  ],
+  "pv-112": [
+    "appiccare un incendio",
+    "rimandare un intervento"
+  ],
+  "pv-113": [
+    "separare le parti",
+    "scartare le prove"
+  ],
+  "pv-114": [
+    "rifiutare di tollerare",
+    "proporre una soluzione"
+  ],
+  "pv-115": [
+    "diffidare di",
+    "essere indipendente da"
+  ],
+  "pv-116": [
+    "confermare come unica spiegazione",
+    "scoprire per la prima volta"
+  ],
+  "pv-117": [
+    "rimanere fermo",
+    "tornare spontaneamente"
+  ],
+  "pv-118": [
+    "evitare una persona",
+    "fissare un appuntamento"
+  ],
+  "pv-119": [
+    "rifornirsi di",
+    "risparmiare una risorsa"
+  ],
+  "pv-120": [
+    "utilizzare immediatamente tutto",
+    "dimenticare senza pianificare"
+  ],
+  "pv-121": [
+    "arrivare a destinazione",
+    "annullare la partenza"
+  ],
+  "pv-122": [
+    "nascondere i risultati",
+    "iniziare un viaggio"
+  ],
+  "pv-123": [
+    "smantellare",
+    "rinunciare a istituire"
+  ],
+  "pv-124": [
+    "non presentarsi",
+    "andarsene senza avvisare"
+  ],
+  "pv-125": [
+    "avviare il funzionamento",
+    "aumentare la potenza"
+  ],
+  "pv-126": [
+    "complicare un problema",
+    "rinviare senza affrontare"
+  ],
+  "pv-127": [
+    "intervenire già attivamente",
+    "abbandonare il posto"
+  ],
+  "pv-128": [
+    "essere contrario a",
+    "sedersi al posto di"
+  ],
+  "pv-129": [
+    "passare inosservato",
+    "essere eliminato"
+  ],
+  "pv-130": [
+    "assumere un incarico",
+    "essere promosso"
+  ],
+  "pv-131": [
+    "ridurre",
+    "sospendere completamente"
+  ],
+  "pv-132": [
+    "deviare da",
+    "abbandonare"
+  ],
+  "pv-133": [
+    "sviluppare ogni dettaglio",
+    "contraddire i risultati"
+  ],
+  "pv-134": [
+    "prendersi cura di",
+    "andare a prendere"
+  ],
+  "pv-135": [
+    "ribadire un'affermazione",
+    "trasmettere un'accusa"
+  ],
+  "pv-136": [
+    "cancellare un dato",
+    "smontare una struttura"
+  ],
+  "pv-137": [
+    "atterrare",
+    "togliersi un indumento"
+  ],
+  "pv-138": [
+    "rifiutare un compito",
+    "completare un compito"
+  ],
+  "pv-139": [
+    "cedere il controllo",
+    "sospendere un'operazione"
+  ],
+  "pv-140": [
+    "abbandonare un'attività",
+    "ridurre il tempo dedicato"
+  ],
+  "pv-141": [
+    "evitare una discussione",
+    "imporre senza discutere"
+  ],
+  "pv-142": [
+    "decidere senza riflettere",
+    "dimenticare le alternative"
+  ],
+  "pv-143": [
+    "conservare con cura",
+    "trascrivere"
+  ],
+  "pv-144": [
+    "accettare un'offerta",
+    "abbassare il volume"
+  ],
+  "pv-145": [
+    "rimanere identico a",
+    "allontanarsi da"
+  ],
+  "pv-146": [
+    "accendere un dispositivo",
+    "aumentarne il volume"
+  ],
+  "pv-147": [
+    "spegnere un dispositivo",
+    "abbassarne il volume"
+  ],
+  "pv-148": [
+    "essere deciso in anticipo",
+    "essere impedito"
+  ],
+  "pv-149": [
+    "scomparire",
+    "aumentare il volume"
+  ],
+  "pv-150": [
+    "lasciare intatte le scorte",
+    "ricostituire le scorte"
+  ],
+  "pv-151": [
+    "addormentarsi",
+    "rimanere addormentato"
+  ],
+  "pv-152": [
+    "fare esercizio fisico",
+    "ignorare i costi"
+  ],
+  "pv-153": [
+    "cancellare un appunto",
+    "memorizzare senza scrivere"
+  ],
+  "pv-154": [
+    "introdurre gradualmente",
+    "sospendere solo per un giorno"
+  ],
+  "pv-155": [
+    "nascondere le opzioni",
+    "eliminare tutte le opzioni"
+  ],
+  "pv-156": [
+    "essere estraneo alla causa",
+    "calcolare senza spiegare"
+  ],
+  "pv-157": [
+    "archiviare senza leggere",
+    "cercare un documento perduto"
+  ],
+  "pv-158": [
+    "iniziare immediatamente",
+    "interrompere per sempre"
+  ],
+  "pv-159": [
+    "evitare ogni contatto con",
+    "prendere fisicamente un oggetto"
+  ],
+  "pv-160": [
+    "chiudere ogni possibilità",
+    "esaminare un'opportunità già persa"
+  ],
+  "pv-161": [
+    "ignorare i rischi",
+    "misurare il peso fisico"
+  ]
 };
 export const PARTICLE_ALTERNATIVES={
   "pv-025":["upon"],"pv-033":["down on"],"pv-034":["back on"],

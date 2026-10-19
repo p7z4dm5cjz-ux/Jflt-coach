@@ -73,7 +73,7 @@ export function coreItems(id,variation=0){
      return {...make(x,page,stem,answer,"choice",options),skill:"recognise",focus_lesson:focus,formula:r2[0],why:r2[6]+" Qui la frase presenta "+meanings[focus]+". Le altre alternative rappresentano: "+group.filter(k=>k!==focus).map(k=>meanings[k]).join("; ")+". La distinzione riguarda il significato espresso, non una regola che vieta ogni altra forma."};
    }
    if(page===1)return make(x,page,(phrase.includes(" ")?"Scrivi solo le parole mancanti (":"Scrivi solo la parola mancante (")+name+"): "+time+", "+who+" ___ "+rest+". ("+v[0]+")",phrase);
-   if(page===2){const neg=subject+" "+negative+" "+tail(v)+" "+rest+" "+when+".";return make(x,page,"Rendi negativa e riscrivi tutta la frase"+(id==="obligation"?" esprimendo un divieto, non l'assenza di obbligo":"")+": "+full,neg,"transformation");}
+   if(page===2){const neg=subject+" "+negative+" "+tail(v)+" "+rest+" "+when+".";return make(x,page,"Rendi negativa e riscrivi tutta la frase"+(id==="obligation"?" esprimendo un divieto, non l'assenza di obbligo":"")+": "+full,neg,"transformation",[],[neg,time+", "+who+" "+negative+" "+tail(v)+" "+rest+"."]);}
    if(page===3)return make(x,page,"Trasforma in domanda e riscrivi tutta la frase, iniziando con "+cap(aux)+": "+full,cap(aux)+" "+who+" "+tail(v)+" "+rest+" "+when+"?","transformation");
  }));
  if(id==="future-going-to"){

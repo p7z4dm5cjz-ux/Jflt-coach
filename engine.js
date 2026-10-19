@@ -1,7 +1,6 @@
 import {LESSONS, VOCABULARY, PHRASALS} from "./catalog.js";
 import {placementProfile, validPlacement, newPlacement} from "./placement.js";
-import {PARTICLE_ALTERNATIVES,BASE_MEANING_DISTRACTORS,MEANING_GROUPS} from "./phrasal-extension.js";
-const SAME_MEANING=new Map(MEANING_GROUPS.flatMap(group=>group.map(id=>[id,new Set(group)])));
+import {PARTICLE_ALTERNATIVES,BASE_MEANING_DISTRACTORS} from "./phrasal-extension.js";
 import {normal,correct} from "./answer-normal.js";
 import {lessonEvidence,practiceWindow} from "./grammar-checks.js";
 export {normal,correct} from "./answer-normal.js";
@@ -117,16 +116,16 @@ export function recoveryItems(terms) {
   return terms.map(v=>({id:"recover-"+v.id,term_id:v.id,kind:"retrieval",skill:"form",stem:"Scrivi l'espressione inglese della scheda studiata che significa «"+v.meaning_it+"». Indizio: inizia con "+v.expression[0]+" e ha "+v.expression.split(/\s+/).length+(v.expression.split(/\s+/).length===1?" parola.":" parole."),answer:v.expression,accept:[v.expression],options:[],why:"Espressione della scheda: "+v.expression+". Esempio: "+v.example,origin:"local"}));
 }
 export function phrasalItems(term, variation=0) {
-  const other=[...new Map(PHRASALS.filter(v=>v.id!==term.id&&v.meaning_it!==term.meaning_it&&v.alternative!==term.alternative&&!SAME_MEANING.get(term.id)?.has(v.id)).map(v=>[v.meaning_it,v])).values()];
-  const distractors=term.meaning_distractors||BASE_MEANING_DISTRACTORS[term.id]||[other[variation%other.length].meaning_it,other[(variation+17)%other.length].meaning_it];
+  const distractors=term.meaning_distractors||BASE_MEANING_DISTRACTORS[term.id];
+  if(!distractors)throw new Error("Scheda senza alternative linguistiche revisionate.");
   const words=term.expression.split(" ");
   const particles=words.slice(1).join(" "),alternatives=PARTICLE_ALTERNATIVES[term.id]||[];
-  const pronoun=term.object_pronoun||"it";
+  const pronoun=term.object_pronoun||(["pv-013","pv-016","pv-020","pv-039","pv-050","pv-055","pv-086","pv-089","pv-097","pv-106","pv-118","pv-134","pv-159"].includes(term.id)?"them":"it");
   const correctForm=term.pattern==="S"?words[0]+" "+pronoun+" "+words.slice(1).join(" "):term.expression+" "+pronoun;
   const misplaced=term.pattern==="S"?term.expression+" "+pronoun:words[0]+" "+pronoun+" "+words.slice(1).join(" ");
   return [
     {id:term.id+"-meaning",term_id:term.id,kind:"choice",skill:"recognise",stem:"Scegli il significato di "+term.expression+" in questo esempio:\n"+term.example,answer:term.meaning_it,options:[term.meaning_it,...distractors],why:"Nel contesto significa: "+term.meaning_it+"."},
-    {id:term.id+"-particles",term_id:term.id,kind:"completion",skill:"form",stem:(particles.includes(" ")?"Scrivi solo le parole mancanti":"Scrivi solo la parola mancante")+". L'espressione significa «"+term.meaning_it+"»: "+words[0]+" ___",answer:particles,accept:[particles,...alternatives],options:[],why:"La scheda insegna "+term.expression+"."+(alternatives.length?" Per il significato richiesto sono valide anche: "+alternatives.map(a=>words[0]+" "+a).join(", ")+".":"")},
+    {id:term.id+"-particles",term_id:term.id,kind:"completion",skill:"form",stem:(particles.includes(" ")?"Scrivi solo le parole mancanti":"Scrivi solo la parola mancante")+". Completa l’espressione della scheda studiata («"+term.meaning_it+"»): "+words[0]+" ___",answer:particles,accept:[particles,...alternatives],options:[],why:"La scheda insegna "+term.expression+"."+(alternatives.length?" Per il significato richiesto sono valide anche: "+alternatives.map(a=>words[0]+" "+a).join(", ")+".":"")},
     term.pattern==="I"?{id:term.id+"-pattern",term_id:term.id,kind:"choice",skill:"choose",stem:"Scegli la risposta corretta. Nell'esempio «"+term.example+"», "+term.expression+" richiede un oggetto diretto?",answer:"No: in questo uso è intransitivo.",options:["No: in questo uso è intransitivo.","Sì: va sempre inserito it tra verbo e particella.","Sì: l'oggetto diretto è obbligatorio dopo l'espressione."],why:"La costruzione del significato qui studiato è intransitiva. Altri significati possono avere costruzioni diverse."}:{id:term.id+"-pronoun",term_id:term.id,kind:"choice",skill:"choose",stem:"Scegli l'ordine corretto delle parole con il pronome "+pronoun+". L'espressione significa «"+term.meaning_it+"».",answer:correctForm,options:[correctForm,misplaced,pronoun+" "+term.expression],why:term.pattern==="S"?"In questo uso separabile, "+pronoun+" va tra il verbo e la particella.":"In questo uso inseparabile, il pronome segue l'intera espressione."}
   ];
 }
