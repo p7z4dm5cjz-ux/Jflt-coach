@@ -85,8 +85,21 @@ export function dailyPlan(state,timestamp=Date.now()) {
     completed_steps:Number(!!practice?.completed_at)+Number(writingWords>=minimumWords)};
 }
 export function dailyWritingTopic(plan) {
-  return "Allenamento breve: scrivi almeno "+plan.minimum_words+" parole in inglese su un controllo di servizio fittizio. Usa «"+plan.lesson.title+"» dove il contesto lo richiede e mantieni coerente la cronologia. "+
-    (plan.terms.length?"Prova a usare, se pertinenti, queste espressioni: "+plan.terms.map(t=>t.expression).join(", ")+". ":"")+"Non inserire dati reali o informazioni riservate. La lunghezza misura il lavoro svolto, non la correttezza del testo.";
+  const future=/^future/.test(plan.lesson_id),present=/^present/.test(plan.lesson_id);
+  const scenarios=future?[
+    "Il coordinatore ha deciso di controllare il deposito domani. L'incontro con il tecnico è già fissato alle 09:00. Secondo te il lavoro richiederà due ore. Distingui intenzione, appuntamento e previsione.",
+    "È stato deciso di rivedere il percorso di accesso. Il sopralluogo con il responsabile è fissato per giovedì alle 10:00. Ritieni che il nuovo percorso ridurrà i ritardi. Distingui decisione, accordo e previsione."
+  ]:present?[
+    "Di solito la squadra controlla due ingressi ogni mattina. Oggi sta verificando anche il magazzino. Finora ha controllato tre locali; lavora dalle 08:00. Distingui routine, attività in corso e risultati.",
+    "Il centro registra le consegne ogni giorno. Oggi due addetti stanno controllando le etichette. Finora hanno verificato quattro scatole; lavorano da un'ora. Distingui abitudini, attività e risultati."
+  ]:[
+    "Alle 08:15 viene segnalata una porta danneggiata; la squadra arriva alle 08:25. Un testimone dice di aver sentito un rumore alle 07:50, ma non ha visto nessuno. Nessun ferito. L'area viene isolata. Distingui osservazioni e dichiarazioni.",
+    "Alle 14:10 viene segnalata una perdita d'acqua; il tecnico arriva alle 14:30. Un addetto riferisce di aver chiuso la valvola alle 14:20. Nessun danno alle persone. Il locale resta chiuso in attesa della verifica. Distingui fatti confermati e dichiarazioni."
+  ];
+  const variant=(Number((plan.day||"0").replaceAll("-",""))||0)%scenarios.length;
+  return "Scrivi un breve aggiornamento di servizio in inglese (almeno "+plan.minimum_words+" parole). Fatti fittizi: "+scenarios[variant]+" " +
+    "Scegli tu le strutture adatte al significato; non forzare «"+plan.lesson.title+"» in ogni frase. "+
+    (plan.terms.length?"Se pertinenti, recupera a memoria: "+plan.terms.map(t=>t.expression).join(", ")+". ":"")+"Non inserire dati reali. Usa soltanto dati fittizi. La lunghezza misura il lavoro svolto, non la correttezza.";
 }
 export function addTerm(state, term, context="") {
   const existing=state.vocabulary.find(v=>v.id===term.id||normal(v.expression)===normal(term.expression)&&normal(v.meaning_it)===normal(term.meaning_it));

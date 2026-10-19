@@ -10,7 +10,7 @@ for(const key of ['window','document','location','Node','navigator','sessionStor
 window.scrollTo=()=>{};
 const {mountApp}=await import('../app.js');
 const repo=await openRepository(new IDBFactory());
-const items=[{id:'going',kind:'completion',stem:'She ___ going to call tomorrow. (be; presente)',answer:'is',accept:[],options:[],why:'SOLUTION_ONLY'},{id:'neg',kind:'completion',stem:'Completa la negativa: We ___ leave yesterday.',answer:'did not',accept:[],options:[],why:'SOLUTION_ONLY'}];
+const items=[{id:'going',kind:'completion',stem:'She ___ going to call tomorrow. (be; presente)',answer:'is',accept:[],options:[],why:'SOLUTION_ONLY'},{id:'neg',focus_lesson:'past-simple',kind:'completion',stem:'Completa la negativa: We ___ leave yesterday.',answer:'did not',accept:[],options:[],why:'SOLUTION_ONLY'}];
 await repo.change(s=>s.sessions.push({id:'hints',lesson_id:'be-going-to',source:'groq',items,answers:{},assisted:false,created_at:new Date().toISOString(),completed_at:null}));
 let calls=0;const app=await mountApp(repo,document.getElementById('view'),async()=>{calls++;throw new Error('Unexpected AI call');});
 async function settle(){for(let i=0;i<100;i++){await new Promise(r=>setTimeout(r,5));if(!document.getElementById('view').hasAttribute('aria-busy'))return;}throw new Error('timeout');}
@@ -28,7 +28,7 @@ test('Hints are local to the question, visible inline, persistent and preserve t
 test('Using a hint marks submitted attempts as assisted, without changing correction',async()=>{
  for(const item of items){const input=document.getElementById(item.id);input.value=item.answer;input.dispatchEvent(new window.Event('input',{bubbles:true}));}await app.flush();
  document.getElementById('practice-form').dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));await settle();
- assert.equal(repo.get().attempts.length,2);assert.ok(repo.get().attempts.every(a=>a.correct));assert.deepEqual(repo.get().attempts.map(a=>a.assisted),[true,false]);assert.equal(document.querySelector('button[aria-controls$="-reasoning-hint"]'),null);
+ assert.equal(repo.get().attempts.length,2);assert.equal(repo.get().attempts[1].lesson_id,"past-simple");assert.ok(repo.get().attempts.every(a=>a.correct));assert.deepEqual(repo.get().attempts.map(a=>a.assisted),[true,false]);assert.equal(document.querySelector('button[aria-controls$="-reasoning-hint"]'),null);
 });
 test('Guidance responds to stem and topic, never reads solution or final explanation',()=>{
  const forbidden=()=>{throw new Error('Solution accessed');};
