@@ -1,3 +1,4 @@
+import {lessonGuideUI} from "./lesson-guide.js";
 import {anchorReading,anchorTest} from "./contract.js";
 import {LESSONS,PHRASALS,VOCABULARY,PATTERNS,STAGES} from "./catalog.js";
 import {PHRASAL_SCENARIOS} from "./phrasal-extension.js";
@@ -80,6 +81,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
   async function refresh(){await render();}
   const courses=writingCourseUI({h,p,title,card,list,link,field,button,change,autosave,goto,refresh,repo,tutor,notify,getState:()=>state});
   const learning=learningUI({h,p,title,card,link,button,change,autosave,goto,refresh,getState:()=>state});
+  const lessonGuide=lessonGuideUI({h,p,card,button,link,change,autosave,refresh,goto,getState:()=>state});
   function sessionRecord(lessonId,items,source="local",extra={}) {
     const id=uid("session");
     const grammarCount=items.filter(it=>it.kind!=="retrieval").length;
@@ -201,7 +203,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     const l=LESSONS.find(l=>l.id===id);if(!l)return [title("STUDIO","Lezione non trovata."),link("Torna alle lezioni","studio")];
     const selected=dueTerms().slice(0,3);
     const study=state.lesson_studies?.find(x=>x.lesson_id===id),question=h("textarea",{id:"grammar-question",maxlength:500,rows:2,value:study?.question||"",placeholder:"Es. Perché qui non uso il past simple?"});
-    return [link("← Tutte le lezioni","studio","back"),title("GRAMMATICA",l.title,l.goal),learning.lessonPanel(id,returnCourse),
+    return [link("← Tutte le lezioni","studio","back"),title("GRAMMATICA",l.title,l.goal),lessonGuide(l),learning.lessonPanel(id,returnCourse),
       card(h("h2",{},"Quando usarla"),p(l.when),l.forms&&p(l.forms,"formula"),list(l.examples.map(t=>h("span",{lang:"en"},t))),h("h3",{},"La differenza che conta"),p(l.contrast),p(l.pitfall,"warning")),
       l.sections&&card(h("h2",{},"Approfondisci e usa la regola"),l.sections.map(s=>h("details",{},h("summary",{},s.title),p(s.text)))), 
       l.related?.length&&card(h("h2",{},"Collega le strutture"),p("Sono collegamenti di studio, non lezioni dichiarate già acquisite dal pretest.","small muted"),h("div",{class:"actions"},l.related.map(id=>{const item=LESSONS.find(l=>l.id===id);return item&&link(item.title,"lesson/"+id,"text-link");}))),

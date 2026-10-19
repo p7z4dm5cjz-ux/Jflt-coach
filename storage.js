@@ -1,3 +1,4 @@
+import {validateGuides} from "./lesson-guide.js";
 import {freshState,migrate,LEGACY_STORES,VERSION,endpoint,validPlacement} from "./engine.js";
 import {validateBackup} from "./legacy/core.js";
 import {validateReply,READING_TEST_TYPES} from "./contract.js";
@@ -12,6 +13,7 @@ export function validateState(s) {
   endpoint(s.settings.endpoint);
   if(s.placement!==null&&!validPlacement(s.placement))throw new Error("Pretest non valido nel backup.");
   const validDate=v=>typeof v==="string"&&Number.isFinite(Date.parse(v));
+  if(s.lesson_guides!==undefined)validateGuides(s.lesson_guides,LESSONS);
   if(s.grammar_checks!==undefined)validateChecks(s.grammar_checks);
   if(s.diagnoses!==undefined){
     if(!Array.isArray(s.diagnoses)||s.diagnoses.length>10)throw new Error("Diagnosi del pretest non valide.");
