@@ -1,5 +1,5 @@
 import {VERSION,API_VERSION,endpoint,uid} from "./engine.js";
-import {validateInput,validateReply} from "./contract.js";
+import {validateInput,validateReply,validateAssessment} from "./contract.js";
 const KEY="jflt-coach-app-token";
 let memoryToken="";
 const HEALTH_TTL=60000;
@@ -23,6 +23,7 @@ export async function callTutor(settings,path,task,data,fetcher=fetch) {
   {
     const health=await loadHealth(settings,fetcher,token,address);
     if(!health.groq_configured)throw new Error("Il Worker è collegato, ma manca GROQ_API_KEY nei secret Cloudflare.");
+    if(data?.learner&&!health.features?.includes("adaptive_profile"))throw new Error("Il Worker deve essere aggiornato per il percorso adattivo. Gli esercizi offline restano disponibili.");
     if(task&&!health.capabilities?.includes(task))throw new Error("Questo Worker non supporta la funzione richiesta. Attendi l'aggiornamento Cloudflare.");
   }
   return send(settings,path,task,data,fetcher,token);
@@ -61,6 +62,7 @@ async function send(settings,path,task,data,fetcher,token) {
     if(path==="/health")return payload;
     if(payload.request_id!==requestId)throw new Error("La risposta non corrisponde alla richiesta inviata.");
     if(task)validateReply(task,payload.result);
+    if(task==="exercises"&&data?.learner)validateAssessment(payload.result.assessment,data.learner);
     if(task&&payload.verification)Object.defineProperty(payload.result,"verification",{value:payload.verification,enumerable:false});
     return task?payload.result:payload;
   }catch(error) {

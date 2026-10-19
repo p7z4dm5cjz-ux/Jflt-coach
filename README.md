@@ -1,4 +1,10 @@
-# JFLT Coach 1.10.1
+# JFLT Coach 1.11.0
+
+## Novità della 1.11.0: pratica adattiva
+
+Il percorso guidato avvia il tutor dopo la spiegazione se il codice è presente e sei online. Ogni blocco di sei domande riceve pretest, risposte autonome, errori e aiuti; Groq propone e motiva il prossimo obiettivo. Le domande confermate dal controllo automatico restano disponibili nel ripasso personale offline della lezione. App e Worker devono essere entrambi alla 1.11.0.
+
+La scelta della lezione usa il percorso esistente; l'AI adatta i blocchi all'interno della lezione. Non è una certificazione del livello. Dettagli, fonti e limiti in [docs/percorso-adattivo.md](docs/percorso-adattivo.md).
 
 ## Novità della 1.10.1
 

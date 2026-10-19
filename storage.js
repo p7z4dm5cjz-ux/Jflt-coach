@@ -1,7 +1,7 @@
 import {validateGuides} from "./lesson-guide.js";
 import {freshState,migrate,LEGACY_STORES,VERSION,endpoint,validPlacement} from "./engine.js";
 import {validateBackup} from "./legacy/core.js";
-import {validateReply,READING_TEST_TYPES} from "./contract.js";
+import {validateReply,validateAssessment,READING_TEST_TYPES} from "./contract.js";
 import {LESSONS} from "./catalog.js";
 import {BLOCK_SIZE} from "./practice-flow.js";
 import {WRITING_UNITS} from "./writing-curriculum.js";
@@ -65,6 +65,10 @@ export function validateState(s) {
   for(const a of s.attempts)if(typeof a.id!=="string"||typeof a.lesson_id!=="string"||typeof a.correct!=="boolean"||typeof a.answer!=="string"||typeof a.assisted!=="boolean"||!validDate(a.date))throw new Error("Un tentativo nel backup non è valido.");
   for(const set of s.sessions) {
     if(typeof set.id!=="string"||typeof set.lesson_id!=="string"||typeof set.assisted!=="boolean"||!set.answers||typeof set.answers!=="object"||Array.isArray(set.answers)||!Array.isArray(set.items)||!validDate(set.created_at)||set.completed_at!==null&&!validDate(set.completed_at))throw new Error("Una sessione nel backup non è valida.");
+    if(set.adaptive_plans!==undefined){
+      if(!Array.isArray(set.adaptive_plans)||set.adaptive_plans.length>5||new Set(set.adaptive_plans.map(p=>p.page)).size!==set.adaptive_plans.length)throw new Error("Piani adattivi non validi.");
+      for(const plan of set.adaptive_plans){if(!Number.isInteger(plan.page)||plan.page<0||plan.page>4||plan.page*6>=set.items.length||!validDate(plan.created_at))throw new Error("Blocco adattivo non valido.");validateAssessment(plan.assessment);}
+    }
     if(set.remediation_focus!==undefined&&(!Array.isArray(set.remediation_focus)||set.remediation_focus.length>3||set.remediation_focus.some(f=>!f||!["stem","answer","reference","why"].every(k=>typeof f[k]==="string")||f.diagnosis!==null&&typeof f.diagnosis!=="string")))throw new Error("Spiegazione della riprova non valida.");
     if(set.remediation_parent!==undefined&&(!set.assisted||!s.sessions.some(p=>p.id===set.remediation_parent&&p.id!==set.id)))throw new Error("La riprova locale deve restare guidata e collegata alla sessione originale.");
     if(set.remediation_blocks!==undefined&&(!set.remediation_blocks||typeof set.remediation_blocks!=="object"||Array.isArray(set.remediation_blocks)||Object.entries(set.remediation_blocks).some(([page,id])=>!/^\d$/.test(page)||Number(page)>4||!s.sessions.some(r=>r.id===id&&r.remediation_parent===set.id))))throw new Error("Collegamento alla riprova non valido.");

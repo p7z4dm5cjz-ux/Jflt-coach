@@ -1,7 +1,7 @@
+import {learnerProfile} from "./learner-profile.js";
 import {blockAdaptation} from "./adaptive-practice.js";
 import {normal} from "./engine.js";
 import {validateReply} from "./contract.js";
-import {blockGoal} from "./block-goals.js";
 
 export const PRACTICE_SIZE=30;
 export const BLOCK_SIZE=6;
@@ -31,11 +31,11 @@ export function exerciseRequest(state,lessonId,{set=null,parent=null,focus=[]}={
   const errors=focus.length?focus.map(item=>({stem:item.stem.slice(0,350),answer:(parent?.answers[item.id]||"").slice(0,300),reference:item.answer.slice(0,300),rule:item.why.slice(0,450)})):state.attempts.filter(a=>a.lesson_id===lessonId&&!a.correct&&!a.disputed).slice(-6).map(lookup);
   const recent=state.sessions.filter(s=>s.lesson_id===lessonId).flatMap(s=>s.items).filter(it=>it.kind!=="retrieval");
   const previous=[...recent,...(parent?.items||[]),...(set?.items||[])].filter(it=>it.kind!=="retrieval");
-  const seen=[...new Set(previous.map(it=>it.stem.slice(0,350)))].slice(-30);
+  const seen=[...new Set(previous.map(it=>it.stem.slice(0,350)))].slice(-16);
   const terms=(set?.training?.recovery||[]).map(it=>state.vocabulary.find(v=>v.id===it.term_id)).filter(Boolean).slice(0,3);
   const adaptation=set?.id?blockAdaptation(state,set):null;
-  return {lesson_id:lessonId,terms:terms.map(v=>({expression:v.expression,meaning_it:v.meaning_it})),recent_errors:errors,
-    already_seen:seen,practice:{block:Math.floor((set?.items.filter(it=>it.kind!=="retrieval").length||0)/BLOCK_SIZE)+1,total:set?.training?.grammar_target||30,purpose:parent?"Riprova guidata: stessa regola debole, frasi e contesti diversi. Non mostrare soluzioni nella consegna.":(adaptation?"Adattamento: "+adaptation.mode+". "+adaptation.message+" ":"")+blockGoal(Math.floor((set?.items.filter(it=>it.kind!=="retrieval").length||0)/BLOCK_SIZE)).goal}};
+  return {learner:learnerProfile(state,lessonId),lesson_id:lessonId,terms:terms.map(v=>({expression:v.expression,meaning_it:v.meaning_it})),recent_errors:errors,
+    already_seen:seen,practice:{block:Math.floor((set?.items.filter(it=>it.kind!=="retrieval").length||0)/BLOCK_SIZE)+1,total:set?.training?.grammar_target||30,purpose:parent?"Riprova guidata: stessa regola debole, frasi e contesti diversi. Non mostrare soluzioni nella consegna.":(adaptation?"Adattamento: "+adaptation.mode+". "+adaptation.message+" ":"")+"Valuta learner: scegli il prossimo obiettivo in base alle prove, non al numero del blocco."}};
 }
 export function negativeRule(item) {
   if(item.rule)return item.rule;

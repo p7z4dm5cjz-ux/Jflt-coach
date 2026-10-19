@@ -1,0 +1,30 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import Ajv from 'ajv';
+import {freshState} from '../engine.js';
+import {QUESTIONS,newPlacement} from '../placement.js';
+import {learnerProfile,personalPractice} from '../learner-profile.js';
+import {exerciseRequest} from '../practice-flow.js';
+import {validateInput,validateAssessment,ADAPTIVE_EXERCISES_SCHEMA,SHAPES} from '../contract.js';
+import {handle} from '../worker/index.js';
+const assessment=(ids=[],mode='diagnose')=>({mode,focus:'meaning',reason:'Verifichiamo la scelta nel contesto.',goal:'Distingui intenzione e decisione.',evidence_ids:ids,item_skills:['meaning','form','tense_choice','word_order','use','form']});
+const stateWithEvidence=()=>{const s=freshState();s.sessions=[{id:'s',lesson_id:'future-going-to',items:[{id:'i',stem:'She ___ going to leave.',answer:'is',skill:'form',kind:'completion',origin:'groq',check:'confirmed'}]}];s.attempts=[{id:'a',session_id:'s',item_id:'i',lesson_id:'future-going-to',stem:s.sessions[0].items[0].stem,answer:'is',correct:true,assisted:false,source:'groq',date:'2026-10-19T10:00:00Z'}];return s;};
+test('Initial profile makes no claim without evidence; input stays bounded',()=>{const s=freshState(),d=exerciseRequest(s,'future-going-to');assert.equal(d.learner.pretest_status,'unassessed');assert.deepEqual(d.learner.evidence,[]);validateInput('exercises',d);validateAssessment(assessment(),d.learner);assert.throws(()=>validateAssessment(assessment([],'advance'),d.learner),/verifica iniziale/);});
+test('Profile retains successes, separates help and excludes disputed/repeated evidence',()=>{const s=stateWithEvidence();s.attempts.push({...s.attempts[0],id:'repeat',correct:false},{...s.attempts[0],id:'dispute',item_id:'j',stem:'Different',disputed:true});let p=learnerProfile(s,'future-going-to');assert.equal(p.evidence.length,1);assert.equal(p.skills[0].independent_correct,1);s.attempts[0].assisted=true;p=learnerProfile(s,'future-going-to');assert.equal(p.skills[0].independent_correct,0);assert.equal(p.skills[0].assisted,1);assert.throws(()=>validateAssessment(assessment(['invented'],'hold'),p),/riscontro/);assert.throws(()=>validateAssessment(assessment(['a'],'advance'),p),/due risposte/);});
+test('Pretest evidence reaches first block, not only errors',()=>{const s=freshState();s.placement=newPlacement();s.placement.answers=QUESTIONS.map(q=>({id:q.id,value:q.answer,confidence:'sure'}));s.placement.submitted_at=new Date().toISOString();const d=exerciseRequest(s,'past-simple');assert.ok(d.learner.evidence.some(e=>e.source==='pretest'&&e.correct));validateInput('exercises',d);});
+test('Personal bank excludes unchecked, disputed and local replacements',()=>{const s=stateWithEvidence(),i=s.sessions[0].items[0];s.sessions[0].items.push({...i,id:'u',stem:'unchecked',check:'unchecked'},{...i,id:'d',stem:'doubt',doubt:true},{...i,id:'l',stem:'local',origin:'local'});const bank=personalPractice(s,'future-going-to');assert.equal(bank.length,1);assert.equal(bank[0].personal_review,true);});
+test('Actual Worker request uses adaptive schema and evidence, rejects invented assessment',async()=>{
+ const data=exerciseRequest(stateWithEvidence(),'future-going-to'),token='adaptive-test-token-long-enough';
+ const env={APP_TOKEN:token,GROQ_API_KEY:'test-only',ALLOWED_ORIGIN:'https://example.test',BUDGET:{idFromName:()=>1,get:()=>({fetch:async()=>Response.json({ok:true})})}};
+ const request=()=>new Request('https://worker.test/tutor',{method:'POST',headers:{Authorization:'Bearer '+token,Origin:env.ALLOWED_ORIGIN,'Content-Type':'application/json'},body:JSON.stringify({api_version:1,request_id:'req-adaptive',task:'exercises',data})});
+ let captured;const result={...structuredClone(SHAPES.exercises),assessment:assessment(['a'],'hold')};
+ const fake=async(_url,options)=>{captured=JSON.parse(options.body);return Response.json({choices:[{finish_reason:'stop',message:{content:JSON.stringify(result)}}]});};
+ let response=await handle(request(),env,fake);assert.equal(response.status,200,JSON.stringify(await response.clone().json()));
+ assert.deepEqual(captured.response_format.json_schema.schema,ADAPTIVE_EXERCISES_SCHEMA);assert.deepEqual(JSON.parse(captured.messages[1].content).learner,data.learner);
+ assert.ok(!captured.messages[0].content.includes('I primi cinque esercizi sono semplici'));
+ assert.ok(!captured.messages[0].content.includes('Aumenta gradualmente il contrasto tra forme nei blocchi successivi'));
+ assert.equal(new Ajv({strict:true}).compile(ADAPTIVE_EXERCISES_SCHEMA)(result),true);
+ result.assessment.evidence_ids=['invented'];response=await handle(request(),env,fake);assert.notEqual(response.status,200);
+});
+
+test('Offline review informs the next request without increasing independent mastery',()=>{const s=stateWithEvidence();s.sessions.push({id:'review',lesson_id:'future-going-to',items:[{...s.sessions[0].items[0],personal_review:true}]});s.attempts.push({...s.attempts[0],id:'review-answer',session_id:'review',correct:false,assisted:true});const p=learnerProfile(s,'future-going-to');assert.equal(p.skills[0].independent_correct,1);assert.ok(p.evidence.some(e=>e.source==='review'&&!e.correct&&e.assisted));});

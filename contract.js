@@ -23,6 +23,7 @@ export function validateInput(task,d) {
     const okError=e=>object(e)&&str(e.area,60)&&arr(e.lessons,4)&&e.lessons.every(x=>str(x,100))&&str(e.stem,1600)&&typeof e.given==="string"&&e.given.length<=350&&str(e.expected,600);
     if(!arr(d.areas,8)||!d.areas.length||!d.areas.every(okArea)||!arr(d.errors,25)||!d.errors.length||!d.errors.every(okError))throw new Error("Servono le aree e almeno una risposta sbagliata del pretest (massimo 25).");
   }
+  if(task==="exercises"&&d.learner!==undefined)validateLearner(d.learner,d.lesson_id);
   return d;
 }
 export function validateReply(task,p) {
@@ -44,6 +45,7 @@ export function validateReply(task,p) {
   if(task==="exercises") {
     needArray(p.items,"items",6);
     if(p.items.length!==6)bad("items","sono richiesti esattamente 6 esercizi");
+    if(p.assessment!==undefined)validateAssessment(p.assessment);
     const kinds=new Set();
     for(const [n,i] of p.items.entries()) {
       const path="items["+n+"]";
@@ -182,4 +184,19 @@ export function anchorReading(result,text) {
   const terms=result.terms.filter(x=>text.includes(x.quote)&&x.quote.includes(x.expression));
   const questions=result.questions.filter(x=>text.includes(x.quote));
   return {...result,segments,terms,questions,omitted:(Number.isInteger(result.omitted)?result.omitted:0)+result.segments.length+result.terms.length+result.questions.length-segments.length-terms.length-questions.length};
+}
+
+export const ADAPTIVE_SKILLS=["form","meaning","tense_choice","word_order","use"];
+export function validateLearner(p,lessonId){
+ if(!object(p)||p.version!==1||p.lesson_id!==lessonId||!arr(p.skills,5)||!arr(p.evidence,16)||!str(p.pretest_status,30))throw new Error("Profilo adattivo non valido.");
+ for(const e of p.evidence)if(!object(e)||!str(e.id,200)||!ADAPTIVE_SKILLS.includes(e.skill)||typeof e.correct!=="boolean"||typeof e.assisted!=="boolean"||!["stem","given","expected"].every(k=>typeof e[k]==="string"&&e[k].length<=240))throw new Error("Prove del profilo non valide.");
+ for(const s of p.skills)if(!ADAPTIVE_SKILLS.includes(s.skill)||!["observations","independent_correct","errors","assisted"].every(k=>Number.isInteger(s[k])&&s[k]>=0))throw new Error("Competenze del profilo non valide.");
+ return p;
+}
+export const ASSESSMENT_SCHEMA=replyObject({mode:{type:"string",enum:["diagnose","consolidate","hold","advance"]},focus:{type:"string",enum:ADAPTIVE_SKILLS},reason:replyText(700),goal:replyText(500),evidence_ids:replyList(replyText(200),"Da zero a 8 id realmente presenti in learner.evidence. Vuoto solo senza prove."),item_skills:replyList({type:"string",enum:ADAPTIVE_SKILLS},"Esattamente 6 competenze, una per esercizio nell'ordine.")});
+export const ADAPTIVE_EXERCISES_SCHEMA=replyObject({...REPLY_SCHEMAS.exercises.properties,assessment:ASSESSMENT_SCHEMA});
+export function validateAssessment(a,learner){
+ if(!object(a)||!["diagnose","consolidate","hold","advance"].includes(a.mode)||!ADAPTIVE_SKILLS.includes(a.focus)||!str(a.reason,700)||!str(a.goal,500)||!arr(a.evidence_ids,8)||!a.evidence_ids.every(id=>str(id,200))||!arr(a.item_skills,6)||a.item_skills.length!==6||!a.item_skills.every(s=>ADAPTIVE_SKILLS.includes(s)))throw new Error("Valutazione adattiva incompleta.");
+ if(learner){const ids=new Set(learner.evidence.map(e=>e.id));if(a.evidence_ids.some(id=>!ids.has(id))||ids.size&&!a.evidence_ids.length)throw new Error("Valutazione senza riscontro nelle risposte.");if(!ids.size&&a.mode!=="diagnose")throw new Error("Senza prove serve una verifica iniziale.");if(a.mode==='advance'&&learner.evidence.filter(e=>a.evidence_ids.includes(e.id)&&e.correct&&!e.assisted).length<2)throw new Error("Servono almeno due risposte autonome per aumentare la difficoltà.");}
+ return a;
 }

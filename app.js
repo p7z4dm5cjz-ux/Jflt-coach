@@ -1,3 +1,4 @@
+import {personalPractice} from "./learner-profile.js";
 import {blockAdaptation,localRetry,replaceDoubts} from "./adaptive-practice.js";
 import {lessonGuideUI,guideTasks} from "./lesson-guide.js";
 import {anchorReading,anchorTest} from "./contract.js";
@@ -87,6 +88,11 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     const guide=state.lesson_guides?.find(g=>g.lesson_id===lessonId);
     const previous=state.sessions.find(s=>s.id===guide?.practice_id);
     if(previous){await goto("practice/"+previous.id);return;}
+    if(getToken()&&navigator.onLine!==false){
+      const sessionId=await startAiPractice(lessonId);
+      await change(s=>{const g=s.lesson_guides.find(g=>g.lesson_id===lessonId);g.practice_id=sessionId;g.step=4;s.sessions.find(x=>x.id===sessionId).guide_lesson_id=lessonId;});
+      return;
+    }
     const lesson=LESSONS.find(l=>l.id===lessonId),tasks=guideTasks(lesson);
     const items=grammarItems(lessonId,state.sessions.length);
     const exposed=guide?.skipped?[]:[...(guide?.revealed.includes(2)?[tasks.form.stem]:[]),...(guide?.revealed.includes(3)&&tasks.choice?[tasks.choice.stem]:[])];
@@ -110,16 +116,16 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     const context={training:trainingRecord(total,recovery,parent?.id||null),items:[]};
     const data=exerciseRequest(state,lessonId,{set:context,parent,focus});
     const result=await tutor(state.settings,"/tutor","exercises",data);
-    const items=replaceDoubts(freshAiItems(parent?.items||[],result),lessonId,state.sessions.flatMap(s=>s.items)).map(it=>({...it,id:uid("ai"),origin:it.replacement_note?"local":"groq",skill:it.kind==="choice"?"choose":"form"}));
+    const items=replaceDoubts(freshAiItems(parent?.items||[],result),lessonId,state.sessions.flatMap(s=>s.items)).map((it,i)=>({...it,id:uid("ai"),origin:it.replacement_note?"local":"groq",skill:it.replacement_note?(it.skill||"form"):(result.assessment?.item_skills[i]||"form")}));
     if(total===BLOCK_SIZE)items.push(...recovery);
-    await makeSession(lessonId,items,"groq",{assisted:!!parent,training:context.training});
+    return await makeSession(lessonId,items,"groq",{assisted:!!parent,training:context.training,adaptive_plans:result.assessment?[{page:0,assessment:result.assessment,created_at:now()}]:[]});
   }
   async function nextPracticeBlock(id) {
     const set=repo.get().sessions.find(s=>s.id===id),block=practiceBlock(set);
     if(!block.checked)throw new Error("Verifica questo blocco prima di proseguire.");
     if(block.page>=block.pages-1)return;
     const decision=blockAdaptation(state,set),prior=set.remediation_blocks?.[block.page];
-    if(decision.mode!=="advance"&&!prior){
+    if(!set.adaptive_plans?.length&&decision.mode!=="advance"&&!prior){
       const mistakes=block.items.filter(i=>!i.doubt&&state.attempts.some(a=>a.session_id===set.id&&a.item_id===i.id&&!a.correct&&!a.disputed));
       const fresh=localRetry(state,set,mistakes);
       if(fresh.length){const drill=sessionRecord(set.lesson_id,fresh,"local",{assisted:true,remediation_parent:set.id,remediation_focus:remediationFocus(set,mistakes),...(fresh.length===BLOCK_SIZE?{training:trainingRecord(BLOCK_SIZE,[],set.id)}:{})});await change(s=>{s.sessions.push(drill);const original=s.sessions.find(x=>x.id===id);original.remediation_blocks??={};original.remediation_blocks[block.page]=drill.id;});await goto("practice/"+drill.id);return;}
@@ -130,8 +136,8 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     if(set.source==="groq"&&set.items.filter(it=>it.kind!=="retrieval").length<required) {
       const parent=state.sessions.find(s=>s.id===set.training.parent_id);
       const result=await tutor(state.settings,"/tutor","exercises",exerciseRequest(state,set.lesson_id,{set,parent}));
-      const items=replaceDoubts(freshAiItems([...set.items,...(parent?.items||[])],result),set.lesson_id,state.sessions.flatMap(s=>s.items)).map(it=>({...it,id:uid("ai"),origin:it.replacement_note?"local":"groq",skill:it.kind==="choice"?"choose":"form",accept:[it.answer,...it.accept],options:shuffled(it.options)}));
-      await change(s=>{const current=s.sessions.find(x=>x.id===id);current.items.push(...items);if(current.items.filter(it=>it.kind!=="retrieval").length===current.training.grammar_target)current.items.push(...current.training.recovery);current.training.page=next;});
+      const items=replaceDoubts(freshAiItems([...set.items,...(parent?.items||[])],result),set.lesson_id,state.sessions.flatMap(s=>s.items)).map((it,i)=>({...it,id:uid("ai"),origin:it.replacement_note?"local":"groq",skill:it.replacement_note?(it.skill||"form"):(result.assessment?.item_skills[i]||"form"),accept:[it.answer,...it.accept],options:shuffled(it.options)}));
+      await change(s=>{const current=s.sessions.find(x=>x.id===id);current.items.push(...items);if(result.assessment){current.adaptive_plans??=[];current.adaptive_plans.push({page:next,assessment:result.assessment,created_at:now()});}if(current.items.filter(it=>it.kind!=="retrieval").length===current.training.grammar_target)current.items.push(...current.training.recovery);current.training.page=next;});
     }else await change(s=>s.sessions.find(x=>x.id===id).training.page=next);
     await refresh();
   }
@@ -222,7 +228,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
   }
   function lesson(id,returnCourse) {
     const l=LESSONS.find(l=>l.id===id);if(!l)return [title("STUDIO","Lezione non trovata."),link("Torna alle lezioni","studio")];
-    const selected=dueTerms().slice(0,3);
+    const selected=dueTerms().slice(0,3),personal=personalPractice(state,id);
     const study=state.lesson_studies?.find(x=>x.lesson_id===id),question=h("textarea",{id:"grammar-question",maxlength:500,rows:2,value:study?.question||"",placeholder:"Es. Perché qui non uso il past simple?"});
     return [link("← Tutte le lezioni","studio","back"),title("GRAMMATICA",l.title,l.goal),lessonGuide(l),learning.lessonPanel(id,returnCourse),
       card(h("h2",{},"Quando usarla"),p(l.when),l.forms&&p(l.forms,"formula"),list(l.examples.map(t=>h("span",{lang:"en"},t))),h("h3",{},"La differenza che conta"),p(l.contrast),p(l.pitfall,"warning")),
@@ -230,7 +236,8 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
       l.related?.length&&card(h("h2",{},"Collega le strutture"),p("Sono collegamenti di studio, non lezioni dichiarate già acquisite dal pretest.","small muted"),h("div",{class:"actions"},l.related.map(id=>{const item=LESSONS.find(l=>l.id===id);return item&&link(item.title,"lesson/"+id,"text-link");}))),
       card(h("h2",{},"Studia questa lezione con il tutor"),p("Prima degli esercizi, chiedi una spiegazione della forma, del significato e della differenza rispetto alla struttura più simile. Puoi aggiungere un dubbio specifico."),h("label",{for:"grammar-question"},"Il tuo dubbio (facoltativo)"),question,button("Spiegami questa lezione",async()=>{const asked=question.value.trim(),result=await tutor(state.settings,"/tutor","grammar_explain",{lesson_id:id,question:asked});await change(s=>{s.lesson_studies??=[];const record={lesson_id:id,question:asked,result,created_at:now()},index=s.lesson_studies.findIndex(x=>x.lesson_id===id);if(index<0)s.lesson_studies.push(record);else s.lesson_studies[index]=record;});await refresh();},"secondary"),p("Una richiesta Groq. La spiegazione ricevuta resta consultabile offline.","small muted")),
       study&&card(h("h2",{},"La spiegazione salvata"),study.question&&p("Il tuo dubbio: "+study.question,"muted"),p(study.result.summary),h("h3",{},"Come costruirla"),p(study.result.form,"formula"),h("h3",{},"Quando e perché"),list(study.result.when),study.result.examples.map(e=>h("div",{class:"course-focus"},h("blockquote",{lang:"en"},e.en),p(e.it),p(e.why,"muted"))),h("h3",{},"Confronta le due scelte"),p(study.result.contrast),h("h3",{},"Errori da evitare"),list(study.result.pitfalls)),
-      h("div",{class:"two-columns"},card(h("h2",{},"Pratica senza connessione"),p(id==="negatives"?"30 esercizi in cinque blocchi: ausiliari, tempi, modali, parole negative e significato. Ogni risposta ha una spiegazione specifica; sugli errori puoi riprovare con frasi diverse.":CORE_LESSONS.includes(id)?"30 esercizi controllati: significato, completamento, negazione, domanda e confronto fra strutture. Sei situazioni sono riprese in cinque operazioni; non equivalgono a 30 contesti indipendenti. Le varianti cambiano il soggetto e la concordanza resta controllata.":grammarItems(id).length+" esercizi locali con soluzione e motivazione. La ripetizione ruota le stesse domande; per altri contesti usa il tutor."),button("Esercizi offline",()=>makeSession(id,[...grammarItems(id,state.sessions.length),...recoveryItems(selected)]))),card(h("h2",{},"30 esercizi con il tutor"),p("Cinque blocchi da sei su questa lezione: rispondi, verifica e leggi il perché prima di continuare. Il blocco successivo usa anche gli errori emersi. Puoi fermarti e riprendere."),button("Inizia 30 esercizi con il tutor",()=>startAiPractice(id)),p("Una richiesta per blocco: cinque per completare la sessione. Il recupero lessicale è aggiunto alla fine.","small muted"),button("Genera 6 esercizi con il tutor",()=>startAiPractice(id,BLOCK_SIZE),"quiet"))),
+      h("div",{class:"two-columns"},card(h("h2",{},"Pratica senza connessione"),p(id==="negatives"?"30 esercizi in cinque blocchi: ausiliari, tempi, modali, parole negative e significato. Ogni risposta ha una spiegazione specifica; sugli errori puoi riprovare con frasi diverse.":CORE_LESSONS.includes(id)?"30 esercizi controllati: significato, completamento, negazione, domanda e confronto fra strutture. Sei situazioni sono riprese in cinque operazioni; non equivalgono a 30 contesti indipendenti. Le varianti cambiano il soggetto e la concordanza resta controllata.":grammarItems(id).length+" esercizi locali con soluzione e motivazione. La ripetizione ruota le stesse domande; per altri contesti usa il tutor."),button("Esercizi offline",()=>makeSession(id,[...grammarItems(id,state.sessions.length),...recoveryItems(selected)]))),card(h("h2",{},"Percorso adattivo con il tutor"),p("Il pretest e le tue risposte guidano il punto di partenza. Groq valuta forma, significato e scelta dei tempi: ogni blocco da sei ha un obiettivo motivato. Puoi fermarti e riprendere."),button("Inizia 30 esercizi con il tutor",()=>startAiPractice(id)),p("Ogni blocco richiede una generazione e, quando disponibile, un controllo AI separato. Le domande confermate restano nel ripasso offline personale.","small muted"),button("Genera 6 esercizi con il tutor",()=>startAiPractice(id,BLOCK_SIZE),"quiet"))),
+      personal.length>0&&card(h("h2",{},"Le tue domande AI, anche offline"),p("Riprendi fino a sei domande già controllate automaticamente, dando precedenza a quelle difficili per te. È un ripasso: le risposte su frasi già viste non contano come nuove prove di padronanza."),button("Ripassa le domande salvate",()=>makeSession(id,personal,"local",{assisted:true}))),
       selected.length&&p("Recupero di oggi: "+selected.map(v=>v.expression).join(" · "),"muted"),sourceNotes(id)];
   }
   function practice(id) {
@@ -238,7 +245,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     const l=LESSONS.find(l=>l.id===set.lesson_id),done=!!set.completed_at,flow=practiceBlock(set),locked=done||flow.checked;
     const form=h("form",{id:"practice-form"}),visibleIds=new Set(flow.items.map(it=>it.id));
     const results=state.attempts.filter(a=>a.session_id===id),blockResults=results.filter(a=>visibleIds.has(a.item_id));
-    const adaptation=blockAdaptation(state,set);
+    const adaptation=blockAdaptation(state,set),assessment=set.adaptive_plans?.find(x=>x.page===flow.page)?.assessment;
     const mistakes=flow.items.filter(it=>it.kind!=="retrieval"&&blockResults.some(a=>a.item_id===it.id&&!a.correct&&!a.disputed));
     const answerTarget=flow.target-set.items.filter(it=>it.doubt).length;
     const progressLabel=p("","small muted"),progressBar=h("progress",{max:answerTarget,value:0,"aria-label":"Risposte compilate nella sessione"});
@@ -300,12 +307,12 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     const blockNavigation=set.training&&h("div",{class:"actions practice-navigation"},flow.page>0&&button("Rivedi il blocco precedente",async()=>{await change(s=>s.sessions.find(x=>x.id===id).training.page--);await refresh();},"quiet"),flow.checked&&flow.page<flow.pages-1&&button((nextNeedsAi?"Genera":"Apri")+" il blocco "+(flow.page+2),()=>nextPracticeBlock(id)));
     return [link("← "+(l?.title||"Ripasso"),set.writing_id?"writing/"+set.writing_id:l?"lesson/"+set.lesson_id:"review","back"),title(set.source==="groq"?"ESERCIZI · GROQ":"ESERCIZI · OFFLINE",set.writing_id?"Verifica in un nuovo contesto":set.daily_plan_id?"Pratica breve e ripasso":l?.title||"Recupero del lessico"),
       set.training&&p("Blocco "+(flow.page+1)+" di "+flow.pages+" · "+set.training.grammar_target+" esercizi di grammatica"+(set.training.recovery.length?" + "+set.training.recovery.length+" recuperi lessicali":""),"practice-step"),
-      set.training&&set.source==="groq"&&card(h("h2",{},blockGoal(flow.page).title),p(blockGoal(flow.page).goal)),
+      set.training&&set.source==="groq"&&card(h("h2",{},assessment?"Perché questo blocco":blockGoal(flow.page).title),p(assessment?.reason||blockGoal(flow.page).goal),assessment&&p(assessment.goal)),
       set.training?.parent_id&&card(p("Riprova guidata dopo la spiegazione: le frasi sono nuove. I risultati restano separati dalle verifiche senza aiuti."),link("Torna alla sessione precedente","practice/"+set.training.parent_id,"text-link")),
       set.source==="local"&&set.items.some(it=>it.stem.startsWith("Scegli la forma corretta del verbo ("))&&card(p("Questa sessione conserva gli esercizi precedenti. È disponibile un nuovo allenamento con confronti di significato; le risposte già date restano salvate."),button("Apri il nuovo allenamento",()=>makeSession(set.lesson_id,[...grammarItems(set.lesson_id,state.sessions.length)]))),
       h("section",{class:"session-progress"},progressLabel,progressBar),
       done?card(h("h2",{},results.filter(r=>r.correct&&!r.disputed).length+"/"+results.filter(r=>!r.disputed).length+" corrette nelle risposte valutabili"),p(results.some(r=>r.assisted)?results.filter(r=>!r.assisted).length+" risposte senza aiuti · "+results.filter(r=>r.assisted).length+" con aiuto. Solo le prime contribuiscono ai risultati autonomi.":"Sessione senza suggerimenti, salvata nei tuoi progressi."),continueButton):flow.checked?card(h("h2",{},blockResults.filter(r=>r.correct&&!r.disputed).length+"/"+blockResults.filter(r=>!r.disputed).length+" corrette nel blocco"),p("Leggi la forma e il perché sotto ogni risposta. Poi prosegui oppure esercita di nuovo i punti da rivedere.")):h("div",{class:"actions"},p("Risposte salvate mentre scrivi. Forma, soluzione e spiegazione compaiono dopo la verifica.","muted"),p("Per un aiuto mirato usa il pulsante sotto la singola domanda. Solo la risposta per cui chiedi aiuto sarà segnata come guidata.","small muted")),
-      locked&&card(h("h2",{},"Il prossimo passo"),p(adaptation.message)),
+      locked&&card(h("h2",{},"Il prossimo passo"),p(set.adaptive_plans?.length?"Il prossimo blocco userà queste risposte insieme al pretest e ai risultati precedenti. Groq spiegherà quale competenza consolidare o rendere più impegnativa.":adaptation.message)),
       set.remediation_focus?.length>0&&card(h("h2",{},"Prima chiarisci l’errore"),set.remediation_focus.map(f=>h("div",{},p(f.stem),p("Avevi scritto: "+f.answer),p("Riferimento: "+f.reference,"formula"),f.diagnosis&&p(f.diagnosis),p(f.why))),p("Ora applica la stessa regola alle frasi diverse qui sotto.","small muted")),
       set.remediation_parent&&p("Riprova guidata: il risultato originale resta salvato. Alla fine puoi tornare al blocco di partenza.","small muted"),
       form,
