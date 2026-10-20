@@ -74,8 +74,8 @@ export function grammarItems(lessonId, variation=0) {
   return bank.map((row,i)=>({id:lessonId+"-offline-"+i,kind:row[0].startsWith("Correggi")?"error_correction":"completion",skill:"form",stem:row[0],answer:row[1],accept:row.slice(1),options:[],why:"Soluzione: "+row[1]+". "+(LESSONS.find(l=>l.id===lessonId)?.pitfall||""),origin:"local"})).sort((a,b)=>variation%2?a.id.localeCompare(b.id):b.id.localeCompare(a.id));
 }
 // Esercizi per le sessioni: quelli storici più la banca per competenza (lesson-bank.js).
-// La banca alterna i tipi (significato o scelta, uso o ordine, forma): tre domande consecutive
-// coprono sempre significato e uso. Nelle lezioni brevi si aggiunge in coda; in quelle lunghe
+// La banca alterna i tipi (significato o scelta, uso o ordine, forma) finché ce ne sono di
+// ciascuno. Nelle lezioni brevi si aggiunge in coda; in quelle lunghe
 // prende il posto di alcune varianti, distribuita fino alla fine, così la sessione resta della
 // stessa lunghezza e anche le ultime 12 risposte (quelle che decidono i progressi) sono complete.
 const GROUP=s=>s==="meaning"||s==="tense_choice"?0:s==="use"||s==="word_order"?1:2;

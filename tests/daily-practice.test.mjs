@@ -23,7 +23,7 @@ test('only due studied topics are mixed, with their own attribution',()=>{
 test('a finite short bank is not padded with duplicates and repeats are disclosed',()=>{
   const s=freshState(),p={...plan,lesson_id:'sentence'};const first=dailyPractice(s,p,timestamp);
   s.attempts=first.items.map(i=>({stem:i.stem,lesson_id:'sentence',assisted:true}));
-  const second=dailyPractice(s,p,timestamp);assert.equal(second.repeated,second.items.length);
+  const second=dailyPractice(s,p,timestamp),seen=new Set(first.items.map(i=>i.stem));assert.equal(second.repeated,second.items.filter(i=>seen.has(i.stem)).length);assert.ok(second.repeated>0);
   assert.equal(new Set(second.items.map(i=>i.stem)).size,second.items.length);
 });
 test('writing provides communicative facts, changes scenario and avoids mandated tense everywhere',()=>{

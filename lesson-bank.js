@@ -19,18 +19,19 @@ export const LESSON_BANK={
       O("form","Scrivi solo la parola mancante: The two guards ___ at the gate now. (be)","are",[],"Soggetto plurale: are."),
       C("meaning","Scegli che cosa significa: The officer called the witness.",["L'agente ha chiamato il testimone.","Il testimone ha chiamato l'agente.","L'agente è stato chiamato dal testimone."],"L'agente ha chiamato il testimone.","In inglese il soggetto viene prima del verbo e l'oggetto dopo: officer è chi chiama."),
       C("meaning","Scegli chi compie l'azione: The visitors were met by a guide.",["i visitatori","una guida","nessuno dei due"],"una guida","Con il passivo chi compie l'azione è introdotto da by."),
-      C("tense_choice","Descrivi come ha letto il rapporto. Scegli la frase con l'ordine corretto delle parole.",["She carefully read the report.","She read carefully the report.","Carefully she the report read."],"She carefully read the report.","L'avverbio di modo non si mette tra verbo e oggetto."),
+      C("word_order","Descrivi come ha letto il rapporto. Scegli la frase con l'ordine corretto delle parole.",["She carefully read the report.","She read carefully the report.","Carefully she the report read."],"She carefully read the report.","L'avverbio di modo non si mette tra verbo e oggetto."),
       C("use","Devi scrivere un messaggio breve e chiaro al collega. Scegli la frase corretta.",["The meeting starts at nine.","The meeting start at nine.","Starts the meeting at nine."],"The meeting starts at nine.","Soggetto + verbo con -s + complemento: la frase base."),
       C("use","In un rapporto vuoi dire chi ha trovato la chiave. Scegli la frase corretta.",["A cleaner found the key.","Found a cleaner the key.","The key found a cleaner."],"A cleaner found the key.","Chi agisce (a cleaner) va prima del verbo; la cosa trovata dopo."),
       O("use","Correggi l'errore e riscrivi tutta la frase: Is ready the car.","The car is ready",[],"In una frase affermativa il soggetto viene prima del verbo."),
       O("word_order","Metti le parole in ordine e scrivi la frase: the parcel / delivered / the courier","The courier delivered the parcel",[],"Soggetto, verbo, oggetto."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: on Fridays / we / the files / archive","We archive the files on Fridays",["On Fridays we archive the files"],"Soggetto, verbo, oggetto e poi il tempo (oppure il tempo all'inizio).")
+      O("word_order","Metti le parole in ordine e scrivi la frase: on Fridays / we / the files / archive","We archive the files on Fridays",["On Fridays we archive the files"],"Soggetto, verbo, oggetto e poi il tempo (oppure il tempo all'inizio)."),
+      C("meaning","Scegli che cosa significa: The guard stopped the car.",["la guardia ha fermato l'auto","l'auto ha fermato la guardia","la guardia si è fermata dentro l'auto"],"la guardia ha fermato l'auto","Soggetto prima del verbo, oggetto dopo: l'ordine decide chi fa che cosa.")
     ],
     check:[
       O("form","Scrivi solo la parola mancante: My brother ___ near the station. (live)","lives",[],"Terza persona singolare: -s."),
       O("form","Scrivi solo la parola mancante: The reports ___ on the desk. (be)","are",[],"Soggetto plurale: are."),
       C("meaning","Scegli che cosa significa: The dog followed the boy.",["Il cane ha seguito il ragazzo.","Il ragazzo ha seguito il cane.","Il cane e il ragazzo si sono seguiti."],"Il cane ha seguito il ragazzo.","Il primo nome è il soggetto."),
-      C("tense_choice","Parli di un'abitudine. Scegli la frase con l'ordine corretto delle parole.",["We often visit the museum.","We visit often the museum.","Often we the museum visit."],"We often visit the museum.","Often va prima del verbo principale."),
+      C("word_order","Parli di un'abitudine. Scegli la frase con l'ordine corretto delle parole.",["We often visit the museum.","We visit often the museum.","Often we the museum visit."],"We often visit the museum.","Often va prima del verbo principale."),
       C("use","Vuoi avvisare che l'ufficio è chiuso. Scegli la frase corretta.",["The office is closed today.","Is closed the office today.","The office closed is today."],"The office is closed today.","Soggetto + be + aggettivo."),
       O("word_order","Metti le parole in ordine e scrivi la frase: the documents / signed / the manager","The manager signed the documents",[],"Soggetto, verbo, oggetto.")
     ]
@@ -482,8 +483,8 @@ export const LESSON_BANK={
       O("form","Scrivi solo le parole mancanti, con will: I'm cold. I ___ the window. (close)","will close",[],"Decisione presa adesso: will."),
       C("meaning","Scegli che cosa significa: I'm meeting the director at three.",["è un appuntamento già fissato","è una decisione presa ora","è una previsione incerta"],"è un appuntamento già fissato","Present continuous: accordo fissato."),
       C("meaning","Scegli che cosa significa: The train leaves at 6:15.",["un orario ufficiale","un'intenzione personale","una previsione"],"un orario ufficiale","Present simple per gli orari."),
-      C("tense_choice","Hai già deciso ieri. Scegli la forma corretta: I ___ a new laptop next week.",["am going to buy","will buy","buy"],"am going to buy","Intenzione già decisa: going to."),
-      C("tense_choice","Scegli la forma corretta: I think it ___ a good meeting.",["will be","is being","is"],"will be","Opinione sul futuro: will."),
+      C("tense_choice","Hai deciso ieri ed è la tua intenzione. Scegli la forma più adatta: I ___ a new laptop next week.",["am going to buy","will buy","buy"],"am going to buy","Intenzione già decisa: going to."),
+      C("tense_choice","Scegli la forma corretta: I think tomorrow's meeting ___ useful.",["will be","is being","was being"],"will be","Opinione sul futuro: will."),
       C("use","Il telefono squilla e ti offri di rispondere. Scegli la frase corretta.",["I'll answer it.","I'm going to answer it since yesterday.","I answer it tomorrow."],"I'll answer it.","Offerta immediata: will."),
       C("use","Comunichi un piano concordato per sabato. Scegli la frase corretta.",["We're visiting the base on Saturday.","We visit the base on Saturday maybe.","We'll visiting the base on Saturday."],"We're visiting the base on Saturday.","Accordo fissato: present continuous."),
       O("word_order","Metti le parole in ordine e scrivi la frase: going to / we / move / are / next year","We are going to move next year",["Next year we are going to move"],"Be going to + verbo base."),
@@ -761,7 +762,7 @@ export const LESSON_BANK={
     train:[
       C("meaning","Scegli che cosa significa: It's getting dark.",["sta diventando buio","è buio da ore","prendi il buio"],"sta diventando buio","Get + aggettivo = diventare."),
       C("meaning","Scegli che cosa significa: The milk has gone off.",["il latte è andato a male","il latte è finito","il latte è stato bevuto"],"il latte è andato a male","Go off = andare a male."),
-      C("tense_choice","Scegli la forma corretta: What time did you ___ home last night?",["get","go to","arrive"],"get","Get home = arrivare a casa (senza to)."),
+      C("tense_choice","Scegli la forma corretta: What time did you ___ home last night?",["get","go to","arrive to"],"get","Get home = arrivare a casa (senza to)."),
       C("use","Dici che ti sei perso in città. Scegli la frase corretta.",["I got lost in the old town.","I went lost in the old town.","I got losing in the old town."],"I got lost in the old town.","Get lost = perdersi."),
       C("use","Dici che la situazione sta peggiorando. Scegli la frase corretta.",["The situation is getting worse.","The situation is going worse.","The situation gets worser."],"The situation is getting worse.","Get worse = peggiorare."),
       O("word_order","Metti le parole in ordine e scrivi la frase: to work / got / late / she","She got to work late",[],"Get to = arrivare a."),
@@ -855,7 +856,7 @@ export const LESSON_BANK={
   "adjective-patterns":{
     train:[
       C("meaning","Scegli che cosa significa: the rich",["le persone ricche","una cosa ricca","il più ricco"],"le persone ricche","The + aggettivo = gruppo di persone."),
-      C("tense_choice","Descrivi un tavolo. Scegli l'ordine corretto degli aggettivi.",["a large old wooden table","a wooden old large table","an old wooden large table"],"a large old wooden table","Dimensione, età, materiale."),
+      C("word_order","Descrivi un tavolo. Scegli l'ordine corretto degli aggettivi.",["a large old wooden table","a wooden old large table","an old wooden large table"],"a large old wooden table","Dimensione, età, materiale."),
       C("tense_choice","Scegli la forma corretta: She is ___.",["alone","an alone woman","alone woman"],"alone","Alone non va davanti al nome."),
       C("use","Descrivi una borsa smarrita nel rapporto. Scegli la frase corretta.",["a small black leather bag","a black small leather bag","a leather small black bag"],"a small black leather bag","Dimensione, colore, materiale."),
       C("use","Descrivi un collega addormentato. Scegli la frase corretta.",["The guard was asleep.","The guard was an asleep guard.","The asleep guard was."],"The guard was asleep.","Asleep si usa dopo il verbo."),
@@ -866,7 +867,7 @@ export const LESSON_BANK={
       O("form","Scrivi solo la parola mancante: The ___ need more support. (poor, gruppo di persone)","poor",[],"The poor = i poveri."),
       O("form","Scrivi solo le parole mancanti in ordine: a ___ car (new / red)","new red",[],"Età prima del colore."),
       C("meaning","Scegli che cosa significa: The injured were taken to hospital.",["i feriti sono stati portati in ospedale","il ferito ha portato altri in ospedale","l'ospedale era danneggiato"],"i feriti sono stati portati in ospedale","The + aggettivo: persone."),
-      C("tense_choice","Descrivi una casetta. Scegli l'ordine corretto degli aggettivi.",["a lovely little cottage","a little lovely cottage","a cottage little lovely"],"a lovely little cottage","Opinione prima della dimensione."),
+      C("word_order","Descrivi una casetta. Scegli l'ordine corretto degli aggettivi.",["a lovely little cottage","a little lovely cottage","a cottage little lovely"],"a lovely little cottage","Opinione prima della dimensione."),
       C("use","Descrivi un oggetto trovato. Scegli la frase corretta.",["a round metal box","a metal round box","a box round metal"],"a round metal box","Forma prima del materiale."),
       O("word_order","Metti le parole in ordine e scrivi la frase: awake / still / was / she","She was still awake",[],"Awake dopo il verbo.")
     ]
@@ -989,7 +990,7 @@ export const LESSON_BANK={
     train:[
       C("meaning","Scegli che cosa significa: I forgot to call her.",["non l'ho chiamata","l'ho chiamata ma non lo ricordo","la chiamo sempre"],"non l'ho chiamata","Forget + to: azione non fatta."),
       C("meaning","Scegli che cosa significa: I'll never forget meeting her.",["ricorderò sempre il nostro incontro","dimenticherò di incontrarla","non l'ho mai incontrata"],"ricorderò sempre il nostro incontro","Forget + -ing: ricordo del passato."),
-      C("tense_choice","La porta non si apre. Scegli la forma corretta: Try ___ it harder.",["pushing","to push","push"],"pushing","Try + -ing = fare una prova."),
+      C("tense_choice","La stampante non funziona: suggerisci una prova. Scegli la forma corretta: Try ___ it off and on again.",["turning","turn","to turning"],"turning","Try + -ing = fare una prova per vedere se funziona."),
       C("use","Ricordi a un collega una cosa da fare. Scegli la frase corretta.",["Remember to lock the office.","Remember locking the office.","Remember lock the office."],"Remember to lock the office.","Remember + to: compito futuro."),
       C("use","Dici che hai provato con tutte le forze ad aprire il file. Scegli la frase corretta.",["I tried to open the file, but I couldn't.","I tried opening the file, but I couldn't to.","I tried open the file, but I couldn't."],"I tried to open the file, but I couldn't.","Try + to = sforzarsi."),
       O("word_order","Metti le parole in ordine e scrivi la frase: stopped / she / to answer / the phone","She stopped to answer the phone",[],"Stop + to = fermarsi per."),
@@ -1230,7 +1231,7 @@ export const LESSON_BANK={
       O("form","Scrivi solo la parola mancante: The test was hard. ___, most students passed. (tuttavia)","However",["Nevertheless"],"Contrasto: however."),
       C("meaning","Scegli che cosa esprime therefore in: The road was closed; therefore, we used another route.",["una conseguenza","un esempio","un contrasto"],"una conseguenza","Therefore = quindi."),
       C("meaning","Scegli che cosa esprime for instance.",["un esempio","una conclusione","un contrasto"],"un esempio","For instance = per esempio."),
-      C("tense_choice","Scegli la punteggiatura corretta.",["The costs are high; however, the benefits are clear.","The costs are high, however the benefits are clear.","The costs are high however, the benefits are clear."],"The costs are high; however, the benefits are clear.","However tra due frasi: punto e virgola prima, virgola dopo."),
+      C("form","Scegli la punteggiatura corretta.",["The costs are high; however, the benefits are clear.","The costs are high, however the benefits are clear.","The costs are high however, the benefits are clear."],"The costs are high; however, the benefits are clear.","However tra due frasi: punto e virgola prima, virgola dopo."),
       C("tense_choice","Scegli il connettivo corretto: ___, I would recommend the second option.",["In conclusion","For example","Moreover than"],"In conclusion","Conclusione: in conclusion."),
       C("use","Nel testo argomentativo aggiungi un secondo argomento. Scegli la frase più adatta.",["Furthermore, the new system saves time.","But furthermore, the new system saves time.","Furthermore the new system, saves time."],"Furthermore, the new system saves time.","Furthermore + virgola."),
       C("use","Introduci un'obiezione in modo formale. Scegli la frase più adatta.",["On the other hand, the cost is considerable.","In the other hand, the cost is considerable.","On the other side hand, the cost is considerable."],"On the other hand, the cost is considerable.","On the other hand."),
