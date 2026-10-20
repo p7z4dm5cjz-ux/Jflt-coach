@@ -40,7 +40,7 @@ async function loadHealth(settings,fetcher,token,address,force=false) {
   healthPending={address,token,fetcher,promise};
   return promise;
 }
-const VERIFY_TASKS=["exercises","reading_test"];
+const VERIFY_TASKS=["exercises","reading_test","writing_compare"];
 // Stessa release = stessa versione principale e secondaria (1.9.x): una correzione che
 // cambia solo i contenuti dell'app non blocca il tutor mentre Cloudflare pubblica il Worker.
 const release=v=>String(v||"").split(".").slice(0,2).join(".");

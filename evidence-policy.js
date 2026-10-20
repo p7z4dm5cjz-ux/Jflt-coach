@@ -1,6 +1,9 @@
 import {normal} from './answer-normal.js';
+import {progressDecision} from './contract.js';
 export const PRACTICE_SKILLS=['form','meaning','tense_choice','word_order','use'];
-export const practiceSkill=item=>PRACTICE_SKILLS.includes(item?.skill)?item.skill:item?.skill==='choose'?'tense_choice':item?.skill==='recognise'?'meaning':/riordin|parole in ordine/i.test(item?.stem||'')?'word_order':'form';
+// Un riordino resta un riordino anche se la banca lo ha etichettato come «form».
+const WORD_ORDER=/riordin|parole in ordine/i;
+export const practiceSkill=item=>WORD_ORDER.test(item?.stem||'')&&(!item?.skill||item.skill==='form')?'word_order':PRACTICE_SKILLS.includes(item?.skill)?item.skill:item?.skill==='choose'?'tense_choice':item?.skill==='recognise'?'meaning':'form';
 export function reliableItem(item,source){
  return !item?.doubt&&!['unchecked','doubt'].includes(item?.check)&&(item?.kind==='retrieval'||(item?.origin||source)!=='groq'||['confirmed','extended'].includes(item?.check));
 }
@@ -19,14 +22,5 @@ export function practiceEvidence(state,lessonId){
  }
  return rows;
 }
-export function progression(rows){
- const groups=new Map();for(const r of rows){if(!groups.has(r.block_id))groups.set(r.block_id,[]);groups.get(r.block_id).push(r);}
- const blocks=[...groups.values()].filter(rs=>rs.length===6&&rs.every(r=>r.block_complete));
- const latest=blocks.at(-1)||[],window=blocks.slice(-2).flat();
- const correct=rs=>rs.filter(r=>r.correct&&!r.assisted).length;
- const can_advance=latest.length===6&&latest.every(r=>!r.assisted)&&correct(latest)>=5;
- const skills=new Set(window.filter(r=>r.correct&&!r.assisted).map(r=>r.skill));
- const contexts=new Set(window.map(r=>r.context_id||r.stem)).size;
- const ready=contexts>=8&&window.length===12&&window.every(r=>!r.assisted)&&correct(window)>=10&&skills.has('form')&&(skills.has('meaning')||skills.has('tense_choice'))&&(skills.has('use')||skills.has('word_order'));
- return {can_advance,ready,latest,window,blocks:blocks.length};
-}
+// La decisione vera sta in contract.js (condivisa con il Worker): qui solo l'adattatore.
+export function progression(rows){return progressDecision(rows);}

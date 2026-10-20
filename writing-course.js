@@ -1,5 +1,5 @@
 import {now,uid,countWords,localDay} from "./engine.js";
-import {WRITING_UNITS,courseAssignment} from "./writing-curriculum.js";
+import {WRITING_UNITS,courseAssignment,assignmentIndex,freshAssignmentsLeft} from "./writing-curriculum.js";
 import {validateReply,sanitizeCoach} from "./contract.js";
 export function newCourse(unitId) {
   if(!WRITING_UNITS.some(u=>u.id===unitId))throw new Error("Percorso di scrittura non riconosciuto.");
@@ -21,8 +21,8 @@ export function courseRequest(course,mode,question="") {
     if(countWords(text)<(stage===1?6:15))throw new Error("Scrivi un tentativo prima di chiedere la revisione.");
     if(stage===1&&text.split(/\n+/).filter(s=>s.trim()).length!==3)throw new Error("Scrivi tre frasi, una per riga.");
   }
-  const assignment=courseAssignment(unit,stage,course.rounds[stage]);
-  return {criteria_version:1,unit_id:unit.id,type:unit.type,stage,round:course.rounds[stage],mode,topic:assignment.details_it,text:course.drafts[stage],question:question.trim(),...(course.grammar_lesson_id?{lesson_id:course.grammar_lesson_id}:{})};
+  const prior=stage===5?course.rounds[4]+1:0,task=assignmentIndex(stage,course.rounds[stage],prior),assignment=unit.tasks[task];
+  return {criteria_version:1,unit_id:unit.id,type:unit.type,stage,round:course.rounds[stage],task,mode,topic:assignment.details_it,text:course.drafts[stage],question:question.trim(),...(course.grammar_lesson_id?{lesson_id:course.grammar_lesson_id}:{})};
 }
 export function addCourseReview(course,mode,result,question="") {
   validateReply("writing_coach",result);
@@ -45,7 +45,8 @@ export function advanceCourse(course,timestamp=Date.now()) {
 }
 export function newCourseRound(course) {
   if(course.stage<4||course.completed_at)throw new Error("La nuova consegna è disponibile nella prova autonoma.");
-  if(course.rounds[course.stage]>=1000)throw new Error("Inizia un nuovo percorso per continuare l'allenamento.");
+  const unit=WRITING_UNITS.find(u=>u.id===course.unit_id);
+  if(unit&&!freshAssignmentsLeft(unit,course))throw new Error("Hai già usato tutte le consegne nuove di questa unità: per un'altra prova autonoma inizia un'altra unità di scrittura.");
   if(course.drafts[course.stage]){course.archives??=[];course.archives.push({stage:course.stage,round:course.rounds[course.stage],text:course.drafts[course.stage],created_at:now()});}
   course.rounds[course.stage]++;course.drafts[course.stage]="";
 }

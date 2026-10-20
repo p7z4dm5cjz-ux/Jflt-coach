@@ -1,3 +1,12 @@
+# Revisione 1.12.1: avanzamento coerente e scrittura
+
+- **Una sola decisione sull'avanzamento** (`progressDecision` in `contract.js`), usata da interfaccia, profilo, percorso e Worker sulle stesse 12 risposte. Per aumentare la difficoltà: almeno 5 corrette sulle ultime 6 risposte verificate, senza aiuti. Per l'autonomia: almeno 10 su 12, 8 contesti, forma + significato/scelta del tempo + uso/ordine. Un errore in un blocco recente, anche non ancora verificato, blocca l'avanzamento: prima, dopo due blocchi riusciti, cinque errori non cambiavano l'indicazione dell'app mentre il Worker rifiutava.
+- **Prove anche da sessioni brevi o miste:** le risposte verificate contano in finestra mobile, senza richiedere gruppi esatti di sei della stessa lezione.
+- **Scrittura:** le prove autonome dei passi 4 e 5 usano consegne sempre nuove finché ce ne sono (prima la terza ripeteva la prima); poi l'app indica di passare a un'altra unità. Il Worker riceve l'indice esatto della consegna.
+- **Esercizi di trasferimento** del confronto bozza/riscrittura: passano dal controllo automatico alla cieca e, se confermati, contano come prove (prima erano tutti esclusi).
+- I riordini della banca locale sono classificati come «ordine delle parole».
+- Ancora aperti: esercizi locali da ampliare (competenze significato/uso, lezioni con 2 o 6 esercizi) e domande di verifica riservate per le 87 lezioni senza banca dedicata.
+
 # Revisione 1.12.0 — progressione e affidabilità
 
 - Livello A1–C1: sequenza completa; basi recuperate quando emergono errori, non al termine delle quattro lezioni iniziali. Fasce didattiche, non certificazioni CEFR.

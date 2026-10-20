@@ -77,16 +77,18 @@ export function newCheck(state,priorities,lessonId=null,timestamp=Date.now()){
  const seenPractice=new Set((state.sessions||[]).flatMap(s=>s.items).map(i=>normal(i.stem)));
  return {practice_reused_ids:items.filter(i=>seenPractice.has(normal(i.stem))).map(i=>i.id),id:"check-"+crypto.randomUUID(),lesson_id:lessonId,item_ids:items.map(i=>i.id),reused_ids:items.filter(i=>used.has(i.id)).map(i=>i.id),answers:{},created_at:new Date(timestamp).toISOString(),completed_at:null};
 }
-// Un'unica regola per «senza aiuti» e «mantenimento», usata da classifica, scheda della lezione
-// e progressi: contano le ultime due sessioni intere, non un numero fisso di risposte.
+// Un'unica regola per «senza aiuti» e «mantenimento», la stessa di profilo e Worker
+// (progressDecision in contract.js): ultime 6 risposte verificate per «da confermare», ultime 12
+// per il mantenimento; un errore più recente le annulla.
 export function practiceWindow(state,id,timestamp=Date.now()){
- const rows=practiceEvidence(state,id),progress=progression(rows),all=rows.filter(a=>!a.assisted),window=progress.window.filter(a=>!a.assisted);
- const lastSession=rows.at(-1)?.session_id,latest=all.filter(a=>a.session_id===lastSession),session=(state.sessions||[]).find(s=>s.id===lastSession);
+ const rows=practiceEvidence(state,id),progress=progression(rows),all=rows.filter(a=>!a.assisted);
+ const latest=progress.latest,window=progress.window.filter(a=>!a.assisted);
  const rate=list=>list.length?list.filter(a=>a.correct).length/list.length:null;
- const goodSession=!!session?.completed_at&&latest.length>=6&&rows.filter(a=>a.session_id===lastSession).every(a=>!a.assisted)&&rate(latest)>=5/6;
- const independent=progress.ready,last=Math.max(0,...latest.map(a=>Date.parse(a.date)||0));
+ // «Da confermare» solo a sessione conclusa: un blocco riuscito in una sessione a metà non basta.
+ const lastSession=(state.sessions||[]).find(x=>x.id===latest.at(-1)?.session_id);
+ const goodSession=progress.can_advance&&!!lastSession?.completed_at,independent=progress.ready,last=Math.max(0,...latest.map(a=>Date.parse(a.date)||0));
  const due=(independent||goodSession)&&last>0&&timestamp-last>=3*86400000;
- return {all,window,latest,accuracy:rate(window),latestRate:rate(latest),errors:latest.filter(a=>!a.correct).length,independent,goodSession,due,can_advance:progress.can_advance};
+ return {all,window,latest,accuracy:rate(window),latestRate:rate(latest),errors:progress.errors+progress.pending_errors,independent,goodSession,due,can_advance:progress.can_advance,missing:progress.missing};
 }
 export function lessonEvidence(state,id,timestamp=Date.now()){
  const checks=(state.grammar_checks||[]).filter(c=>c.completed_at&&checkItems(c).some(i=>i.lesson_id===id)).sort((a,b)=>Date.parse(a.completed_at)-Date.parse(b.completed_at));

@@ -8,7 +8,7 @@ export function validateInput(task,d) {
   if(task==="exercises"&&(!str(d.lesson_id,100)||!arr(d.terms||[],3)))throw new Error("Manca una lezione valida.");
   if(task==="grammar_explain"&&(!str(d.lesson_id,100)||d.question!==undefined&&(typeof d.question!=="string"||d.question.length>500)))throw new Error("Manca la lezione o la domanda è troppo lunga.");
   if(task==="writing_coach") {
-    if(!["report","email","argument"].includes(d.type)||!str(d.unit_id,100)||!Number.isInteger(d.stage)||d.stage<0||d.stage>5||!Number.isInteger(d.round)||d.round<0||d.round>1000||!["hint","review"].includes(d.mode)||!str(d.topic,2000)||typeof d.text!=="string"||d.text.length>6000||d.mode==="review"&&!str(d.text,6000)||typeof d.question!=="string"||d.question.length>500)throw new Error("Passo del percorso o testo non valido.");
+    if(!["report","email","argument"].includes(d.type)||!str(d.unit_id,100)||!Number.isInteger(d.stage)||d.stage<0||d.stage>5||!Number.isInteger(d.round)||d.round<0||d.round>1000||!["hint","review"].includes(d.mode)||!str(d.topic,2000)||typeof d.text!=="string"||d.text.length>6000||d.mode==="review"&&!str(d.text,6000)||typeof d.question!=="string"||d.question.length>500||d.task!==undefined&&(!Number.isInteger(d.task)||d.task<0||d.task>9))throw new Error("Passo del percorso o testo non valido.");
   }
   if(["writing_review","writing_compare"].includes(task)&&(!["report","email","argument"].includes(d.type)||!str(d.topic,2000)||!str(d.text,12000)))throw new Error("Mancano consegna o testo dello scritto.");
   if(["writing_review","writing_coach"].includes(task)&&d.lesson_id!==undefined&&!str(d.lesson_id,100))throw new Error("Riferimento alla lezione non valido.");
@@ -198,13 +198,32 @@ export function validateLearner(p,lessonId){
  for(const s of [...p.skills,...(p.global_skills||[])])if(!ADAPTIVE_SKILLS.includes(s.skill)||!["observations","independent_correct","errors","assisted"].every(k=>Number.isInteger(s[k])&&s[k]>=0))throw new Error("Competenze del profilo non valide.");
  return p;
 }
+// Decisione unica sull'avanzamento, usata da interfaccia, profilo e Worker sugli stessi dati.
+// rows: risposte di pratica in ordine cronologico ({correct, assisted, block_complete, skill,
+// context_id|stem, session_id|block_id}). Contano le risposte già verificate (block_complete),
+// in finestre mobili: ultime 6 per aumentare la difficoltà, ultime 12 (almeno 8 contesti e tre competenze) per l'autonomia,
+// anche da sessioni brevi o miste; la tenuta nel tempo la controllano le verifiche distanziate. Un errore in un blocco recente non ancora verificato blocca
+// comunque l'avanzamento: le prove recenti prevalgono su quelle vecchie.
+export const PROGRESS_SKILLS=["form","meaning","tense_choice","word_order","use"];
+export function progressDecision(rows){
+ // Si decide sempre sulle ultime 12 risposte: sono anche le prove inviate al Worker, che
+ // ripete lo stesso calcolo e arriva per forza allo stesso risultato.
+ const recent=rows.slice(-12),done=recent.filter(r=>r.block_complete),lastDone=recent.findLastIndex(r=>r.block_complete);
+ const pending=recent.slice(lastDone+1).filter(r=>!r.block_complete),pendingErrors=pending.filter(r=>!r.correct||r.assisted).length;
+ const latest=done.slice(-6),window=done.slice(-12),good=rs=>rs.filter(r=>r.correct&&!r.assisted).length;
+ const can_advance=!pendingErrors&&latest.length===6&&latest.every(r=>!r.assisted)&&good(latest)>=5;
+ const skills=new Set(window.filter(r=>r.correct&&!r.assisted).map(r=>r.skill));
+ const contexts=new Set(window.map(r=>r.context_id||r.stem)).size;
+ const coverage=skills.has("form")&&(skills.has("meaning")||skills.has("tense_choice"))&&(skills.has("use")||skills.has("word_order"));
+ const ready=can_advance&&window.length===12&&window.every(r=>!r.assisted)&&good(window)>=10&&contexts>=8&&coverage;
+ const missing=[window.length<12&&"risposte verificate",!coverage&&"competenze",good(window)<10&&"risposte corrette"].filter(Boolean);
+ return {can_advance,ready,latest,window,pending_errors:pendingErrors,errors:latest.filter(r=>!r.correct).length,missing,decision_rows:recent};
+}
 export const ASSESSMENT_SCHEMA=replyObject({mode:{type:"string",enum:["diagnose","consolidate","hold","advance"]},focus:{type:"string",enum:ADAPTIVE_SKILLS},reason:replyText(700),goal:replyText(500),evidence_ids:replyList(replyText(200),"Da zero a 8 id realmente presenti in learner.evidence. Vuoto solo senza prove."),item_skills:replyList({type:"string",enum:ADAPTIVE_SKILLS},"Esattamente 6 competenze, una per esercizio nell'ordine.")});
 export const ADAPTIVE_EXERCISES_SCHEMA=replyObject({...REPLY_SCHEMAS.exercises.properties,assessment:ASSESSMENT_SCHEMA});
 export function validateAssessment(a,learner){
  if(!object(a)||!["diagnose","consolidate","hold","advance"].includes(a.mode)||!ADAPTIVE_SKILLS.includes(a.focus)||!str(a.reason,700)||!str(a.goal,500)||!arr(a.evidence_ids,8)||!a.evidence_ids.every(id=>str(id,200))||!arr(a.item_skills,6)||a.item_skills.length!==6||!a.item_skills.every(s=>ADAPTIVE_SKILLS.includes(s)))throw new Error("Valutazione adattiva incompleta.");
- if(learner){const ids=new Set(learner.evidence.map(e=>e.id));if(a.evidence_ids.some(id=>!ids.has(id))||ids.size&&!a.evidence_ids.length)throw new Error("Valutazione senza riscontro nelle risposte.");if(!ids.size&&a.mode!=="diagnose")throw new Error("Senza prove serve una verifica iniziale.");if(a.mode==='advance'){
- const rows=learner.evidence.filter(e=>e.source==='practice'),last=rows.at(-1)?.block_id,block=rows.filter(e=>e.block_id===last);
- if(!last||block.length!==6||block.some(e=>!e.block_complete||e.assisted)||block.filter(e=>e.correct).length<5)throw new Error("Servono almeno cinque risposte corrette su sei senza aiuti in un blocco completo per aumentare la difficoltà.");
- }}
+ if(learner){const ids=new Set(learner.evidence.map(e=>e.id));if(a.evidence_ids.some(id=>!ids.has(id))||ids.size&&!a.evidence_ids.length)throw new Error("Valutazione senza riscontro nelle risposte.");if(!ids.size&&a.mode!=="diagnose")throw new Error("Senza prove serve una verifica iniziale.");if(a.mode==='advance'&&!progressDecision(learner.evidence.filter(e=>e.source==='practice')).can_advance)throw new Error("Servono almeno cinque risposte corrette sulle ultime sei verificate, senza aiuti e senza errori più recenti, per aumentare la difficoltà.");
+ }
  return a;
 }

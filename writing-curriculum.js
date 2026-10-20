@@ -45,11 +45,19 @@ export const WRITING_UNITS=[
     tasks:[task("Una lista condivisa","Proponi una lista condivisa dei materiali prima della formazione: spiega un beneficio, fai un esempio, considera il tempo necessario per aggiornarla e suggerisci una prova di una settimana.",["Proposta e beneficio","Esempio concreto e limite di tempo","Prova di una settimana"]),task("Un calendario comune","Proponi un calendario comune dei turni: spiega un beneficio, fai un esempio, considera la riservatezza dei dati e suggerisci una prova di due settimane.",["Proposta e beneficio","Esempio e riservatezza","Prova di due settimane"]),task("Ripasso a coppie","Proponi un breve ripasso a coppie dopo il corso: dai un beneficio e un esempio, considera gli orari diversi e suggerisci una prova di tre incontri.",["Proposta e beneficio","Esempio e orari diversi","Prova di tre incontri"]),task("Cartella dei documenti","Proponi una cartella comune dei documenti: dai un beneficio e un esempio, considera il controllo delle versioni e suggerisci una prova di un mese.",["Proposta e beneficio","Esempio e controllo versioni","Prova di un mese"]),task("Incontro settimanale","Proponi un incontro breve ogni settimana: dai un beneficio e un esempio, considera il tempo dei partecipanti e suggerisci una prova di quattro settimane.",["Proposta e beneficio","Esempio e tempo dei partecipanti","Prova di quattro settimane"]),task("Feedback a fine corso","Proponi un modulo di feedback a fine corso: dai un beneficio e un esempio, considera l'anonimato e suggerisci una prova di due corsi.",["Proposta e beneficio","Esempio e anonimato","Prova di due corsi"]) ]}
 ];
 WRITING_UNITS.push(...BOOK_WRITING_UNITS);
-export function courseAssignment(unit,stage,round=0) {
-  const index=stage<4?0:stage===4?1+round%2:3+round%3;
-  return unit.tasks[index];
+// Consegne autonome senza ripetizioni: i passi 4 e 5 attingono dalla stessa riserva (tutte le
+// consegne tranne quella guidata), una dopo l'altra. prior = consegne già usate nel passo 4.
+export function assignmentIndex(stage,round=0,prior=1){return stage<4?0:stage===4?1+round:1+prior+round;}
+export function freshAssignmentsLeft(unit,course){
+  const last=unit.tasks.length-1,used=course.stage===4?1+course.rounds[4]:1+course.rounds[4]+1+course.rounds[5];
+  // nel passo 4 resta sempre almeno una consegna nuova per la conferma del passo 5
+  return Math.max(0,(course.stage===4?last-1:last)-used);
 }
-export function courseContext(unit,stage,round=0) {
-  const assignment=courseAssignment(unit,stage,round);
+export function courseAssignment(unit,stage,round=0,prior=1) {
+  return unit.tasks[assignmentIndex(stage,round,prior)];
+}
+export function courseContext(unit,stage,round=0,prior=1){return courseContextAt(unit,stage,assignmentIndex(stage,round,prior));}
+export function courseContextAt(unit,stage,index) {
+  const assignment=unit.tasks[index];
   return {unit_id:unit.id,type:unit.type,goal:unit.goal,stage:COURSE_STAGES[stage],assignment,requirements:stage===1?unit.sentence_steps:stage===2?[unit.paragraph_goal||"Un paragrafo pertinente con una conclusione coerente"]:assignment.required,focus:unit.focus,grammar:unit.grammar,references:unit.references||[],length_guidance:unit.ranges?.[stage]||"Lunghezza commisurata al passo, non all'esame",...(stage<4?{model:unit.model,outline:unit.outline}:{} )};
 }

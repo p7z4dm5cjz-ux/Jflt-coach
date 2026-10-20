@@ -4,10 +4,12 @@ import {grammarItems} from './practice-bank.js';
 import {normal} from './answer-normal.js';
 // Practical thresholds, not a calibrated assessment of language proficiency.
 export function blockAdaptation(state,set){
- const progress=progression(practiceEvidence(state,set.lesson_id).filter(r=>r.session_id===set.id));
- if(progress.can_advance)return {mode:'advance',message:'Almeno 5 risposte su 6 senza aiuti: puoi provare un confronto più impegnativo. Non significa aver concluso la lezione.'};
- const recent=progress.latest,errors=recent.filter(r=>!r.correct).length;
- return errors>=3?{mode:'consolidate',message:'Riprendi i punti deboli con nuovi contesti e un obiettivo alla volta.'}:{mode:'hold',message:'Mantieni la difficoltà: servono sei risposte valutabili senza aiuti e almeno cinque corrette per aumentarla.'};
+ // Stessa decisione di profilo e Worker: ultime risposte verificate della lezione, anche da
+ // sessioni diverse; un errore più recente non ancora verificato blocca l'aumento.
+ const progress=progression(practiceEvidence(state,set.lesson_id));
+ if(progress.can_advance)return {mode:'advance',message:'Almeno 5 delle ultime 6 risposte verificate senza aiuti: puoi provare un confronto più impegnativo. Non significa aver concluso la lezione.'};
+ const errors=progress.errors+progress.pending_errors;
+ return errors>=3?{mode:'consolidate',message:'Riprendi i punti deboli con nuovi contesti e un obiettivo alla volta.'}:{mode:'hold',message:'Mantieni la difficoltà: servono almeno cinque corrette sulle ultime sei risposte verificate, senza aiuti, per aumentarla.'};
 }
 export function localRetry(state,set,focus,count=6){
  const seen=new Set([...state.sessions.flatMap(s=>s.items),...set.items].map(i=>normal(i.stem)));

@@ -12,12 +12,15 @@ export function learnerProfile(state,lessonId){
  const p=placementProfile(state.placement),sessions=state.sessions||[];
  const index=new Map(sessions.flatMap(s=>s.items.map(i=>[s.id+'|'+i.id,i])));
  const facts=practiceEvidence(state,lessonId),progress=progression(facts);
- const rows=facts.map(a=>({id:a.id||a.session_id+'|'+a.item_id,source:'practice',skill:a.skill,stem:a.stem.slice(0,240),given:String(a.answer||'').slice(0,160),expected:a.expected.slice(0,160),correct:!!a.correct,assisted:!!a.assisted,date:a.date||null,block_id:a.block_id,block_complete:a.block_complete}));
+ const decisionRows=new Set(progress.decision_rows);
+ const rows=facts.filter(a=>decisionRows.has(a)).map(a=>({id:a.id||a.session_id+'|'+a.item_id,source:'practice',skill:a.skill,stem:a.stem.slice(0,240),given:String(a.answer||'').slice(0,160),expected:a.expected.slice(0,160),correct:!!a.correct,assisted:!!a.assisted,date:a.date||null,block_id:a.block_id,block_complete:a.block_complete}));
  const reviews=(state.attempts||[]).filter(a=>a.lesson_id===lessonId&&!a.disputed&&index.get(a.session_id+'|'+a.item_id)?.personal_review).slice(-2).map(a=>({id:a.id,source:'review',skill:skillOf(index.get(a.session_id+'|'+a.item_id)),stem:String(a.stem||'').slice(0,240),given:String(a.answer||'').slice(0,160),expected:'',correct:!!a.correct,assisted:true,date:a.date||null}));
  const pre=(p?.rows||[]).filter(r=>r.item.lessons.includes(lessonId)).map(r=>({id:'pretest:'+r.item.id,source:'pretest',skill:skillOf(r.item),stem:r.item.stem.slice(0,240),given:String(r.answer.value||'').slice(0,160),expected:r.item.answer.slice(0,160),correct:r.correct,assisted:!r.secure,date:state.placement.submitted_at}));
  const checks=(state.grammar_checks||[]).filter(c=>c.completed_at).flatMap(c=>checkResults(c).filter(i=>i.lesson_id===lessonId).map(i=>({id:c.id+':'+i.id,source:'check',skill:skillOf(i),stem:i.stem.slice(0,240),given:i.value.slice(0,160),expected:i.answer.slice(0,160),correct:i.correct,assisted:!!i.repeated||!!i.practice_bank,date:c.completed_at})));
- const evidence=[...[...pre,...checks,...reviews].slice(-4),...rows.slice(-12)];
- const skills=SKILLS.map(skill=>{const all=[...pre,...rows].filter(r=>r.skill===skill);return {skill,observations:all.length,independent_correct:all.filter(r=>r.correct&&!r.assisted).length,errors:all.filter(r=>!r.correct).length,assisted:all.filter(r=>r.assisted).length};});
+ // Massimo 16 prove: prima quelle su cui si decide l'avanzamento, poi pretest, verifiche e ripassi.
+ const others=[...pre,...checks,...reviews],evidence=[...(rows.length<16?others.slice(-Math.min(4,16-rows.length)):[]),...rows];
+ const allRows=facts.map(a=>({skill:a.skill,correct:!!a.correct,assisted:!!a.assisted}));
+ const skills=SKILLS.map(skill=>{const all=[...pre,...allRows].filter(r=>r.skill===skill);return {skill,observations:all.length,independent_correct:all.filter(r=>r.correct&&!r.assisted).length,errors:all.filter(r=>!r.correct).length,assisted:all.filter(r=>r.assisted).length};});
  const prior=sessions.filter(s=>s.lesson_id===lessonId).flatMap(s=>s.adaptive_plans||[]).at(-1)?.assessment;
  const lesson=LESSONS.find(l=>l.id===lessonId);
  const relatedIds=[...new Set([...(lesson?lessonMeta(lesson).prerequisites:[]),...({"future-going-to":["future-will","future-arrangements"]}[lessonId]||[])])].slice(0,4);

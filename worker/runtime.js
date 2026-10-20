@@ -1,7 +1,7 @@
 // Incorporato con contratto e libri in worker/index.js, autonomo al deploy.
 const MODELS=["openai/gpt-oss-120b","openai/gpt-oss-20b"];
 const DIAGNOSTICS_REVISION="groq-reply-v1";
-const PROMPT_REVISION="groq-adaptive-v13";
+const PROMPT_REVISION="groq-adaptive-v14";
 const FALLBACK_MODEL="openai/gpt-oss-20b";
 const TASK_INSTRUCTIONS={
   grammar_explain:[
@@ -159,7 +159,10 @@ export async function handle(request,env,fetcher=fetch) {
     else if(input.task==="writing_coach") {
       const unit=WRITING_COURSE_CONTEXT[input.data.unit_id],stage=unit?.stages[input.data.stage];
       if(!stage||unit.type!==input.data.type||input.data.stage===0&&input.data.mode==="review")return reply({message:"Percorso o passo non riconosciuto.",code:"course",request_id:requestId},400);
-      context={course:stage[input.data.round%stage.length],books:WRITING_CONTEXT[unit.type]};
+      // La consegna arriva come indice (task); le richieste precedenti senza task usano la vecchia corrispondenza.
+      const task=Number.isInteger(input.data.task)?input.data.task:input.data.stage<4?0:input.data.stage===4?1+input.data.round%2:3+input.data.round%3;
+      if(!stage[task])return reply({message:"Consegna non riconosciuta.",code:"course",request_id:requestId},400);
+      context={course:stage[task],books:WRITING_CONTEXT[unit.type]};
       if(input.data.lesson_id){const focus=LESSON_CONTEXT[input.data.lesson_id];if(!focus)return reply({message:"Lezione non riconosciuta.",code:"lesson",request_id:requestId},400);context={...context,focus};}
     }
     else if(input.task.startsWith("writing")){
@@ -214,9 +217,10 @@ export async function handle(request,env,fetcher=fetch) {
     if(input.task==="translate"&&result.translations.length!==input.data.paragraphs.length){diagnostics.stage="alignment";return reply(diagnosticFailure("La traduzione non ha lo stesso numero di paragrafi del testo. Riprova.","invalid_response",requestId,diagnostics),502);}
     if(input.task==="reading_test"){result=anchorTest(result,input.data.text);if(result.questions.length<4){diagnostics.stage="anchoring";return reply(diagnosticFailure("Groq ha proposto citazioni non presenti nel testo: la prova non è affidabile. Riprova.","invalid_response",requestId,diagnostics),502);}}
     let verification=null;
-    if(input.verify===true&&["exercises","reading_test"].includes(input.task)&&env.VERIFY!=="off"){
+    if(input.verify===true&&["exercises","reading_test","writing_compare"].includes(input.task)&&env.VERIFY!=="off"){
       diagnostics.stage="verification";
-      const list=input.task==="exercises"?result.items:result.questions;
+      // Gli esercizi di trasferimento del confronto bozza/riscrittura passano dallo stesso controllo.
+      const list=input.task==="exercises"?result.items:input.task==="writing_compare"?result.transfer.map(t=>({...t,kind:"completion",options:[]})):result.questions;
       let checked=null;const verifyController=new AbortController(),verifyTimer=setTimeout(()=>verifyController.abort(),30000);
       try{
         const v=await groqCall({messages:[{role:"system",content:VERIFY_PROMPT},{role:"user",content:JSON.stringify(verificationRequest(list,input.task==="reading_test"?input.data.text:null))}],response_format:{type:"json_schema",json_schema:{name:"jflt_verify",strict:true,schema:VERIFY_SCHEMA}},reasoning_effort:"medium",temperature:0,max_completion_tokens:3000},primary.used,verifyController.signal);
@@ -226,7 +230,7 @@ export async function handle(request,env,fetcher=fetch) {
       }catch{checked=null;}
       finally{clearTimeout(verifyTimer);}
       const applied=applyVerification(list,checked);
-      result=input.task==="exercises"?{...result,items:applied.items}:{...result,questions:applied.items};
+      result=input.task==="exercises"?{...result,items:applied.items}:input.task==="writing_compare"?{...result,transfer:applied.items.map(({kind,options,...t})=>t)}:{...result,questions:applied.items};
       verification=applied.summary;
     }
     diagnostics.stage="accepted";
