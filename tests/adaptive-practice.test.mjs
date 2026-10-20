@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {blockAdaptation,localRetry,replaceDoubts} from '../adaptive-practice.js';
-import {grammarItems} from '../practice-bank.js';
+import {grammarItems,lessonItems} from '../practice-bank.js';
 import {freshState} from '../engine.js';
 import {exerciseRequest} from '../practice-flow.js';
 const set={id:'s',lesson_id:'future-going-to',items:grammarItems('future-going-to'),training:{page:0,grammar_target:30,recovery:[],checked:[0]},answers:{}};
@@ -21,5 +21,5 @@ test('Doubtful AI output is replaced locally with audit context, finite exhauste
  const doubtful={...set.items[0],stem:'unconfirmed AI sentence',doubt:true,check_note:'ambiguous'};
  const r=replaceDoubts([doubtful,set.items[1]],set.lesson_id);
  assert.ok(r[0].replacement_note);assert.equal(r[0].doubt,undefined);assert.equal(r[0].replaced_item.stem,doubtful.stem);assert.equal(r[1],set.items[1]);assert.equal(doubtful.doubt,true);
- const all=Array.from({length:4},(_,v)=>grammarItems('sentence',v)).flat();assert.equal(replaceDoubts([doubtful],'sentence',all)[0],doubtful);
+ const all=Array.from({length:4},(_,v)=>lessonItems('sentence',v)).flat();assert.equal(replaceDoubts([doubtful],'sentence',all)[0],doubtful);
 });

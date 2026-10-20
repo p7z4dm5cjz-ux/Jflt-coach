@@ -1,6 +1,6 @@
 import {practiceEvidence,progression} from "./evidence-policy.js";
 import {negativeItems} from './negative-bank.js';
-import {grammarItems} from './practice-bank.js';
+import {lessonItems} from './practice-bank.js';
 import {normal} from './answer-normal.js';
 // Practical thresholds, not a calibrated assessment of language proficiency.
 export function blockAdaptation(state,set){
@@ -16,7 +16,7 @@ export function localRetry(state,set,focus,count=6){
  const ids=[...new Set(focus.map(i=>i.focus_lesson||set.lesson_id))],out=[];
  for(let variation=0;variation<8&&out.length<count;variation++)for(const id of ids){
   let pool;
-  if(id==="negatives"){try{pool=negativeItems(variation,{count:6,rules:[...new Set(focus.map(i=>i.rule).filter(Boolean))],exclude:[...seen]});}catch{pool=[];}}else pool=grammarItems(id,variation);
+  if(id==="negatives"){try{pool=negativeItems(variation,{count:6,rules:[...new Set(focus.map(i=>i.rule).filter(Boolean))],exclude:[...seen]});}catch{pool=[];}}else pool=lessonItems(id,variation);
   const candidates=pool.filter(i=>focus.some(f=>(f.focus_lesson||set.lesson_id)===id&&f.kind===i.kind&&(!f.rule||f.rule===i.rule)));
   for(const item of candidates){if(out.length>=count)break;const key=normal(item.stem);if(seen.has(key)||item.doubt)continue;seen.add(key);out.push({...item,focus_lesson:item.focus_lesson||id});}
  }
@@ -24,7 +24,7 @@ export function localRetry(state,set,focus,count=6){
 }
 export function replaceDoubts(items,lessonId,previous=[]){
  const seen=new Set([...previous,...items].map(i=>normal(i.stem))),pool=[];
- for(let v=0;v<4;v++)pool.push(...grammarItems(lessonId,v));
+ for(let v=0;v<4;v++)pool.push(...lessonItems(lessonId,v));
  return items.map(item=>{
   if(!item.doubt)return item;
   const candidate=pool.find(x=>!x.doubt&&!seen.has(normal(x.stem))&&(!x.focus_lesson||x.focus_lesson===lessonId));

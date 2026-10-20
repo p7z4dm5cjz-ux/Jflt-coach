@@ -32,7 +32,7 @@ test("Ripetere operazioni o cambiare il soggetto non certifica otto contesti",()
  assert.equal(lessonProgress(s,"past-simple").independent,false);assert.notEqual(recommendation(s).find(l=>l.id==="past-simple").status,"maintain");
 });
 test("240 domande di verifica su 30 nuclei sono distinte da pretest e allenamento",()=>{
- assert.equal(CHECK_ITEMS.filter(i=>!i.practice_bank).length,240);assert.equal(CHECK_LESSONS.length,117);assert.equal(new Set(CHECK_ITEMS.map(i=>i.id)).size,CHECK_ITEMS.length);
+ assert.equal(CHECK_ITEMS.filter(i=>!i.practice_bank&&!i.id.startsWith('check-bank')).length,240);assert.equal(CHECK_LESSONS.length,117);assert.equal(new Set(CHECK_ITEMS.map(i=>i.id)).size,CHECK_ITEMS.length);
  const stems=new Set([...QUESTIONS,...LESSONS.flatMap(l=>grammarItems(l.id))].map(i=>i.stem));
  for(const item of CHECK_ITEMS){if(!item.practice_bank)assert.ok(!stems.has(item.stem),item.id);for(const answer of item.accept)assert.ok(correct(item,answer));assert.equal(correct(item,"wrong answer"),false);}
 });

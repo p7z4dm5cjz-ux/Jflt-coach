@@ -2,6 +2,7 @@ import {LESSONS} from "./catalog.js";
 import {coreItems} from "./core-practice.js";
 import {negativeItems} from "./negative-bank.js";
 import {EXTENSION_DRILLS,extensionItems} from "./grammar-drills.js";
+import {bankTrainItems} from "./lesson-bank.js";
 // Esercizi originali; nessuna domanda copiata dal pretest o dai manuali.
 const rows = {
 sentence:[["Metti le parole in ordine e scrivi la frase: checked / the guard / the list","The guard checked the list"],["Scrivi solo ciò che manca: The guards ___ the lists daily. (check)","check"]],
@@ -71,5 +72,25 @@ export function grammarItems(lessonId, variation=0) {
   const bank=rows[lessonId];
   if(!bank)throw new Error("Lezione non disponibile.");
   return bank.map((row,i)=>({id:lessonId+"-offline-"+i,kind:row[0].startsWith("Correggi")?"error_correction":"completion",skill:"form",stem:row[0],answer:row[1],accept:row.slice(1),options:[],why:"Soluzione: "+row[1]+". "+(LESSONS.find(l=>l.id===lessonId)?.pitfall||""),origin:"local"})).sort((a,b)=>variation%2?a.id.localeCompare(b.id):b.id.localeCompare(a.id));
+}
+// Esercizi per le sessioni: quelli storici più la banca per competenza (lesson-bank.js).
+// La banca alterna i tipi (significato o scelta, uso o ordine, forma): tre domande consecutive
+// coprono sempre significato e uso. Nelle lezioni brevi si aggiunge in coda; in quelle lunghe
+// prende il posto di alcune varianti, distribuita fino alla fine, così la sessione resta della
+// stessa lunghezza e anche le ultime 12 risposte (quelle che decidono i progressi) sono complete.
+const GROUP=s=>s==="meaning"||s==="tense_choice"?0:s==="use"||s==="word_order"?1:2;
+function alternate(items){
+  const groups=[0,1,2].map(g=>items.filter(i=>GROUP(i.skill)===g)),out=[];
+  while(groups.some(g=>g.length))for(const g of groups)if(g.length)out.push(g.shift());
+  return out;
+}
+export function lessonItems(lessonId,variation=0){
+  const base=grammarItems(lessonId,variation),bank=alternate(bankTrainItems(lessonId));
+  if(!bank.length)return base;
+  const shift=Math.abs(variation)%bank.length,rotated=[...bank.slice(shift),...bank.slice(0,shift)];
+  if(base.length<12)return [...base,...rotated];
+  const out=[...base],n=rotated.length;
+  rotated.forEach((item,k)=>{out[Math.floor((k+1)*base.length/n)-1]=item;});
+  return out;
 }
 export const COVERED_LESSONS=[...Object.keys(rows),...Object.keys(EXTENSION_DRILLS),"negatives"];

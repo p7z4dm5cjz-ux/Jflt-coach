@@ -1,8 +1,8 @@
-import {grammarItems} from './practice-bank.js';
+import {lessonItems} from './practice-bank.js';
 import {correct} from './answer-normal.js';
 export const GUIDE_STEPS=['Situazione','Significato','Costruzione','Confronto','Una frase tua'];
 export function guideTasks(lesson){
- const items=grammarItems(lesson.id);
+ const items=lessonItems(lesson.id);
  return {form:items.find(i=>i.kind!=='choice'&&i.kind!=='retrieval'),choice:items.find(i=>i.kind==='choice'&&(!i.focus_lesson||i.focus_lesson===lesson.id)),example:lesson.examples[0]};
 }
 export function freshGuide(id){return {lesson_id:id,step:0,meaning:'',form:'',contrast:'',draft:'',revealed:[],skipped:false,completed_at:null,writing_id:null,practice_id:null};}

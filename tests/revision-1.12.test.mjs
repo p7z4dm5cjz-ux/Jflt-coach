@@ -10,6 +10,8 @@ import {levelSequence,STARTING_LEVELS} from '../starting-level.js';
 import {splitParagraphs,termContext} from '../reading-text.js';
 import {applyVerification} from '../verification.js';
 import {validateState} from '../storage.js';
+import {lessonItems} from '../practice-bank.js';
+import {normal} from '../answer-normal.js';
 function addBlock(s,lesson='past-simple',{correct=6,assisted=false,check='confirmed',skills=['form','meaning','use'],complete=true,sid='s'+s.sessions.length}={}){
  const items=Array.from({length:6},(_,i)=>({id:sid+'-'+i,stem:sid+' context '+i,kind:'completion',answer:'was',accept:['was'],options:[],why:'Past form.',skill:skills[i%skills.length],origin:'groq',check}));
  s.sessions.push({id:sid,lesson_id:lesson,source:'groq',items,answers:{},assisted:false,created_at:new Date().toISOString(),completed_at:null,training:{grammar_target:30,target:30,page:0,checked:complete?[0]:[],recovery:[],parent_id:null}});
@@ -45,7 +47,7 @@ test('Related prerequisites carry observed results, never presumed mastery',()=>
 test('Every lesson has a short check; reused practice is disclosed and backups retain it',()=>{
  assert.equal(CHECK_LESSONS.length,117);
  for(const l of LESSONS){const s=freshState(),c=newCheck(s,[l.id],l.id);assert.ok(c.item_ids.length>=2&&c.item_ids.length<=4,l.id);s.grammar_checks=[c];validateState(s);}
- const s=freshState(),c=newCheck(s,['inversion'],'inversion');assert.ok(checkItems(c).every(i=>i.practice_bank));
+ const s=freshState(),c=newCheck(s,['inversion'],'inversion');const train=new Set([0,1,2,3].flatMap(v=>lessonItems('inversion',v)).map(i=>normal(i.stem)));assert.ok(checkItems(c).every(i=>!i.practice_bank&&!train.has(normal(i.stem))),'1.13.0: verifica con domande riservate');
  const item=checkItems(c)[0];s.sessions=[{items:[item]}];const repeat=newCheck(s,['inversion'],'inversion');assert.ok(repeat.practice_reused_ids.includes(item.id));assert.ok(checkResults(repeat).find(i=>i.id===item.id).repeated);
 });
 test('Ambiguous open questions excluded; ordinary variants still accepted',()=>{

@@ -1,4 +1,5 @@
 import {grammarItems} from "./practice-bank.js";
+import {bankCheckItems} from "./lesson-bank.js";
 import {LESSONS} from "./catalog.js";
 import {normal} from "./answer-normal.js";
 import {practiceEvidence,progression} from "./evidence-policy.js";
@@ -56,7 +57,9 @@ const extraChecks={"relatives": [["Scrivi solo la parola mancante: The engineer 
 for(const [id,rows] of Object.entries(extraChecks)){banks[id]=rows.slice(0,4);further[id]=rows.slice(4);}
 export const CHECK_ITEMS=Object.entries(banks).flatMap(([lesson_id,rows])=>[...rows,...further[lesson_id]].map(([stem,answer,...accept],i)=>({id:"check-150-"+lesson_id+"-"+i,lesson_id,stem,answer,accept:[answer,...accept]})));
 // Additional checks reuse the curated practice bank openly; never call them held-out questions.
-for(const lesson of LESSONS.filter(l=>!banks[l.id])){
+// Domande riservate della banca per competenza: verifiche indipendenti dall'allenamento.
+for(const lesson of LESSONS.filter(l=>!banks[l.id]&&bankCheckItems(l.id).length>=4))for(const [n,i] of bankCheckItems(lesson.id).entries())CHECK_ITEMS.push({...i,id:'check-bank-'+lesson.id+'-'+n,lesson_id:lesson.id});
+for(const lesson of LESSONS.filter(l=>!banks[l.id]&&bankCheckItems(l.id).length<4)){
  const unique=new Map();
  for(let v=0;v<4;v++)for(const i of grammarItems(lesson.id,v))if(i.kind!=='retrieval'&&(!i.focus_lesson||i.focus_lesson===lesson.id)&&!unique.has(normal(i.stem)))unique.set(normal(i.stem),i);
  const pool=[...unique.values()];

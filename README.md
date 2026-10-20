@@ -1,3 +1,13 @@
+# Revisione 1.13.0: esercizi per competenza in tutte le lezioni
+
+Completa i tre punti rimasti aperti della revisione di 1.12.0 (classificazione e contenuti, quantità offline, verifiche separate).
+
+- **Banca per competenza (`lesson-bank.js`) per tutte le 117 lezioni:** 928 esercizi di allenamento nuovi e 582 domande di verifica, scritti apposta (non etichette cambiate): significato, scelta del tempo, uso in una situazione, ordine delle parole e forma. Ogni consegna inizia con un'istruzione in italiano ("Scegli…", "Scrivi solo…", "Metti le parole in ordine…") e ha una spiegazione breve.
+- **Lezioni con due esercizi:** ora 10 di allenamento + 6 di verifica. Lezioni con sei esercizi: 7 + 6. Lezioni lunghe (30 per sessione): 6 o 7 domande su significato, uso e ordine al posto di varianti ripetute; la sessione resta di 30.
+- **Autonomia raggiungibile offline in ogni lezione:** la banca alterna i tipi e, nelle sessioni lunghe, è distribuita fino all'ultimo blocco, così le 12 risposte che decidono i progressi contengono forma, significato o scelta e uso o ordine. Un test lo verifica per tutte le lezioni e quattro varianti.
+- **Allenamento e verifica separati:** le 87 lezioni senza domande riservate usano ora le domande di verifica della banca, che non compaiono mai negli esercizi. Nessuna verifica riprende più domande dell'allenamento (prima: 87 lezioni), quindi la verifica breve può confermare l'autonomia anche in queste lezioni.
+- **Controlli automatici sulla banca:** classificazione coerente con `practiceSkill`, 3-4 opzioni diverse con la soluzione presente, risposte aperte accettate dal correttore, "parola/parole" coerenti con la soluzione, parole da ordinare identiche alla frase finale, nessuna consegna ripetuta né già presente altrove.
+
 # Revisione 1.12.1: avanzamento coerente e scrittura
 
 - **Una sola decisione sull'avanzamento** (`progressDecision` in `contract.js`), usata da interfaccia, profilo, percorso e Worker sulle stesse 12 risposte. Per aumentare la difficoltà: almeno 5 corrette sulle ultime 6 risposte verificate, senza aiuti. Per l'autonomia: almeno 10 su 12, 8 contesti, forma + significato/scelta del tempo + uso/ordine. Un errore in un blocco recente, anche non ancora verificato, blocca l'avanzamento: prima, dopo due blocchi riusciti, cinque errori non cambiavano l'indicazione dell'app mentre il Worker rifiutava.
