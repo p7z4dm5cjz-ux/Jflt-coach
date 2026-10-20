@@ -73,7 +73,7 @@ test("Le stesse sei risposte ripetute non diventano otto contesti autonomi",()=>
   s.attempts=[0,1].flatMap(round=>items.map(i=>({lesson_id:"preferences",correct:true,assisted:false,source:"local",session_id:"session-"+round,stem:i.stem})));
   assert.notEqual(recommendation(s).find(l=>l.id==="preferences").status,"maintain");
   s.attempts[6].stem="Different context one";s.attempts[7].stem="Different context two";
-  assert.equal(recommendation(s).find(l=>l.id==="preferences").status,"maintain");
+  assert.notEqual(recommendation(s).find(l=>l.id==="preferences").status,"maintain","Due frasi diverse non bastano senza blocchi completi e competenze diverse");
 });
 test("Il pretest resta di 45 domande e non dichiara acquisiti gli approfondimenti non verificati",()=>{
   const s=freshState(),p=newPlacement();p.answers=QUESTIONS.map(q=>({id:q.id,value:q.answer,confidence:"sure"}));p.submitted_at=new Date().toISOString();s.placement=p;

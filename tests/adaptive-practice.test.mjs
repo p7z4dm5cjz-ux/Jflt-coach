@@ -4,12 +4,12 @@ import {blockAdaptation,localRetry,replaceDoubts} from '../adaptive-practice.js'
 import {grammarItems} from '../practice-bank.js';
 import {freshState} from '../engine.js';
 import {exerciseRequest} from '../practice-flow.js';
-const set={id:'s',lesson_id:'future-going-to',items:grammarItems('future-going-to'),training:{page:0,grammar_target:30,recovery:[]},answers:{}};
+const set={id:'s',lesson_id:'future-going-to',items:grammarItems('future-going-to'),training:{page:0,grammar_target:30,recovery:[],checked:[0]},answers:{}};
 test('Difficulty uses independent correct answers, excludes disputed items and holds with little evidence',()=>{
- const s=freshState();assert.equal(blockAdaptation(s,set).mode,'hold');
+ const s=freshState();s.sessions=[set];assert.equal(blockAdaptation(s,set).mode,'hold');
  s.attempts=set.items.slice(0,6).map(i=>({session_id:'s',item_id:i.id,lesson_id:set.lesson_id,correct:true,assisted:false}));
- assert.equal(blockAdaptation(s,set).mode,'advance');s.attempts.forEach(a=>a.assisted=true);assert.equal(blockAdaptation(s,set).mode,'consolidate');
- assert.match(exerciseRequest(s,set.lesson_id,{set}).practice.purpose,/consolidate/);
+ assert.equal(blockAdaptation(s,set).mode,'advance');s.attempts.forEach(a=>a.assisted=true);assert.equal(blockAdaptation(s,set).mode,'hold');
+ assert.match(exerciseRequest(s,set.lesson_id,{set}).practice.purpose,/hold/);
  s.attempts.forEach(a=>a.disputed=true);assert.equal(blockAdaptation(s,set).mode,'hold');
 });
 test('Local remediation keeps target and operation, never repeats seen stems or mutates answers',()=>{

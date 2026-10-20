@@ -22,7 +22,7 @@ export function courseRequest(course,mode,question="") {
     if(stage===1&&text.split(/\n+/).filter(s=>s.trim()).length!==3)throw new Error("Scrivi tre frasi, una per riga.");
   }
   const assignment=courseAssignment(unit,stage,course.rounds[stage]);
-  return {unit_id:unit.id,type:unit.type,stage,round:course.rounds[stage],mode,topic:assignment.details_it,text:course.drafts[stage],question:question.trim(),...(course.grammar_lesson_id?{lesson_id:course.grammar_lesson_id}:{})};
+  return {criteria_version:1,unit_id:unit.id,type:unit.type,stage,round:course.rounds[stage],mode,topic:assignment.details_it,text:course.drafts[stage],question:question.trim(),...(course.grammar_lesson_id?{lesson_id:course.grammar_lesson_id}:{})};
 }
 export function addCourseReview(course,mode,result,question="") {
   validateReply("writing_coach",result);

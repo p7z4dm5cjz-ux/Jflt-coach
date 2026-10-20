@@ -1,11 +1,11 @@
-import {STARTING_LEVELS,startingLevel} from "./starting-level.js";
+import {STARTING_LEVELS,startingLevel,levelSequence} from "./starting-level.js";
 import {LESSONS, VOCABULARY, PHRASALS} from "./catalog.js";
 import {placementProfile, validPlacement, newPlacement} from "./placement.js";
 import {PARTICLE_ALTERNATIVES,BASE_MEANING_DISTRACTORS} from "./phrasal-extension.js";
 import {normal,correct} from "./answer-normal.js";
 import {lessonEvidence,practiceWindow} from "./grammar-checks.js";
 export {normal,correct} from "./answer-normal.js";
-export const VERSION = "1.11.1";
+export const VERSION = "1.12.0";
 export const API_VERSION = 1;
 export const LEGACY_STORES = ["settings","diag_responses","diag_texts","profile","requests","grammar_sets","grammar_answers","tasks","texts","feedback","error_log","cards","transfer_checks","device_tests","to_verify"];
 export const now = () => new Date().toISOString();
@@ -38,7 +38,8 @@ export function migrate(stores) {
 }
 export function recommendation(state) {
   const profile=placementProfile(state.placement);
-  const defaults=startingLevel(state)?.lessons||["present-simple","past-simple","present-perfect-simple","negatives","phrasal-basics","present-perfect-continuous","past-perfect-simple","verb-patterns"];
+  const sequence=levelSequence(state);
+  const defaults=sequence||["present-simple","past-simple","present-perfect-simple","negatives","phrasal-basics","present-perfect-continuous","past-perfect-simple","verb-patterns"];
   const courseErrors=(state.writing_courses||[]).slice(-3).flatMap(c=>c.reviews.findLast(r=>r.stage===c.stage&&r.round===c.rounds[c.stage]&&r.mode==="review"&&r.text===c.drafts[c.stage])?.result.issues.filter(i=>i.kind==="error")||[]);
   const writingErrors=[...state.writings.slice(-3).flatMap(w=>w.feedback_source===w.draft?(w.feedback?.issues||[]).filter(i=>i.kind==="error"):[]),...courseErrors];
   const mapCategory={tenses:["past-simple","present-perfect-simple"],negation:["negatives"],phrasals:["phrasal-basics"],word_order:["sentence"],verb_patterns:["verb-patterns"]};
@@ -48,19 +49,19 @@ export function recommendation(state) {
     if(w.independent)status="maintain";
     // Ultima sessione riuscita (almeno 6 risposte, 85%): la tappa lascia il posto alla successiva
     // e torna con la verifica distanziata; il pretest non la tiene più in testa.
-    else if(w.goodSession)status="confirm";
+    else if(w.goodSession)status=profile?.lessonStatus[l.id]||"new";
     else if(errors)status="review";
     const evidence=lessonEvidence(state,l.id);
     if(evidence.errors)status="review";
-    const base=!profile&&defaults.includes(l.id)?15-defaults.indexOf(l.id):0;
+    const base=(sequence||!profile)&&defaults.includes(l.id)?15-10*defaults.indexOf(l.id)/defaults.length:0;
     const writingWeight=writingErrors.filter(i=>i.category===l.id||(mapCategory[i.category]||[]).includes(l.id)).length*8;
     // Un pretest di base non dimostra la padronanza degli approfondimenti.
     // Gli errori nei prerequisiti li rendono pertinenti, senza precedere il recupero.
     const bridge=l.extension&&profile?(l.prerequisites||[]).some(id=>profile.lessonStatus[id]==="review")?5:0:0;
-    const score=Math.min(errors,6)*6+writingWeight+evidence.errors*12+(evidence.due_now?120:0)+(w.due&&!evidence.due_now?60:0)+(status==="review"?20:0)+(status!=="confirm"&&profile?.priorityIds.includes(l.id)?30-profile.priorityIds.indexOf(l.id):0)+base+bridge-(l.extension?l.stage+1:0)-(["skip","maintain"].includes(status)&&!w.due?100:0)-(evidence.passed&&!evidence.due_now?35:0);
-    return {...l,status,score,index,accuracy:recent,attempts:w.all.length,window:w.window.length};
+    const score=Math.min(errors,6)*6+writingWeight+evidence.errors*12+(evidence.due_now?120:0)+(w.due&&!evidence.due_now?60:0)+(status==="review"?20:0)+(status!=="confirm"&&profile?.priorityIds.includes(l.id)?30-profile.priorityIds.indexOf(l.id):0)+base+bridge-(l.extension?l.stage+1:0)-(["skip","maintain"].includes(status)&&!w.due?100:0)-(evidence.delayed&&!evidence.due_now?35:0);
+    return {...l,eligible:!sequence||sequence.includes(l.id)||errors>0||evidence.errors>0||evidence.due_now||w.due||writingWeight>0||profile?.lessonStatus[l.id]==="review",status,score,index,accuracy:recent,attempts:w.all.length,window:w.window.length};
   });
-  return scored.sort((a,b)=>b.score-a.score||a.index-b.index);
+  return scored.filter(l=>l.eligible).sort((a,b)=>b.score-a.score||a.index-b.index);
 }
 // Il percorso consigliato: le prime tappe della classifica, nello stesso ordine usato dal
 // piano di oggi e dall'allenamento completo, così la proposta è una sola.

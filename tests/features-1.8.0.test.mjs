@@ -48,10 +48,10 @@ test("1.8.0: il controllo alla cieca conferma, estende o segnala senza cambiare 
   assert.deepEqual(sent[1].response_format.json_schema.schema,VERIFY_SCHEMA);assert.equal(sent[1].temperature,0);
   const shown=JSON.parse(sent[1].messages[1].content);assert.ok(shown.items.every(i=>!("answer" in i)&&!("accept" in i)&&!("why" in i)));
   const items=body.result.items;
-  assert.deepEqual(items.map(i=>i.check),["confirmed","doubt","doubt","extended","confirmed","confirmed"]);
+  assert.deepEqual(items.map(i=>i.check),["confirmed","doubt","doubt","extended","confirmed","doubt"]);
   assert.equal(items[1].answer,SHAPES.exercises.items[1].answer);assert.equal(items[1].doubt,true);assert.match(items[1].check_note,/gone/);
   assert.ok(items[3].accept.includes("have completed"));assert.deepEqual(items[3].accept_added,["have completed"]);
-  assert.deepEqual(body.verification,{checked:6,confirmed:3,extended:1,doubts:2,status:"done"});
+  assert.deepEqual(body.verification,{checked:6,confirmed:2,extended:1,doubts:3,status:"done"});
 });
 
 test("1.8.0: se il controllo non risponde, gli esercizi arrivano comunque, segnati come non controllati",async()=>{

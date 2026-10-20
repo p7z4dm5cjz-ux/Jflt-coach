@@ -15,7 +15,7 @@ test('daily workload is bounded, spans production and interpretation, accepts re
 });
 test('only due studied topics are mixed, with their own attribution',()=>{
   const s=freshState();s.attempts=Array.from({length:6},(_,i)=>({lesson_id:'past-simple',session_id:'old',stem:'past '+i,correct:true,assisted:false,source:'local',date:'2026-10-10T10:00:00Z'}));
-  const result=dailyPractice(s,plan,timestamp);assert.deepEqual(result.review_ids,['past-simple']);
+  s.sessions=[{id:'old',items:s.attempts.map(a=>({id:a.stem,stem:a.stem})),completed_at:'2026-10-10T10:00:00Z'}];const result=dailyPractice(s,plan,timestamp);assert.deepEqual(result.review_ids,['past-simple']);
   assert.ok(result.items.some(i=>i.focus_lesson==='past-simple'));
   assert.equal(result.items.length,12);
   s.attempts.forEach(a=>a.date='2026-10-19T09:00:00Z');assert.deepEqual(dailyPractice(s,plan,timestamp).review_ids,[]);

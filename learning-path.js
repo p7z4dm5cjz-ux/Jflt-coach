@@ -31,9 +31,9 @@ export function learningReason(state,lesson,timestamp=Date.now()){
  if(ev.errors)return "Nell'ultima verifica breve sono emersi errori su questa struttura.";
  if(ev.due_now)return "È il momento di controllare se ricordi la struttura a distanza di giorni.";
  const w=practiceWindow(state,lesson.id,timestamp);
- if(w.due)return w.independent?"Sono passate tre settimane dall'ultima sessione riuscita: una sessione controlla che la struttura tenga.":"Sono passati almeno tre giorni dalla sessione riuscita: una seconda sessione la conferma.";
- if(w.independent)return "Due sessioni diverse riuscite senza aiuti: resta in mantenimento, il ripasso a distanza controlla la tenuta.";
- if(w.goodSession)return "Ultima sessione riuscita ("+Math.round(w.latestRate*100)+"%): da confermare con una verifica a distanza di giorni.";
+ if(w.due)return w.independent?"Sono passati almeno tre giorni dalle prove riuscite: controlla che la struttura tenga.":"Sono passati almeno tre giorni dalla sessione riuscita: una seconda sessione la conferma.";
+ if(w.independent)return "Almeno 10 risposte corrette su 12 in due blocchi senza aiuti, con forma, significato e uso: puoi avanzare. Il ripasso a distanza deve ancora confermare la tenuta.";
+ if(w.goodSession)return "Sessione completata ("+Math.round(w.latestRate*100)+"%): servono ancora prove diversificate di forma, significato e uso prima di avanzare.";
  if(w.errors)return "Nell'ultima sessione senza aiuti: "+w.errors+(w.errors===1?" errore":" errori")+" su "+w.latest.length+" risposte.";
  if(profile?.lessonStatus[lesson.id]==="review"){const rows=profile.rows.filter(r=>profile.adaptive?r.item.lessons[0]===lesson.id:r.item.lessons.includes(lesson.id)),wrong=rows.filter(r=>!r.correct).length;return wrong?"Nel pretest: "+wrong+(wrong===1?" risposta sbagliata":" risposte sbagliate")+" su "+rows.length+(rows.length===1?" domanda":" domande")+" che riguardano questa struttura.":"Nel pretest le risposte su questa struttura erano giuste ma date con dubbio: da confermare.";}
  if(profile?.lessonStatus[lesson.id]==="skip")return "Il pretest consente di alleggerire questa base. Puoi verificarla brevemente prima di saltarla.";

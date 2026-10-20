@@ -1,3 +1,7 @@
+import {grammarItems} from "./practice-bank.js";
+import {LESSONS} from "./catalog.js";
+import {normal} from "./answer-normal.js";
+import {practiceEvidence,progression} from "./evidence-policy.js";
 import {correct} from "./answer-normal.js";
 // Held out from the training banks. Finite bank: reused questions are labelled.
 const banks={
@@ -51,33 +55,38 @@ const further={
 const extraChecks={"relatives": [["Scrivi solo la parola mancante: The engineer ___ repaired the lift has left. (who o which?)", "who", "that"], ["Scrivi solo la parola mancante: The lift, ___ was repaired yesterday, is working. (who o which?)", "which"], ["Scrivi solo la parola mancante: The person ___ badge was lost called reception. (whose o who?)", "whose"], ["Scrivi solo la parola mancante: The office ___ the interview took place is upstairs. (where o which?)", "where"], ["Scrivi solo la parola mancante: The file ___ I requested has arrived. (who o which?)", "which", "that"], ["Scrivi solo la parola mancante: The author, ___ lives abroad, joined online. (who o that?)", "who"], ["Scrivi solo la parola mancante: The equipment ___ failed was replaced. (who o which?)", "which", "that"], ["Scrivi solo la parola mancante: The client for ___ we worked thanked us. (whom o which?)", "whom"]], "linkers": [["Scrivi solo la parola mancante: ___ the rain, the inspection continued. (Despite o Although?)", "Despite"], ["Scrivi solo la parola mancante: ___ it was late, the team stayed. (Despite o Although?)", "Although"], ["Scrivi solo ciò che manca: He left early ___ he was ill. (because o because of?)", "because"], ["Scrivi solo ciò che manca: The road closed ___ the snow. (because o because of?)", "because of"], ["Scrivi solo ciò che manca: She spoke slowly ___ everyone could follow. (so that o because?)", "so that"], ["Scrivi solo la parola mancante: ___ his tiredness, he completed the form. (Although o Despite?)", "Despite"], ["Scrivi solo la parola mancante: Contrasto con le aspettative: The notice was very short. ___, it contained every detail. (However o Therefore?)", "However"], ["Scrivi solo la parola mancante: He wore a coat ___ keep warm. (to o for?)", "to"]], "dependent-prepositions": [["Scrivi solo la preposizione mancante: The officer is responsible ___ the keys.", "for"], ["Scrivi solo la preposizione mancante: We depend ___ accurate records.", "on"], ["Scrivi solo la preposizione mancante: Thank you ___ your patience.", "for"], ["Scrivi solo la preposizione mancante: This tool is similar ___ the old one.", "to"], ["Scrivi solo la preposizione mancante: He insisted ___ paying.", "on"], ["Scrivi solo la preposizione mancante: They succeeded ___ finding the address.", "in"], ["Scrivi solo la preposizione mancante: There is a shortage ___ staff.", "of"], ["Scrivi solo la preposizione mancante: Please reply ___ the invitation.", "to"]], "phrasal-basics": [["Sostituisci the radio con un pronome e riscrivi tutta la frase: Turn off the radio.", "Turn it off"], ["Sostituisci the boy con un pronome e riscrivi tutta la frase: Look after the boy.", "Look after him"], ["Sostituisci the keys con un pronome e riscrivi tutta la frase: Give back the keys.", "Give them back"], ["Sostituisci the woman con un pronome e riscrivi tutta la frase: Pick up the woman at the station.", "Pick her up at the station"], ["Sostituisci the complaint con un pronome e riscrivi tutta la frase: Deal with the complaint.", "Deal with it"], ["Sostituisci the coats con un pronome e riscrivi tutta la frase: Put on the coats.", "Put them on"], ["Sostituisci the task con un pronome e riscrivi tutta la frase: Get on with the task.", "Get on with it"], ["Sostituisci the number con un pronome e riscrivi tutta la frase: Write down the number.", "Write it down"]], "word-building": [["Scrivi solo la parola mancante: The task was completed ___. (trasforma efficient in un avverbio)", "efficiently"], ["Scrivi solo la parola mancante: The solution was ___. (aggettivo: pratico, da practice)", "practical"], ["Scrivi solo la parola mancante: We need more ___. (trasforma inform in un nome)", "information"], ["Scrivi solo la parola mancante: He showed ___. (trasforma kind in un nome)", "kindness"], ["Scrivi solo la parola mancante: The evidence was ___. (aggiungi a sufficient un prefisso negativo)", "insufficient"], ["Scrivi solo la parola mancante: She gave a detailed ___. (trasforma describe in un nome)", "description"], ["Scrivi solo la parola mancante: The visitors waited ___. (trasforma patient in un avverbio)", "patiently"], ["Scrivi solo la parola mancante: This result is ___. (trasforma believe in un aggettivo con prefisso negativo)", "unbelievable"]], "spelling-control": [["Forma in -ing. Scrivi solo la parola mancante: They are ___. (swim)", "swimming"], ["Usa il past simple. Scrivi solo la parola mancante: She ___ the page. (copy)", "copied"], ["Usa il present simple. Scrivi solo la parola mancante: He ___ the early bus. (catch)", "catches"], ["Forma in -ing. Scrivi solo la parola mancante: We are ___ tomorrow. (move)", "moving"], ["Usa il past simple. Scrivi solo la parola mancante: He ___ the mistake. (admit)", "admitted"], ["Forma in -ing. Scrivi solo la parola mancante: I am ___ outside. (wait)", "waiting"], ["Usa il present simple. Scrivi solo la parola mancante: She ___ every week. (fly)", "flies"], ["Usa il past simple. Scrivi solo la parola mancante: They ___ overnight. (stay)", "stayed"]], "question-meaning": [["Chiedi dell'aspetto fisico. Scrivi solo la parola mancante: Can you tell me what the suspect ___ like?", "looks"], ["Chiedi com'è il suo carattere. Scrivi solo la parola mancante: What is your manager ___?", "like"], ["Chiedi come sta. Scrivi solo la parola mancante: ___ is the patient this morning?", "How"], ["Domanda di sorpresa: chiedi «quando?». Scrivi solo la parola mancante: They arrived ___?", "when"], ["Domanda di sorpresa: chiedi «che cosa?». Scrivi solo la parola mancante: You cancelled ___?", "what"], ["Scrivi solo la parola mancante: Where ___ she live? (does o do?)", "does"], ["Domanda al passato. Scrivi solo la parola mancante: Who ___ you meet? (did o do?)", "did"], ["Chiedi una descrizione. Scrivi solo la parola mancante: What ___ the new office like? (is o does?)", "is"]], "take-collocations": [["Scrivi solo la parola mancante: The discussion took ___ yesterday. (place o part?)", "place"], ["Scrivi solo la parola mancante: We should take ___ to reduce delays. (action o attention?)", "action"], ["Scrivi solo la parola mancante: She took detailed ___ during the interview. (notes o notices?)", "notes"], ["Stesso significato. Scrivi solo la parola mancante: We must consider the budget → We must take the budget into ___. (account o count?)", "account"], ["Scrivi solo la preposizione mancante: They took part ___ the seminar.", "in"], ["Scrivi solo la preposizione mancante: She took charge ___ the investigation.", "of"], ["Scrivi solo la parola mancante: It will take some ___ to learn. (time o times?)", "time"], ["Scrivi solo la parola mancante: Take ___ when crossing. (care o careful?)", "care"]]};
 for(const [id,rows] of Object.entries(extraChecks)){banks[id]=rows.slice(0,4);further[id]=rows.slice(4);}
 export const CHECK_ITEMS=Object.entries(banks).flatMap(([lesson_id,rows])=>[...rows,...further[lesson_id]].map(([stem,answer,...accept],i)=>({id:"check-150-"+lesson_id+"-"+i,lesson_id,stem,answer,accept:[answer,...accept]})));
-export const CHECK_LESSONS=Object.keys(banks);
+// Additional checks reuse the curated practice bank openly; never call them held-out questions.
+for(const lesson of LESSONS.filter(l=>!banks[l.id])){
+ const unique=new Map();
+ for(let v=0;v<4;v++)for(const i of grammarItems(lesson.id,v))if(i.kind!=='retrieval'&&(!i.focus_lesson||i.focus_lesson===lesson.id)&&!unique.has(normal(i.stem)))unique.set(normal(i.stem),i);
+ const pool=[...unique.values()];
+ // Include a meaning/contrast question where available, plus short production.
+ const selected=[...pool.filter(i=>i.kind==='choice').slice(0,2),...pool.filter(i=>i.kind!=='choice')].slice(0,8);
+ for(const [n,i] of selected.entries())CHECK_ITEMS.push({...i,id:'check-112-'+lesson.id+'-'+n,lesson_id:lesson.id,practice_bank:true});
+}
+export const CHECK_LESSONS=[...new Set(CHECK_ITEMS.map(i=>i.lesson_id))];
 const byId=new Map(CHECK_ITEMS.map(item=>[item.id,item]));
 export function checkItems(check){return check.item_ids.map(id=>byId.get(id));}
-export function checkResults(check){return checkItems(check).map(item=>({...item,value:check.answers[item.id]||"",correct:correct(item,check.answers[item.id]||""),repeated:check.reused_ids.includes(item.id)}));}
+export function checkResults(check){return checkItems(check).map(item=>({...item,value:check.answers[item.id]||"",correct:correct(item,check.answers[item.id]||""),repeated:check.reused_ids.includes(item.id)||(check.practice_reused_ids||[]).includes(item.id)}));}
 export function newCheck(state,priorities,lessonId=null,timestamp=Date.now()){
  const used=new Set((state.grammar_checks||[]).filter(c=>c.completed_at).flatMap(c=>c.item_ids));
  const order=[...new Set([...priorities,...CHECK_LESSONS])].filter(id=>CHECK_LESSONS.includes(id));
  const topics=lessonId?[lessonId]:order.slice(0,5);
  const items=topics.flatMap(id=>CHECK_ITEMS.filter(i=>i.lesson_id===id).sort((a,b)=>Number(used.has(a.id))-Number(used.has(b.id))).slice(0,lessonId?4:2));
- if(items.length!==(lessonId?4:10))throw new Error("Questa lezione non ha ancora una verifica locale dedicata.");
- return {id:"check-"+crypto.randomUUID(),lesson_id:lessonId,item_ids:items.map(i=>i.id),reused_ids:items.filter(i=>used.has(i.id)).map(i=>i.id),answers:{},created_at:new Date(timestamp).toISOString(),completed_at:null};
+ if(lessonId?items.length<2:items.length!==10)throw new Error("Questa lezione non ha ancora una verifica locale dedicata.");
+ const seenPractice=new Set((state.sessions||[]).flatMap(s=>s.items).map(i=>normal(i.stem)));
+ return {practice_reused_ids:items.filter(i=>seenPractice.has(normal(i.stem))).map(i=>i.id),id:"check-"+crypto.randomUUID(),lesson_id:lessonId,item_ids:items.map(i=>i.id),reused_ids:items.filter(i=>used.has(i.id)).map(i=>i.id),answers:{},created_at:new Date(timestamp).toISOString(),completed_at:null};
 }
 // Un'unica regola per «senza aiuti» e «mantenimento», usata da classifica, scheda della lezione
 // e progressi: contano le ultime due sessioni intere, non un numero fisso di risposte.
 export function practiceWindow(state,id,timestamp=Date.now()){
- const all=(state.attempts||[]).filter(a=>a.lesson_id===id&&!a.assisted&&!a.disputed&&a.source!=="legacy");
- const order=[...new Set(all.map(a=>a.session_id))],lastTwo=order.slice(-2),lastOne=order.slice(-1);
- const window=all.filter(a=>lastTwo.includes(a.session_id)),latest=all.filter(a=>lastOne.includes(a.session_id));
+ const rows=practiceEvidence(state,id),progress=progression(rows),all=rows.filter(a=>!a.assisted),window=progress.window.filter(a=>!a.assisted);
+ const lastSession=rows.at(-1)?.session_id,latest=all.filter(a=>a.session_id===lastSession),session=(state.sessions||[]).find(s=>s.id===lastSession);
  const rate=list=>list.length?list.filter(a=>a.correct).length/list.length:null;
- const contexts=new Set(window.filter(a=>a.correct).map(a=>a.context_id||a.stem)).size;
- const independent=lastTwo.length>=2&&window.length>=8&&contexts>=8&&rate(window)>=0.85;
- const goodSession=latest.length>=6&&rate(latest)>=0.85;
- // Ritorno nel tempo anche per le lezioni senza domande nella verifica breve: una sessione
- // riuscita si conferma dopo 3 giorni, il mantenimento si ricontrolla dopo 21.
- const last=Math.max(0,...latest.map(a=>Date.parse(a.date)||0)),days=independent?21:goodSession?3:null;
- const due=days!==null&&last>0&&timestamp-last>=days*86400000;
- return {all,window,latest,accuracy:rate(window),latestRate:rate(latest),errors:latest.filter(a=>!a.correct).length,independent,goodSession,due};
+ const goodSession=!!session?.completed_at&&latest.length>=6&&rows.filter(a=>a.session_id===lastSession).every(a=>!a.assisted)&&rate(latest)>=5/6;
+ const independent=progress.ready,last=Math.max(0,...latest.map(a=>Date.parse(a.date)||0));
+ const due=(independent||goodSession)&&last>0&&timestamp-last>=3*86400000;
+ return {all,window,latest,accuracy:rate(window),latestRate:rate(latest),errors:latest.filter(a=>!a.correct).length,independent,goodSession,due,can_advance:progress.can_advance};
 }
 export function lessonEvidence(state,id,timestamp=Date.now()){
  const checks=(state.grammar_checks||[]).filter(c=>c.completed_at&&checkItems(c).some(i=>i.lesson_id===id)).sort((a,b)=>Date.parse(a.completed_at)-Date.parse(b.completed_at));
@@ -86,7 +95,7 @@ export function lessonEvidence(state,id,timestamp=Date.now()){
  let streak=0,lastCounted=null;for(const c of checks.toReversed()){const r=checkResults(c).filter(i=>i.lesson_id===id);if(r.length<2||!r.every(x=>x.correct))break;const stamp=Date.parse(c.completed_at);if(lastCounted===null||lastCounted-stamp>=86400000){streak++;lastCounted=stamp;}}
  const intervals=[1,3,7,14,30],due=last?Date.parse(last.completed_at)+(passed?intervals[Math.min(streak-1,4)]:1)*86400000:null;
  const lastFailure=checks.findLastIndex(c=>checkResults(c).some(i=>i.lesson_id===id&&!i.correct));
- const fresh=checks.slice(lastFailure+1).filter(c=>{const r=checkResults(c).filter(i=>i.lesson_id===id);return r.every(i=>i.correct)&&r.filter(i=>!i.repeated).length>=2;});
+ const fresh=checks.slice(lastFailure+1).filter(c=>{const r=checkResults(c).filter(i=>i.lesson_id===id);return r.every(i=>i.correct)&&r.filter(i=>!i.repeated&&!i.practice_bank).length>=2;});
  const delayed=fresh.length>=2&&Date.parse(fresh.at(-1).completed_at)-Date.parse(fresh[0].completed_at)>=86400000;
  return {last,passed,errors:results.filter(r=>!r.correct).length,due,due_now:due!==null&&due<=timestamp,delayed,streak};
 }
@@ -98,7 +107,8 @@ export function validateChecks(checks){
  if(!Array.isArray(checks)||new Set(checks.map(c=>c?.id)).size!==checks.length)throw new Error("Verifiche grammaticali non valide.");
  for(const c of checks){
   const validDate=v=>typeof v==="string"&&Number.isFinite(Date.parse(v));
-  if(!c||typeof c.id!=="string"||!Array.isArray(c.item_ids)||c.item_ids.length!==(c.lesson_id?4:10)||new Set(c.item_ids).size!==c.item_ids.length||c.item_ids.some(id=>!byId.has(id))||c.lesson_id!==null&&!CHECK_LESSONS.includes(c.lesson_id)||!Array.isArray(c.reused_ids)||c.reused_ids.some(id=>!c.item_ids.includes(id))||!c.answers||typeof c.answers!=="object"||Array.isArray(c.answers)||!validDate(c.created_at)||c.completed_at!==null&&(!validDate(c.completed_at)||Date.parse(c.completed_at)<Date.parse(c.created_at)))throw new Error("Una verifica grammaticale non è valida.");
+  if(!c||typeof c.id!=="string"||!Array.isArray(c.item_ids)||(c.lesson_id?(c.item_ids.length<2||c.item_ids.length>4):c.item_ids.length!==10)||new Set(c.item_ids).size!==c.item_ids.length||c.item_ids.some(id=>!byId.has(id))||c.lesson_id!==null&&!CHECK_LESSONS.includes(c.lesson_id)||!Array.isArray(c.reused_ids)||c.reused_ids.some(id=>!c.item_ids.includes(id))||!c.answers||typeof c.answers!=="object"||Array.isArray(c.answers)||!validDate(c.created_at)||c.completed_at!==null&&(!validDate(c.completed_at)||Date.parse(c.completed_at)<Date.parse(c.created_at)))throw new Error("Una verifica grammaticale non è valida.");
+  if(c.practice_reused_ids!==undefined&&(!Array.isArray(c.practice_reused_ids)||c.practice_reused_ids.some(id=>!c.item_ids.includes(id))))throw new Error("Riferimenti di ripasso non validi.");
   if(c.lesson_id&&checkItems(c).some(i=>i.lesson_id!==c.lesson_id))throw new Error("Argomenti della verifica non coerenti.");
   if(!c.lesson_id){const counts={};for(const item of checkItems(c))counts[item.lesson_id]=(counts[item.lesson_id]||0)+1;if(Object.keys(counts).length!==5||Object.values(counts).some(n=>n!==2))throw new Error("La rivalutazione richiede cinque aree con due domande ciascuna.");}
   if(new Set(c.reused_ids).size!==c.reused_ids.length)throw new Error("Contesti ripetuti non validi.");

@@ -1,3 +1,4 @@
+import {startingLevel} from "./starting-level.js";
 import {LESSONS} from "./catalog.js";
 import {recommendation,learningPath,now} from "./engine.js";
 import {PATH_GROUPS,lessonMeta,lessonProgress,learningReason,checkPriorities,reviewNotice} from "./learning-path.js";
@@ -14,7 +15,7 @@ export function learningUI(api){
  function notice(){
   const s=getState(),review=reviewNotice(s),active=s.grammar_checks?.find(c=>!c.completed_at);
   return card(h("h2",{},review.recalibrate?"Ricalibra le priorità":review.due.length?"Ripasso grammaticale in scadenza":"Una verifica breve per orientarti"),
-   p(review.recalibrate?"Sono passate almeno quattro settimane: dieci domande aggiornano le priorità senza ripetere tutto il pretest.":review.due.length?review.due.length+" strutture da riprendere dopo un intervallo. La verifica usa prima i contesti che non hai già visto.":"Dieci domande su cinque aree, separate dagli esercizi di allenamento. Gli approfondimenti non verificati restano da esplorare."),
+   p(review.recalibrate?"Sono passate almeno quattro settimane: dieci domande aggiornano le priorità senza ripetere tutto il pretest.":review.due.length?review.due.length+" strutture da riprendere dopo un intervallo. La verifica usa prima i contesti che non hai già visto.":"Dieci domande su cinque aree. Alcune prove dedicate sono separate dalla pratica; gli altri argomenti usano domande della banca di allenamento, indicate come tali."),
    active?link("Riprendi la verifica","checkpoint/"+active.id):button("Inizia la verifica breve · 10 domande",()=>begin()),
    p("Banca locale di "+CHECK_ITEMS.length+" domande su "+CHECK_LESSONS.length+" strutture. Non è un test di livello completo. Quando una domanda è già stata usata, viene indicato.","small muted"));
  }
@@ -22,7 +23,7 @@ export function learningUI(api){
  function pathCard(heading="Il tuo percorso"){
   const s=getState(),steps=learningPath(s,5),next=steps[0];
   return h("section",{class:"card learning-path-card"},h("h2",{},heading),
-   p(s.placement?.submitted_at?"L'ordine lo decide l'app in base al pretest e ai tuoi esercizi. Parti dalla tappa 1: quando la consolidi, il percorso si aggiorna da solo.":"Senza pretest l'ordine segue le basi del JFLT. Il pretest lo adatta a te.","small muted"),
+   p(s.placement?.submitted_at?"L'ordine lo decide l'app in base al pretest e ai tuoi esercizi. Parti dalla tappa 1: quando la consolidi, il percorso si aggiorna da solo.":startingLevel(s)?"Il percorso parte dal livello "+startingLevel(s).id+" e si aggiorna con le prove. Le basi tornano se emergono errori.":"Senza pretest l’ordine segue le basi del JFLT. Il pretest lo adatta a te.","small muted"),
    h("ol",{class:"path-steps"},steps.map((l,i)=>h("li",{class:i===0?"current":""},h("a",{href:"#/lesson/"+l.id},h("span",{class:"step-title"},(i===0?"Adesso · ":"")+l.title),h("span",{class:"step-reason small muted"},learningReason(s,l)))))),
    link("Inizia: "+next.title,"lesson/"+next.id),
    !s.placement?.submitted_at&&link("Prima fai il pretest (circa 15 minuti)","placement","text-link"),
@@ -49,7 +50,7 @@ export function learningUI(api){
    h("div",{class:"path-milestones"},[["Consultata",progress.read],["Praticata",progress.practised],["Senza aiuti",progress.independent],["Verifiche distanziate",progress.delayed]].map(([name,ok])=>h("span",{class:"pill "+(ok?"maintain":"confirm")},(ok?"✓ ":"○ ")+name))),
    meta.prerequisites.length>0&&p("Prima è utile conoscere:","small"),h("div",{class:"actions"},meta.prerequisites.map(id=>link(LESSONS.find(l=>l.id===id).title,"lesson/"+id,"text-link"))),
    !progress.read&&button("Ho studiato la spiegazione",async()=>{await change(state=>{state.lesson_reads??=[];state.lesson_reads.push({lesson_id:id,date:now()});});await refresh();},"quiet"),
-   CHECK_LESSONS.includes(id)&&button("Verifica breve · 4 domande",()=>begin(id),"secondary"),button("Usala nel percorso di scrittura",startWriting,"secondary"),
+   CHECK_LESSONS.includes(id)&&button("Verifica breve · fino a 4 domande",()=>begin(id),"secondary"),button("Usala nel percorso di scrittura",startWriting,"secondary"),
    course&&link("Torna alla tua bozza salvata","course/"+course.id),
    p("Aver letto non significa aver acquisito la regola. Le verifiche distanziate riguardano solo i punti campionati, non tutta la lezione.","small muted"));
  }
@@ -59,7 +60,7 @@ export function learningUI(api){
   const done=!!c.completed_at,items=checkItems(c),results=done?checkResults(c):[];
   const form=h("div",{},items.map((item,index)=>{
    const result=results.find(r=>r.id===item.id),l=LESSONS.find(l=>l.id===item.lesson_id);
-   return h("fieldset",{class:"exercise"},h("legend",{},(index+1)+". "+l.title),p(item.stem,"stem"),c.reused_ids.includes(item.id)&&p("Domanda già vista: ripasso, non nuovo contesto.","small muted"),h("label",{for:item.id},"La tua risposta"),answerHint(item)&&h("p",{class:"small muted answer-hint",id:item.id+"-hint"},answerHint(item)),h("input",{id:item.id,"aria-describedby":answerHint(item)?item.id+"-hint":null,value:c.answers[item.id]||"",maxlength:600,disabled:done,autocomplete:"off",lang:"en",autocapitalize:"none",autocorrect:"off",spellcheck:"false",oninput:e=>{const value=e.target.value;autosave(s=>s.grammar_checks.find(c=>c.id===id).answers[item.id]=value);}}),!done&&button("Non lo so",async()=>{await change(s=>s.grammar_checks.find(c=>c.id===id).answers[item.id]="Non lo so");await refresh();},"quiet"),result&&h("div",{},p(result.correct?"Corretto":"Da ripassare",result.correct?"good":"warning"),p("Risposta: "+item.answer,"formula"),p(l.forms),link("Rivedi forma e significato","lesson/"+l.id,"text-link")));
+   return h("fieldset",{class:"exercise"},h("legend",{},(index+1)+". "+l.title),p(item.stem,"stem"),item.practice_bank&&p("Domanda dalla banca di allenamento: utile al ripasso, non conferma da sola il trasferimento a distanza.","small muted"),(c.reused_ids.includes(item.id)||(c.practice_reused_ids||[]).includes(item.id))&&p("Domanda già vista: ripasso, non nuovo contesto.","small muted"),h("label",{for:item.id},"La tua risposta"),answerHint(item)&&h("p",{class:"small muted answer-hint",id:item.id+"-hint"},answerHint(item)),item.options?.length?h("div",{},item.options.map((option,n)=>h("label",{class:"option"},h("input",{type:"radio",name:item.id,value:option,checked:c.answers[item.id]===option,disabled:done,onchange:()=>autosave(s=>s.grammar_checks.find(c=>c.id===id).answers[item.id]=option)}),option))):h("input",{id:item.id,"aria-describedby":answerHint(item)?item.id+"-hint":null,value:c.answers[item.id]||"",maxlength:600,disabled:done,autocomplete:"off",lang:"en",autocapitalize:"none",autocorrect:"off",spellcheck:"false",oninput:e=>{const value=e.target.value;autosave(s=>s.grammar_checks.find(c=>c.id===id).answers[item.id]=value);}}),!done&&button("Non lo so",async()=>{await change(s=>s.grammar_checks.find(c=>c.id===id).answers[item.id]="Non lo so");await refresh();},"quiet"),result&&h("div",{},p(result.correct?"Corretto":"Da ripassare",result.correct?"good":"warning"),p("Risposta: "+item.answer,"formula"),p(l.forms),link("Rivedi forma e significato","lesson/"+l.id,"text-link")));
   }));
   return [link("← Studio","studio","back"),title("VERIFICA SENZA AIUTI",c.lesson_id?"Conferma breve della struttura":"Dieci domande per aggiornare le priorità",done?results.filter(r=>r.correct).length+"/"+items.length+" risposte corrette":"Risposte salvate mentre scrivi. Leggi le soluzioni dopo la consegna."),form,
    !done&&button("Consegna la verifica",async()=>{await change(s=>{const current=s.grammar_checks.find(c=>c.id===id);if(current.completed_at)return;if(current.item_ids.some(id=>!current.answers[id]?.trim()))throw new Error("Rispondi a tutte le domande oppure scegli Non lo so.");current.completed_at=now();});await refresh();}),

@@ -1,15 +1,13 @@
+import {practiceEvidence,progression} from "./evidence-policy.js";
 import {negativeItems} from './negative-bank.js';
 import {grammarItems} from './practice-bank.js';
 import {normal} from './answer-normal.js';
 // Practical thresholds, not a calibrated assessment of language proficiency.
 export function blockAdaptation(state,set){
- const page=set.training?.page||0,items=set.training?set.items.slice(page*6,page*6+6):set.items;
- const ids=new Set(items.filter(i=>i.kind!=='retrieval'&&!i.doubt).map(i=>i.id));
- const rows=state.attempts.filter(a=>a.session_id===set.id&&ids.has(a.item_id)&&!a.disputed);
- const independent=rows.filter(a=>a.correct&&!a.assisted).length;
- if(rows.length<3)return {mode:'hold',message:'Risposte valutabili insufficienti: manteniamo il livello, senza dedurre una difficoltà personale.'};
- const ratio=independent/rows.length;
- return ratio>=0.8?{mode:'advance',message:'Buona riuscita senza aiuti: passa al livello successivo con meno sostegni.'}:ratio<0.5?{mode:'consolidate',message:'Prima consolida: riprova le regole del blocco con frasi diverse e un obiettivo alla volta.'}:{mode:'hold',message:'Mantieni il livello: alterna nuove prove sui punti incerti e confronto fra significati.'};
+ const progress=progression(practiceEvidence(state,set.lesson_id).filter(r=>r.session_id===set.id));
+ if(progress.can_advance)return {mode:'advance',message:'Almeno 5 risposte su 6 senza aiuti: puoi provare un confronto più impegnativo. Non significa aver concluso la lezione.'};
+ const recent=progress.latest,errors=recent.filter(r=>!r.correct).length;
+ return errors>=3?{mode:'consolidate',message:'Riprendi i punti deboli con nuovi contesti e un obiettivo alla volta.'}:{mode:'hold',message:'Mantieni la difficoltà: servono sei risposte valutabili senza aiuti e almeno cinque corrette per aumentarla.'};
 }
 export function localRetry(state,set,focus,count=6){
  const seen=new Set([...state.sessions.flatMap(s=>s.items),...set.items].map(i=>normal(i.stem)));

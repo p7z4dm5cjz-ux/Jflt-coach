@@ -67,6 +67,8 @@ export function validateReply(task,p) {
     for(const [n,e] of p.examples.entries()){needObject(e,"examples["+n+"]");needString(e.en,"examples["+n+"].en",400);needString(e.it,"examples["+n+"].it",400);needString(e.why,"examples["+n+"].why",1200);}
   } else if(task==="writing_coach") {
     needString(p.summary,"summary");needString(p.next_step,"next_step",800);
+    if(p.criteria!==undefined){needObject(p.criteria,"criteria");for(const key of ['content','organisation','grammar','register']){const c=p.criteria[key];needObject(c,'criteria.'+key);if(!['met','developing','not_assessed'].includes(c.status))bad('criteria.'+key,'esito non valido');needString(c.reason,'criteria.'+key+'.reason',500);}}
+
     if(typeof p.ready!=="boolean")bad("ready","deve essere booleano");
     needArray(p.focus,"focus",3);if(!p.focus.length)bad("focus","serve almeno una spiegazione della forma");
     for(const [n,f] of p.focus.entries()){needObject(f,"focus["+n+"]");for(const [key,max] of [["form",300],["meaning_it",300],["why",1200],["example_en",400]])needString(f[key],"focus["+n+"]."+key,max);}
@@ -124,7 +126,7 @@ export function validateReply(task,p) {
 export function sanitizeCoach(result,text,mode) {
   const issues=result.issues.filter(i=>text.includes(i.quote));
   const omitted=(Number.isInteger(result.omitted)?result.omitted:0)+result.issues.length-issues.length;
-  return {...result,issues,ready:mode==="review"&&result.ready&&omitted===0&&!issues.some(i=>i.kind==="error"),...(omitted?{omitted}:{} )};
+  return {...result,issues,ready:mode==="review"&&result.ready&&(!result.criteria||Object.values(result.criteria).every(c=>c.status==="met"))&&omitted===0&&!issues.some(i=>i.kind==="error"),...(omitted?{omitted}:{} )};
 }
 // Use the documented Groq strict subset. Counts, text lengths and relationships
 // between fields are described here and enforced by validateReply above.
@@ -134,7 +136,7 @@ const replyList=(items,description)=>({type:"array",items,description});
 const transferFields={stem:replyText(),answer:replyText(600),accept:replyList(replyText(600),"Massimo 8 risposte inglesi accettabili."),why:replyText()};
 export const REPLY_SCHEMAS={
   grammar_explain:replyObject({summary:replyText(),form:replyText(),when:replyList(replyText(),"Da 1 a 4 usi."),examples:replyList(replyObject({en:replyText(400),it:replyText(400),why:replyText(1200)}),"Due o tre esempi inglesi originali, con traduzione e motivazione."),contrast:replyText(),pitfalls:replyList(replyText(),"Da 1 a 3 errori tipici pertinenti.")}),
-  writing_coach:replyObject({summary:replyText(),focus:replyList(replyObject({form:replyText(300),meaning_it:replyText(300),why:replyText(1200),example_en:replyText(400)}),"Da 1 a 3 forme spiegate, con esempio in un altro contesto."),issues:replyList(replyObject({quote:replyText(300),correction:replyText(400),explanation:replyText(1200),kind:{type:"string",enum:["error","style"]},category:replyText(100)}),"Da 0 a 2 osservazioni con citazione letterale del testo dello studente."),next_step:replyText(800),ready:{type:"boolean",description:"True solo per una revisione senza errori prioritari e con le funzioni richieste presenti. Sempre false per un aiuto."}}),
+  writing_coach:replyObject({criteria:replyObject(Object.fromEntries(["content","organisation","grammar","register"].map(k=>[k,replyObject({status:{type:"string",enum:["met","developing","not_assessed"]},reason:replyText(500)})]))),summary:replyText(),focus:replyList(replyObject({form:replyText(300),meaning_it:replyText(300),why:replyText(1200),example_en:replyText(400)}),"Da 1 a 3 forme spiegate, con esempio in un altro contesto."),issues:replyList(replyObject({quote:replyText(300),correction:replyText(400),explanation:replyText(1200),kind:{type:"string",enum:["error","style"]},category:replyText(100)}),"Da 0 a 2 osservazioni con citazione letterale del testo dello studente."),next_step:replyText(800),ready:{type:"boolean",description:"True solo per una revisione senza errori prioritari e con le funzioni richieste presenti. Sempre false per un aiuto."}}),
   exercises:replyObject({items:replyList(replyObject({
     kind:{type:"string",enum:["choice","completion","transformation","error_correction"]},
     stem:replyText(),
@@ -154,7 +156,7 @@ export const REPLY_SCHEMAS={
 };
 export const SHAPES={
   grammar_explain:{summary:"Distingui il fatto concluso dalla situazione collegata al presente.",form:"Past simple: soggetto + passato; present perfect: soggetto + have/has + participio.",when:["Past simple con un momento passato concluso.","Present perfect per un risultato attuale senza tempo passato concluso."],examples:[{en:"We checked the door yesterday.",it:"Abbiamo controllato la porta ieri.",why:"Yesterday identifica un tempo concluso."},{en:"We have checked the door, so it is safe now.",it:"Abbiamo controllato la porta, quindi ora è sicura.",why:"Il risultato interessa il presente."}],contrast:"Il contesto decide; una forma non sostituisce sempre l'altra.",pitfalls:["Non usare il present perfect con yesterday in questo significato."]},
-  writing_coach:{summary:"Lo scopo è comprensibile.",focus:[{form:"Could you + verbo base",meaning_it:"Potrebbe…?",why:"Una richiesta cortese usa il verbo base dopo could.",example_en:"Could you confirm the address?"}],issues:[],next_step:"Controlla che il destinatario trovi tutte le informazioni richieste.",ready:false},
+  writing_coach:{criteria:Object.fromEntries(["content","organisation","grammar","register"].map(k=>[k,{status:"met",reason:"Requisito del passo rispettato."}])),summary:"Lo scopo è comprensibile.",focus:[{form:"Could you + verbo base",meaning_it:"Potrebbe…?",why:"Una richiesta cortese usa il verbo base dopo could.",example_en:"Could you confirm the address?"}],issues:[],next_step:"Controlla che il destinatario trovi tutte le informazioni richieste.",ready:false},
   exercises:{items:[
     {kind:"choice",stem:"Scegli la forma corretta: They ___ on duty.",options:["am","is","are"],answer:"are",accept:["are"],why:"They richiede are."},
     {kind:"choice",stem:"Scegli il past simple di go.",options:["goed","went","gone"],answer:"went",accept:["went"],why:"Go ha il past simple irregolare went."},
@@ -190,14 +192,19 @@ export const ADAPTIVE_SKILLS=["form","meaning","tense_choice","word_order","use"
 export function validateLearner(p,lessonId){
  if(!object(p)||p.version!==1||p.lesson_id!==lessonId||!arr(p.skills,5)||!arr(p.evidence,16)||!str(p.pretest_status,30))throw new Error("Profilo adattivo non valido.");
  if(p.starting_level!=null&&!["A1","A2","B1","B2","C1"].includes(p.starting_level))throw new Error("Livello iniziale non valido.");
+ if(p.related!==undefined&&(!arr(p.related,4)||p.related.some(r=>!object(r)||!str(r.lesson_id,100)||!['observations','independent_correct','errors'].every(k=>Number.isInteger(r[k])&&r[k]>=0)||!str(r.pretest_status,30))))throw new Error("Prerequisiti del profilo non validi.");
  for(const e of p.evidence)if(!object(e)||!str(e.id,200)||!ADAPTIVE_SKILLS.includes(e.skill)||typeof e.correct!=="boolean"||typeof e.assisted!=="boolean"||!["stem","given","expected"].every(k=>typeof e[k]==="string"&&e[k].length<=240))throw new Error("Prove del profilo non valide.");
- for(const s of p.skills)if(!ADAPTIVE_SKILLS.includes(s.skill)||!["observations","independent_correct","errors","assisted"].every(k=>Number.isInteger(s[k])&&s[k]>=0))throw new Error("Competenze del profilo non valide.");
+ if(p.global_skills!==undefined&&!arr(p.global_skills,5))throw new Error("Competenze trasversali non valide.");
+ for(const s of [...p.skills,...(p.global_skills||[])])if(!ADAPTIVE_SKILLS.includes(s.skill)||!["observations","independent_correct","errors","assisted"].every(k=>Number.isInteger(s[k])&&s[k]>=0))throw new Error("Competenze del profilo non valide.");
  return p;
 }
 export const ASSESSMENT_SCHEMA=replyObject({mode:{type:"string",enum:["diagnose","consolidate","hold","advance"]},focus:{type:"string",enum:ADAPTIVE_SKILLS},reason:replyText(700),goal:replyText(500),evidence_ids:replyList(replyText(200),"Da zero a 8 id realmente presenti in learner.evidence. Vuoto solo senza prove."),item_skills:replyList({type:"string",enum:ADAPTIVE_SKILLS},"Esattamente 6 competenze, una per esercizio nell'ordine.")});
 export const ADAPTIVE_EXERCISES_SCHEMA=replyObject({...REPLY_SCHEMAS.exercises.properties,assessment:ASSESSMENT_SCHEMA});
 export function validateAssessment(a,learner){
  if(!object(a)||!["diagnose","consolidate","hold","advance"].includes(a.mode)||!ADAPTIVE_SKILLS.includes(a.focus)||!str(a.reason,700)||!str(a.goal,500)||!arr(a.evidence_ids,8)||!a.evidence_ids.every(id=>str(id,200))||!arr(a.item_skills,6)||a.item_skills.length!==6||!a.item_skills.every(s=>ADAPTIVE_SKILLS.includes(s)))throw new Error("Valutazione adattiva incompleta.");
- if(learner){const ids=new Set(learner.evidence.map(e=>e.id));if(a.evidence_ids.some(id=>!ids.has(id))||ids.size&&!a.evidence_ids.length)throw new Error("Valutazione senza riscontro nelle risposte.");if(!ids.size&&a.mode!=="diagnose")throw new Error("Senza prove serve una verifica iniziale.");if(a.mode==='advance'&&learner.evidence.filter(e=>a.evidence_ids.includes(e.id)&&e.correct&&!e.assisted).length<2)throw new Error("Servono almeno due risposte autonome per aumentare la difficoltà.");}
+ if(learner){const ids=new Set(learner.evidence.map(e=>e.id));if(a.evidence_ids.some(id=>!ids.has(id))||ids.size&&!a.evidence_ids.length)throw new Error("Valutazione senza riscontro nelle risposte.");if(!ids.size&&a.mode!=="diagnose")throw new Error("Senza prove serve una verifica iniziale.");if(a.mode==='advance'){
+ const rows=learner.evidence.filter(e=>e.source==='practice'),last=rows.at(-1)?.block_id,block=rows.filter(e=>e.block_id===last);
+ if(!last||block.length!==6||block.some(e=>!e.block_complete||e.assisted)||block.filter(e=>e.correct).length<5)throw new Error("Servono almeno cinque risposte corrette su sei senza aiuti in un blocco completo per aumentare la difficoltà.");
+ }}
  return a;
 }

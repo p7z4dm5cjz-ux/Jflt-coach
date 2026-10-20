@@ -38,7 +38,7 @@ export function validateState(s) {
         if(typeof r.id!=="string"||!validStage(r.stage)||r.stage>c.stage||!validRound(r.round)||r.round>c.rounds[r.stage]||!validText(r.text)||!validDate(r.created_at)||typeof r.assisted!=="boolean"||!["hint","review"].includes(r.mode)||typeof r.question!=="string"||r.question.length>500)throw new Error("Una revisione del percorso non è valida.");
         const assisted=r.stage<4||c.reviews.slice(0,index).some(old=>old.stage===r.stage&&old.round===r.round);
         if(r.assisted!==assisted)throw new Error("Un aiuto non può diventare una prova autonoma.");
-        validateReply("writing_coach",r.result);if(r.result.issues.some(i=>!r.text.includes(i.quote))||r.mode==="hint"&&r.result.ready||r.result.ready&&(r.result.omitted||r.result.issues.some(i=>i.kind==="error")))throw new Error("Revisione non ancorata al testo o conferma non valida.");
+        validateReply("writing_coach",r.result);if(r.result.issues.some(i=>!r.text.includes(i.quote))||r.mode==="hint"&&r.result.ready||r.result.ready&&(r.result.criteria&&Object.values(r.result.criteria).some(c=>c.status!=="met")||r.result.omitted||r.result.issues.some(i=>i.kind==="error")))throw new Error("Revisione non ancorata al testo o conferma non valida.");
       }
       if(c.checks.length!==c.stage+Number(!!c.completed_at)||!!c.completed_at&&c.stage!==5||new Set(c.reviews.map(r=>r.id)).size!==c.reviews.length)throw new Error("Tappe e revisioni non corrispondono.");
       for(const [index,check] of c.checks.entries()) {

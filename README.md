@@ -1,3 +1,16 @@
+# Revisione 1.12.0 — progressione e affidabilità
+
+- Livello A1–C1: sequenza completa; basi recuperate quando emergono errori, non al termine delle quattro lezioni iniziali. Fasce didattiche, non certificazioni CEFR.
+- Per aumentare la difficoltà: blocco completo di sei risposte valutabili tutte senza aiuti, almeno cinque corrette. Per avanzare nel percorso: almeno dieci su dodici nei due ultimi blocchi completi, con forma, significato/scelta del tempo e uso/ordine, almeno otto contesti distinti. Soglie pratiche iniziali, non scientificamente calibrate.
+- Il completamento di una sessione resta distinto dalla riuscita di un blocco e dalla conferma a distanza. Risposte AI non controllate, contestate e ripetizioni non certificano padronanza.
+- Profilo Groq: fino a dodici risposte di pratica recenti, prove del pretest/verifiche/ripasso e riepilogo dei prerequisiti. Le prove effettive prevalgono sull’autovalutazione.
+- Verifica breve per tutte le 117 lezioni: 240 domande dedicate preesistenti e ulteriori domande dalla banca di allenamento, dichiarate esplicitamente. Queste ultime NON certificano trasferimento a distanza, anche se ancora non viste. Banca finita; non si dichiara una revisione linguistica umana completa delle nuove selezioni.
+- Scrittura: quattro criteri espliciti (contenuti, organizzazione, grammatica, registro); tutti devono essere raggiunti per confermare il passo. I backup precedenti senza rubriche restano importabili.
+- Articoli: spiegazione contestuale anche per parole già nel catalogo; finestra attorno al termine; suddivisione della traduzione senza perdere frasi lunghe.
+- Nessuna cancellazione di progressi. Le valutazioni dei progressi vengono ricalcolate con criteri più prudenti. App e Worker devono mostrare 1.12.0. I test usano risposte simulate: non sostituiscono una sessione reale con Groq né Safari su iPhone.
+
+## Note delle versioni precedenti
+
 # JFLT Coach 1.11.0
 
 ## Novità della 1.11.0: pratica adattiva
