@@ -11,6 +11,7 @@ const STORE="app_v2";
 export function validateState(s) {
   if(!s||s.version!==2||s.id!=="main"||!s.settings||!Array.isArray(s.attempts)||!Array.isArray(s.sessions)||!Array.isArray(s.writings)||!Array.isArray(s.readings)||!Array.isArray(s.vocabulary))throw new Error("Backup incompleto o formato non riconosciuto.");
   endpoint(s.settings.endpoint);
+  if(s.settings.starting_level!=null&&!["A1","A2","B1","B2","C1"].includes(s.settings.starting_level))throw new Error("Livello iniziale non valido nel backup.");
   if(s.placement!==null&&!validPlacement(s.placement))throw new Error("Pretest non valido nel backup.");
   const validDate=v=>typeof v==="string"&&Number.isFinite(Date.parse(v));
   if(s.lesson_guides!==undefined)validateGuides(s.lesson_guides,LESSONS);

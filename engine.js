@@ -1,10 +1,11 @@
+import {STARTING_LEVELS,startingLevel} from "./starting-level.js";
 import {LESSONS, VOCABULARY, PHRASALS} from "./catalog.js";
 import {placementProfile, validPlacement, newPlacement} from "./placement.js";
 import {PARTICLE_ALTERNATIVES,BASE_MEANING_DISTRACTORS} from "./phrasal-extension.js";
 import {normal,correct} from "./answer-normal.js";
 import {lessonEvidence,practiceWindow} from "./grammar-checks.js";
 export {normal,correct} from "./answer-normal.js";
-export const VERSION = "1.11.0";
+export const VERSION = "1.11.1";
 export const API_VERSION = 1;
 export const LEGACY_STORES = ["settings","diag_responses","diag_texts","profile","requests","grammar_sets","grammar_answers","tasks","texts","feedback","error_log","cards","transfer_checks","device_tests","to_verify"];
 export const now = () => new Date().toISOString();
@@ -37,7 +38,7 @@ export function migrate(stores) {
 }
 export function recommendation(state) {
   const profile=placementProfile(state.placement);
-  const defaults=["present-simple","past-simple","present-perfect-simple","negatives","phrasal-basics","present-perfect-continuous","past-perfect-simple","verb-patterns"];
+  const defaults=startingLevel(state)?.lessons||["present-simple","past-simple","present-perfect-simple","negatives","phrasal-basics","present-perfect-continuous","past-perfect-simple","verb-patterns"];
   const courseErrors=(state.writing_courses||[]).slice(-3).flatMap(c=>c.reviews.findLast(r=>r.stage===c.stage&&r.round===c.rounds[c.stage]&&r.mode==="review"&&r.text===c.drafts[c.stage])?.result.issues.filter(i=>i.kind==="error")||[]);
   const writingErrors=[...state.writings.slice(-3).flatMap(w=>w.feedback_source===w.draft?(w.feedback?.issues||[]).filter(i=>i.kind==="error"):[]),...courseErrors];
   const mapCategory={tenses:["past-simple","present-perfect-simple"],negation:["negatives"],phrasals:["phrasal-basics"],word_order:["sentence"],verb_patterns:["verb-patterns"]};

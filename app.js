@@ -1,3 +1,4 @@
+import {STARTING_LEVELS,startingLevel} from "./starting-level.js";
 import {personalPractice} from "./learner-profile.js";
 import {blockAdaptation,localRetry,replaceDoubts} from "./adaptive-practice.js";
 import {lessonGuideUI,guideTasks} from "./lesson-guide.js";
@@ -182,12 +183,21 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     return h("section",{class:"week-strip","aria-label":"Questa settimana"},h("ol",{},names.map((name,i)=>{const day=new Date(monday.getFullYear(),monday.getMonth(),monday.getDate()+i),key=localDay(day.getTime()),done=active.has(key),isToday=key===todayKey,future=day>today&&!isToday;
       return h("li",{class:[done&&"done",isToday&&"today",future&&"future"].filter(Boolean).join(" ")},h("span",{"aria-hidden":"true"},name),h("span",{class:"dot"},done?h("span",{class:"sr-only"},full[i]+": studio svolto"):h("span",{class:"sr-only"},full[i]+(isToday?": oggi":future?"":": nessuna attività"))));})));
   }
+  function startingLevelCard() {
+    const selected=startingLevel(state);
+    const input=h("select",{id:"starting-level"},h("option",{value:"",selected:!selected},"Scegli un livello"),STARTING_LEVELS.map(l=>h("option",{value:l.id,selected:selected?.id===l.id},l.label)));
+    return card(h("h2",{},"Da quale livello vuoi partire?"),p("Scegli il tuo punto di partenza. Le risposte e il pretest, se lo fai, guideranno poi gli adattamenti."),h("label",{for:"starting-level"},"Livello iniziale"),input,button("Parti dal livello scelto",async()=>{
+      if(!input.value)throw new Error("Scegli un livello oppure fai il pretest.");
+      await change(s=>s.settings.starting_level=input.value);
+      goto("lesson/"+learningPath(state)[0].id);
+    }),p("È un’autovalutazione, non una certificazione. Puoi cambiarla nelle Impostazioni; progressi e attività già iniziate restano salvati.","small muted"),link("Non so: fai il pretest","placement","text-link"));
+  }
   function home() {
     const plan=dailyPlan(state),planLesson=plan.lesson,next=learningPath(state)[0],profile=placementProfile(state.placement),due=dueTerms(),active=state.writings.findLast(w=>!w.comparison),activePractice=state.sessions.findLast(set=>!set.completed_at),activeCourse=state.writing_courses?.findLast(c=>!c.completed_at),activeGuide=state.lesson_guides?.findLast(g=>!g.completed_at);
     const courseCard=card(h("h2",{},activeCourse?"Riprendi la scrittura passo passo":"Dal modello al saggio e al rapporto"),p("MISSION, TARGET e CAMPAIGN: comprensione, frasi, paragrafo, scaletta e nuove prove autonome."),link(activeCourse?"Riprendi · passo "+(activeCourse.stage+1)+" di 6":"Impara a scrivere",activeCourse?"course/"+activeCourse.id:"writing","secondary"));
     const attempts=state.attempts.filter(a=>!a.assisted&&!a.disputed&&a.source!=="legacy"),score=attempts.length?Math.round(attempts.filter(a=>a.correct).length/attempts.length*100):null;
-    if(!profile)return [
-      restoreCard(),
+    if(!profile&&!startingLevel(state))return [
+      restoreCard(),startingLevelCard(),
       title("IL TUO PUNTO DI PARTENZA","Prima capiamo da dove iniziare.","Un pretest adattivo di circa 15 minuti sceglie gli argomenti da ripassare e le basi che puoi saltare."),
       h("section",{class:"hero"},h("div",{},p("PRETEST · PUOI INTERROMPERE E RIPRENDERE","eyebrow"),h("h2",{},state.placement?"Riprendi il tuo pretest":"Trova le tue priorità"),p("Tempi verbali, negazioni, phrasal verbs e altre strutture. Le risposte corrette date con dubbio restano da confermare."),link(state.placement?"Riprendi il pretest":"Inizia il pretest","placement")),h("span",{class:"hero-mark","aria-hidden":"true"},"Aa")),
       card(h("h2",{},"Un percorso basato sui risultati"),p("Alla fine del pretest l'app ti propone un percorso. Le risposte successive e gli errori degli scritti lo aggiornano."),p("Per ogni lezione puoi fare 30 esercizi con il tutor: cinque blocchi da sei, con correzione, spiegazione e nuova prova sugli errori."),link("Esplora le lezioni","studio","secondary")),
@@ -213,7 +223,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
       activeGuide&&card(h("h2",{},"Riprendi la lezione passo passo"),link("Continua la lezione","lesson/"+activeGuide.lesson_id)),
       courseCard,
       h("div",{class:"stats"},card(p("Verifiche senza aiuti","muted"),h("strong",{class:"big"},score===null?"—":score+"%"),p(attempts.length+" risposte valutate","small")),card(p("Parole da recuperare","muted"),h("strong",{class:"big"},due.length),link("Apri Ripasso","review","text-link")),card(p("I tuoi scritti","muted"),h("strong",{class:"big"},state.writings.length),link(active?"Riprendi la bozza":"Prepara un testo",active?"writing/"+active.id:"writing","text-link"))),
-      card(h("h2",{},"Il tuo punto di partenza"),p(profile.correct+" risposte corrette su "+profile.total+". Una risposta data con dubbio resta da confermare."),link("Vedi risultati e priorità","placement","text-link")),
+      profile?card(h("h2",{},"Il tuo punto di partenza"),p(profile.correct+" risposte corrette su "+profile.total+". Una risposta data con dubbio resta da confermare."),link("Vedi risultati e priorità","placement","text-link")):card(h("h2",{},"Livello iniziale: "+startingLevel(state).id),p("Il tutor parte da questa autovalutazione e si adatta alle tue risposte."),link("Cambia livello","settings","text-link"),link("Affina con il pretest","placement","text-link")),
       h("div",{class:"two-columns"},card(h("h2",{},"Phrasal verbs nel contesto"),p("Significato, particelle, ordine dei pronomi e registro. Una parola segnata come nota resta distinta da una risposta verificata."),link("Apri il laboratorio","phrasals")),card(h("h2",{},"Impara a comprendere"),p("Incolla un articolo: scopri il senso, le scelte linguistiche e salva le parole nel dizionario personale."),link("Incolla e comprendi un articolo","reading"))),
       link("Consulta i progressi","progress","text-link")
     ];
@@ -609,6 +619,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     const preview=h("div",{});let candidate=null;
     file.onchange=()=>run(async()=>{candidate=null;preview.replaceChildren();if(!file.files[0])return;const parsed=parseBackup(await file.files[0].text());candidate=parsed;preview.replaceChildren(p("Backup valido: "+parsed.writings.length+" scritti, "+parsed.attempts.length+" tentativi, "+parsed.vocabulary.length+" termini."),button("Importa questo backup",async()=>{if(!candidate)return;await repo.replace(candidate);state=repo.get();candidate=null;notify("Backup importato. Il token del tutor resta sul dispositivo.");await refresh();},"secondary"),p("L'importazione sostituisce i dati della nuova app. Esporta prima una copia dei progressi attuali.","warning"));});
     return [title("IMPOSTAZIONI","Ritmo, aspetto e tutor.","I progressi restano su questo dispositivo. Il tutor usa il tuo Worker Cloudflare e Groq."),
+      startingLevelCard(),
       card(h("h2",{},"Il tuo ritmo"),h("label",{for:"theme-preference"},"Aspetto"),theme,h("label",{for:"daily-minutes"},"Tempo indicativo del piano quotidiano"),minutes,p("Automatico segue il tema del dispositivo. Un piano già iniziato mantiene obiettivo e contenuti fino a fine giornata.","small muted")),
       card(h("h2",{},"Collega il tutor"),h("label",{for:"endpoint"},"Indirizzo Worker"),address,h("label",{for:"token"},"Codice personale del tutor"),token,h("label",{class:"inline-check"},remember,"Ricorda il codice su questo dispositivo"),button("Salva collegamento",verifyConnection),button("Rimuovi il codice dal dispositivo",async()=>{saveToken("");healthCheckGeneration++;health=null;healthError="";groq=null;notify("Codice rimosso da questo dispositivo.");await refresh();},"quiet"),p("La chiave Groq va nei secret Cloudflare. Qui si inserisce solo il codice personale APP_TOKEN; non viene incluso nei backup.","small muted")),
       statusBox,card(h("h2",{},"Proteggi i tuoi progressi"),button("Esporta backup JSON",async()=>{const text=await repo.backup(),blob=new Blob([text],{type:"application/json"}),url=URL.createObjectURL(blob),a=h("a",{href:url,download:"jflt-progressi-"+now().slice(0,10)+".json"});document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);notify("Backup preparato. Conserva il file scaricato.");},"secondary"),h("label",{for:"backup-file"},"Importa un backup"),file,preview,p("Gli aggiornamenti dell'app conservano i tuoi dati. Il backup serve per cambiare dispositivo e per passare da Safari all'app sulla schermata Home: su iPhone le due hanno archivi separati.","muted")),

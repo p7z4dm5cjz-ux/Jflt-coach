@@ -189,6 +189,7 @@ export function anchorReading(result,text) {
 export const ADAPTIVE_SKILLS=["form","meaning","tense_choice","word_order","use"];
 export function validateLearner(p,lessonId){
  if(!object(p)||p.version!==1||p.lesson_id!==lessonId||!arr(p.skills,5)||!arr(p.evidence,16)||!str(p.pretest_status,30))throw new Error("Profilo adattivo non valido.");
+ if(p.starting_level!=null&&!["A1","A2","B1","B2","C1"].includes(p.starting_level))throw new Error("Livello iniziale non valido.");
  for(const e of p.evidence)if(!object(e)||!str(e.id,200)||!ADAPTIVE_SKILLS.includes(e.skill)||typeof e.correct!=="boolean"||typeof e.assisted!=="boolean"||!["stem","given","expected"].every(k=>typeof e[k]==="string"&&e[k].length<=240))throw new Error("Prove del profilo non valide.");
  for(const s of p.skills)if(!ADAPTIVE_SKILLS.includes(s.skill)||!["observations","independent_correct","errors","assisted"].every(k=>Number.isInteger(s[k])&&s[k]>=0))throw new Error("Competenze del profilo non valide.");
  return p;

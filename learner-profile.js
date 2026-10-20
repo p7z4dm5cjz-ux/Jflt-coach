@@ -1,3 +1,4 @@
+import {STARTING_LEVELS,startingLevel} from "./starting-level.js";
 import {placementProfile} from './placement.js';
 import {normal} from './answer-normal.js';
 export const SKILLS=['form','meaning','tense_choice','word_order','use'];
@@ -18,7 +19,7 @@ export function learnerProfile(state,lessonId){
  const evidence=[...pre.slice(-4),...rows.slice(-8),...reviews.slice(-4)];
  const skills=SKILLS.map(skill=>{const all=[...pre,...rows].filter(r=>r.skill===skill);return {skill,observations:all.length,independent_correct:all.filter(r=>r.correct&&!r.assisted).length,errors:all.filter(r=>!r.correct).length,assisted:all.filter(r=>r.assisted).length};});
  const prior=sessions.filter(s=>s.lesson_id===lessonId).flatMap(s=>s.adaptive_plans||[]).at(-1)?.assessment;
- return {version:1,lesson_id:lessonId,pretest_status:p?.lessonStatus[lessonId]||'unassessed',skills,evidence,previous_assessment:prior?{mode:prior.mode,focus:prior.focus,reason:prior.reason}:null};
+ return {version:1,starting_level:startingLevel(state)?.id||null,lesson_id:lessonId,pretest_status:p?.lessonStatus[lessonId]||'unassessed',skills,evidence,previous_assessment:prior?{mode:prior.mode,focus:prior.focus,reason:prior.reason}:null};
 }
 // The persistent sessions are the source of the personal bank. Only automatically
 // cross-checked AI items qualify; this is not a human certification.
