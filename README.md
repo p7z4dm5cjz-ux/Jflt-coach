@@ -1,3 +1,10 @@
+# Revisione 1.15.0: regole e livelli su tutti gli esercizi (fase 1 del tutor adattivo)
+
+- **Regole di ogni lezione** (`item-tags-data.js`, `LESSON_RULES`): 515 regole per le 117 lezioni, da 2 a 11 per lezione, ciascuna con nome, che cosa verifica ed errore tipico. Esempio, future-going-to: forma, negativa, domanda, intenzione già decisa, previsione con un indizio, contrasto con will e present continuous, movimento o futuro.
+- **Regola e livello su ogni esercizio offline e di verifica**: 4.859 esercizi (2.279 etichettati a mano, gli altri dai modelli che li generano, nel codice di `core-practice.js` e `negative-bank.js`). Livelli: 1 riconoscere, 2 produrre con aiuto, 3 distinguere dal contesto, 4 intrecciare più regole, 5 trasferire in un testo. Le sessioni salvano `rules` e `level` con l'esercizio.
+- **Registro robusto**: i tag sono indicizzati per impronta della consegna (`item-tags.js`), quindi un esercizio spostato conserva il suo tag; se una consegna cambia, `npm run tags:check` segnala l'esercizio senza tag e il tag orfano, e il test fallisce.
+- **Vuoti misurati** (`npm run tags:coverage`): livello 1 = 1.445 esercizi, livello 2 = 3.213, livello 3 = 200, livello 4 = 1, livello 5 = 0. Sei regole non hanno esercizi offline: stati al simple nel perfect continuous, quando il past perfect non serve, going to come movimento, future perfect continuous (nella lezione future-perfect), condizionali misti (nella lezione conditionals-unreal), condizionali senza if (nella lezione inversion).
+
 # Revisione 1.14.1: fase 0 del tutor adattivo
 
 - **Nessun blocco perso per una proposta non ammessa:** se Groq propone di aumentare la difficoltà senza i requisiti, il Worker la riconduce a "mantieni" (con il motivo standard) invece di rifiutare la risposta; senza prove la riconduce a una diagnosi. Prove inventate restano un errore. La correzione è registrata nella diagnostica (`assessment_adjusted`).

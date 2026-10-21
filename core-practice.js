@@ -1,3 +1,4 @@
+import {lessonRules} from "./item-tags.js";
 // Original controlled practice. Six situations, five operations per situation.
 // Each situation keeps its verb; the complement changes at every operation.
 // Reusing a situation is deliberate practice, not independent proof of mastery.
@@ -59,7 +60,8 @@ export function coreItems(id,variation=0){
  const subject=subjects[Math.abs(variation)%subjects.length],who=subject.toLowerCase();
  const when=time[0].toLowerCase()+time.slice(1);
  const contexts=verbs.map((v,i)=>({v,i,context:id+"-s"+(Math.abs(variation)%subjects.length)+"-v"+i}));
- const make=(x,page,stem,answer,kind="completion",options=[],accept=[answer])=>({id:x.context+"-task"+page,context_id:id+"-situation-"+x.i,kind,skill:page===0?"recognise":"form",stem,answer,accept:[...new Set(accept)],options,why,formula:name,origin:"local"});
+ // Regola e livello (item-tags.js): forma, negativa e domanda della lezione; il significato dell'alternativa in esame.
+ const make=(x,page,stem,answer,kind="completion",options=[],accept=[answer])=>({id:x.context+"-task"+page,context_id:id+"-situation-"+x.i,kind,skill:page===0?"recognise":"form",stem,answer,accept:[...new Set(accept)],options,why,formula:name,origin:"local",rules:[id+"."+(["use","form","neg","q","use"][page])],level:page===0?1:2});
  const items=[1,0,2,3,4].flatMap(page=>contexts.map(x=>{
    const {v}=x,phrase=affirm(v),rest=v[4][page];
    const body=subject+" "+phrase+" "+rest,full=body+" "+when+".";
@@ -70,7 +72,7 @@ export function coreItems(id,variation=0){
      const options=page===0?group.map(k=>meanings[k]):group.map(k=>contextSentence(k,subject,cv,crest));
      const answer=page===0?meanings[focus]:sentence;
      const stem=page===0?"Scegli il significato espresso dalla frase: "+sentence:"Scegli la frase che presenta esplicitamente "+meanings[focus]+". Le altre frasi sono grammaticali, ma presentano situazioni diverse.";
-     return {...make(x,page,stem,answer,"choice",options),skill:"recognise",focus_lesson:focus,formula:r2[0],why:r2[6]+" Qui la frase presenta "+meanings[focus]+". Le altre alternative rappresentano: "+group.filter(k=>k!==focus).map(k=>meanings[k]).join("; ")+". La distinzione riguarda il significato espresso, non una regola che vieta ogni altra forma."};
+     return {...make(x,page,stem,answer,"choice",options),skill:"recognise",focus_lesson:focus,rules:[focus+(page===4&&lessonRules(focus).some(r=>r.key==="contrast")?".contrast":".use")],formula:r2[0],why:r2[6]+" Qui la frase presenta "+meanings[focus]+". Le altre alternative rappresentano: "+group.filter(k=>k!==focus).map(k=>meanings[k]).join("; ")+". La distinzione riguarda il significato espresso, non una regola che vieta ogni altra forma."};
    }
    if(page===1)return make(x,page,(phrase.includes(" ")?"Scrivi solo le parole mancanti (":"Scrivi solo la parola mancante (")+name+"): "+time+", "+who+" ___ "+rest+". ("+v[0]+")",phrase);
    if(page===2){const neg=subject+" "+negative+" "+tail(v)+" "+rest+" "+when+".";return make(x,page,"Rendi negativa e riscrivi tutta la frase"+(id==="obligation"?" esprimendo un divieto, non l'assenza di obbligo":"")+": "+full,neg,"transformation",[],[neg,time+", "+who+" "+negative+" "+tail(v)+" "+rest+"."]);}
@@ -78,7 +80,7 @@ export function coreItems(id,variation=0){
  }));
  if(id==="future-going-to"){
   const starts=[['I','am','check the equipment'],['She','is','write the summary'],['We','are','prepare the briefing'],['They','are','read the instructions'],['It','is','rain']];
-  starts.forEach(([subject,answer,tail],i)=>{items[i]={...items[i],stem:'Scrivi solo la forma di be mancante: '+subject+' ___ going to '+tail+'.',answer,accept:[answer],why:'Be going to richiede am con I, is con he/she/it, are con you/we/they. Qui il soggetto è '+subject+': serve '+answer+'. Going to e il verbo base sono già presenti: non riscriverli.'};});
+  starts.forEach(([subject,answer,tail],i)=>{items[i]={...items[i],stem:'Scrivi solo la forma di be mancante: '+subject+' ___ going to '+tail+'.',answer,accept:[answer],rules:['future-going-to.form'],level:2,why:'Be going to richiede am con I, is con he/she/it, are con you/we/they. Qui il soggetto è '+subject+': serve '+answer+'. Going to e il verbo base sono già presenti: non riscriverli.'};});
   const challenges=[
    ['The team is going to inspect the site, but no appointment has been made. Che cosa puoi concludere?', ['È già fissato un appuntamento con un orario concordato.','La squadra ha intenzione di fare il controllo; un appuntamento non è ancora fissato.','La squadra sta eseguendo il controllo proprio ora.'],1,'future-going-to','Going to comunica qui un’intenzione. La seconda parte esclude un appuntamento già fissato; non descrive un’attività in corso.'],
    ['The ladder is moving and one support has broken. It is going to fall. Perché il parlante presenta questa previsione?', ['Sta comunicando una decisione volontaria della scala.','Descrive una caduta già conclusa.','Sta interpretando indizi osservabili nel presente.'],2,'future-going-to','La scala instabile e il supporto rotto sono indizi presenti. Going to può esprimere una previsione, non soltanto un piano.'],
@@ -87,7 +89,8 @@ export function coreItems(id,variation=0){
    ['We are not going to inspect the warehouse; we are going to inspect the office. Quale frase conserva il piano comunicato?', ['We are going to inspect both buildings.','We are going to inspect neither building.','We intend to inspect the office, not the warehouse.'],2,'future-going-to','La negazione riguarda il magazzino, non tutte le ispezioni. Il piano positivo riguarda l’ufficio: entrambe le informazioni vanno conservate nella parafrasi.'],
    ['The team ___ the site tomorrow. Senza altre informazioni, quale valutazione è corretta?', ['Will inspect, is going to inspect e is inspecting possono essere possibili, con contesti o punti di vista diversi.','Tomorrow impone sempre is going to inspect.','Is inspecting non può mai riferirsi al futuro.'],0,'future-arrangements','Tomorrow indica quando, ma non chiarisce da solo se si tratti di intenzione, previsione o accordo. Non è corretto dichiarare una sola forma obbligatoria senza un contesto sufficiente.']
   ];
-  challenges.forEach(([stem,options,n,focus,explanation],i)=>{items[24+i]={...items[24+i],stem,options,answer:options[n],accept:[options[n]],focus_lesson:focus,why:explanation+' Le altre alternative modificano il significato o attribuiscono alla forma una regola troppo rigida.'};});
+  const challengeRules=['future-going-to.contrast','future-going-to.evidence','future-will.use','future-arrangements.use','future-going-to.use','future-arrangements.contrast'];
+  challenges.forEach(([stem,options,n,focus,explanation],i)=>{items[24+i]={...items[24+i],stem,options,answer:options[n],accept:[options[n]],focus_lesson:focus,rules:[challengeRules[i]],level:3,why:explanation+' Le altre alternative modificano il significato o attribuiscono alla forma una regola troppo rigida.'};});
  }
  return items.map((item,i)=>({...item,difficulty:i<5?1:i<12?2:i<24?3:4,difficulty_label:i<5?'Base · costruisci la forma':i<12?'Comprendi forma e significato':i<24?'Applica · negazioni e domande':'Approfondisci · contesto e alternative'}));
 

@@ -1,6 +1,6 @@
 {
   "name": "jflt-coach",
-  "version": "1.14.1",
+  "version": "1.15.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,7 +11,9 @@
     "build": "npm run build:worker && npm run build:sw",
     "check": "node scripts/build-worker.mjs --check && node scripts/build-sw.mjs --check && node scripts/check.mjs",
     "deploy:worker": "wrangler deploy",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "tags:check": "node scripts/tags-report.mjs",
+    "tags:coverage": "node scripts/tags-report.mjs --coverage"
   },
   "devDependencies": {
     "ajv": "^8.20.0",

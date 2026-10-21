@@ -1,5 +1,6 @@
 import {grammarItems} from "./practice-bank.js";
 import {bankCheckItems} from "./lesson-bank.js";
+import {withTags} from "./item-tags.js";
 import {LESSONS} from "./catalog.js";
 import {normal} from "./answer-normal.js";
 import {practiceEvidence,progression} from "./evidence-policy.js";
@@ -67,6 +68,8 @@ for(const lesson of LESSONS.filter(l=>!banks[l.id]&&bankCheckItems(l.id).length<
  const selected=[...pool.filter(i=>i.kind==='choice').slice(0,2),...pool.filter(i=>i.kind!=='choice')].slice(0,8);
  for(const [n,i] of selected.entries())CHECK_ITEMS.push({...i,id:'check-112-'+lesson.id+'-'+n,lesson_id:lesson.id,practice_bank:true});
 }
+// Regola e livello di ogni domanda di verifica (item-tags.js).
+for(const [n,i] of CHECK_ITEMS.entries())CHECK_ITEMS[n]=withTags(i.lesson_id,i);
 export const CHECK_LESSONS=[...new Set(CHECK_ITEMS.map(i=>i.lesson_id))];
 const byId=new Map(CHECK_ITEMS.map(item=>[item.id,item]));
 export function checkItems(check){return check.item_ids.map(id=>byId.get(id));}

@@ -3,6 +3,7 @@ import {coreItems} from "./core-practice.js";
 import {negativeItems} from "./negative-bank.js";
 import {EXTENSION_DRILLS,extensionItems} from "./grammar-drills.js";
 import {bankTrainItems} from "./lesson-bank.js";
+import {withTags} from "./item-tags.js";
 // Esercizi originali; nessuna domanda copiata dal pretest o dai manuali.
 const rows = {
 sentence:[["Metti le parole in ordine e scrivi la frase: checked / the guard / the list","The guard checked the list"],["Scrivi solo ciò che manca: The guards ___ the lists daily. (check)","check"]],
@@ -84,7 +85,8 @@ function alternate(items){
   while(groups.some(g=>g.length))for(const g of groups)if(g.length)out.push(g.shift());
   return out;
 }
-export function lessonItems(lessonId,variation=0){
+export function lessonItems(lessonId,variation=0){return mixedItems(lessonId,variation).map(item=>withTags(lessonId,item));}
+function mixedItems(lessonId,variation){
   const base=grammarItems(lessonId,variation),bank=alternate(bankTrainItems(lessonId));
   if(!bank.length)return base;
   const shift=Math.abs(variation)%bank.length,rotated=[...bank.slice(shift),...bank.slice(0,shift)];

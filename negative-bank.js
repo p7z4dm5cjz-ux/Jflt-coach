@@ -69,7 +69,7 @@ export function negativeItems(variation=0,{count=30,rules=[],exclude=[]}={}) {
     for(const [index,item] of rows(variant).entries()) {
       if(rules.length&&!rules.includes(item.rule))continue;
       if(seen.has(item.stem.toLowerCase().replace(/\s+/g," ").trim()))continue;
-      candidates.push({...item,id:`negatives-${index}-v${variant}`});
+      candidates.push({...item,id:`negatives-${index}-v${variant}`,rules:["negatives."+item.rule],level:item.kind==="error_correction"?3:2});
     }
   }
   if(!Number.isInteger(count)||count<1||count>30||candidates.length<count)throw new Error("Non ci sono abbastanza nuove varianti offline per questa riprova. Puoi generarla con Groq.");
