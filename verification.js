@@ -49,3 +49,35 @@ export function applyVerification(items,reply){
   });
   return {items:out,summary:{...summary,status:"done"}};
 }
+
+// ---- Percorso adattivo: lo stesso controllo alla cieca, più regola esercitata e consegna rivelatrice ----
+export const VERIFY_PATH_PROMPT=VERIFY_PROMPT+"\n"+[
+  "Each item also lists rule_options: the grammar rules it could be testing (id: name). Set rule to the id of the rule the item really tests, copied exactly from its rule_options.",
+  "Set names_form to true when the instruction or the brackets name the tense, structure or rule to use (for example 'use the present perfect', 'past simple', 'passive'), so the learner does not have to infer it from the context. A base verb in brackets alone is not naming the form.",
+  "Items with a passage refer to the numbered gap in that passage: solve the gap using the whole passage."
+].join("\n");
+export const VERIFY_PATH_SCHEMA={type:"object",properties:{answers:{type:"array",description:"One entry per item, in order.",items:{type:"object",properties:{n:{type:"integer"},best:{type:"string"},all_valid:{type:"array",items:{type:"string"}},ambiguous:{type:"boolean"},rule:{type:"string"},names_form:{type:"boolean"}},required:["n","best","all_valid","ambiguous","rule","names_form"],additionalProperties:false}}},required:["answers"],additionalProperties:false};
+// ruleOptions: {lesson_id: [{id,name}]} per le lezioni del blocco.
+export function pathVerificationRequest(items,passages,slots,ruleOptions){
+  return {items:items.map((item,i)=>({n:i+1,kind:item.kind,instruction_and_sentence:item.stem,options:item.options||[],passage:item.group?passages.find(p=>p.group===item.group)?.text||null:null,rule_options:(ruleOptions[slots[i].lesson_id]||[]).map(r=>r.id+": "+r.name)}))};
+}
+// Dopo il controllo comune: regola di un'altra lezione → dubbio; altra regola della stessa lezione →
+// l'esercizio conta per quella; dal livello 3 una consegna che nomina il tempo non misura il livello → dubbio.
+export function applyPathVerification(items,reply,slots,ruleOptions={}){
+  const base=applyVerification(items,reply),answers=Array.isArray(reply?.answers)?reply.answers:[];
+  const summary={...base.summary,retagged:0,rule_doubts:0,named:0};
+  const out=base.items.map((item,i)=>{
+    const slot=slots[i],a=answers.find(x=>x&&x.n===i+1),tagged={...item,rules:[slot.rule],level:slot.level,focus_lesson:slot.lesson_id,path_role:slot.role,...(slot.group?{group:slot.group}:{})};
+    if(item.doubt||!a||item.check==="unchecked")return tagged;
+    const doubt=note=>{summary.doubts++;if(item.check==="confirmed")summary.confirmed--;if(item.check==="extended")summary.extended--;return {...tagged,check:"doubt",doubt:true,check_note:note};};
+    if(slot.level>=3&&a.names_form===true){summary.named++;return doubt("La consegna nomina la forma da usare: al livello "+slot.level+" il contesto deve bastare. Esclusa dal punteggio.");}
+    const rule=typeof a.rule==="string"?a.rule.trim():"";
+    if(rule&&rule!==slot.rule){
+      if(!rule.startsWith(slot.lesson_id+".")){summary.rule_doubts++;return doubt("Il controllo automatico ritiene che l'esercizio non riguardi la lezione prevista: escluso dal punteggio.");}
+      if(!(ruleOptions[slot.lesson_id]||[]).some(r=>r.id===rule))return tagged;
+      summary.retagged++;return {...tagged,rules:[rule],rule_retagged:slot.rule};
+    }
+    return tagged;
+  });
+  return {items:out,summary};
+}

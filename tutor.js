@@ -40,7 +40,7 @@ async function loadHealth(settings,fetcher,token,address,force=false) {
   healthPending={address,token,fetcher,promise};
   return promise;
 }
-const VERIFY_TASKS=["exercises","reading_test","writing_compare"];
+const VERIFY_TASKS=["exercises","reading_test","writing_compare","path_block"];
 // Stessa release = stessa versione principale e secondaria (1.9.x): una correzione che
 // cambia solo i contenuti dell'app non blocca il tutor mentre Cloudflare pubblica il Worker.
 const release=v=>String(v||"").split(".").slice(0,2).join(".");
@@ -61,7 +61,7 @@ async function send(settings,path,task,data,fetcher,token) {
     if(payload.api_version!==API_VERSION||!sameRelease(payload.version)){invalidateHealth();const error=new Error("Versioni diverse: app "+VERSION+", Worker "+(payload.version||"precedente")+". Attendi il deploy Cloudflare della stessa release.");error.code="version";throw error;}
     if(path==="/health")return payload;
     if(payload.request_id!==requestId)throw new Error("La risposta non corrisponde alla richiesta inviata.");
-    if(task)validateReply(task,payload.result);
+    if(task)validateReply(task,payload.result,data);
     if(task==="exercises"&&data?.learner)validateAssessment(payload.result.assessment,data.learner);
     if(task&&payload.verification)Object.defineProperty(payload.result,"verification",{value:payload.verification,enumerable:false});
     return task?payload.result:payload;

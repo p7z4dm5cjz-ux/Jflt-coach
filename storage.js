@@ -7,6 +7,8 @@ import {BLOCK_SIZE} from "./practice-flow.js";
 import {WRITING_UNITS} from "./writing-curriculum.js";
 import {localDay} from "./engine.js";
 import {validateChecks} from "./grammar-checks.js";
+import {validateLessonLevels} from "./path-levels.js";
+import {validatePaths} from "./path-planner.js";
 const STORE="app_v2";
 export function validateState(s) {
   if(!s||s.version!==2||s.id!=="main"||!s.settings||!Array.isArray(s.attempts)||!Array.isArray(s.sessions)||!Array.isArray(s.writings)||!Array.isArray(s.readings)||!Array.isArray(s.vocabulary))throw new Error("Backup incompleto o formato non riconosciuto.");
@@ -16,6 +18,8 @@ export function validateState(s) {
   const validDate=v=>typeof v==="string"&&Number.isFinite(Date.parse(v));
   if(s.lesson_guides!==undefined)validateGuides(s.lesson_guides,LESSONS);
   if(s.grammar_checks!==undefined)validateChecks(s.grammar_checks);
+  validateLessonLevels(s.lesson_levels,LESSONS.map(l=>l.id));
+  validatePaths(s);
   if(s.diagnoses!==undefined){
     if(!Array.isArray(s.diagnoses)||s.diagnoses.length>10)throw new Error("Diagnosi del pretest non valide.");
     for(const d of s.diagnoses){if(typeof d?.id!=="string"||!validDate(d.created_at)||!validDate(d.placement_started_at))throw new Error("Diagnosi del pretest non valida.");validateReply("diagnosis",d.result);}

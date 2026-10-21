@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {inspectRequest} from "../tools/ispeziona-richiesta.mjs";
 test("Richiesta effettiva intercettata: una chiamata, stessa configurazione e solo contesto della lezione",async()=>{
   const output=await inspectRequest("exercises","mixed-conditionals"),body=output.groq_request.body;
-  assert.equal(output.release,"1.15.0");assert.equal(output.provider_calls,1);assert.equal(output.mocked_budget_calls,1);
+  assert.equal(output.release,"1.16.0");assert.equal(output.provider_calls,1);assert.equal(output.mocked_budget_calls,1);
   assert.equal(body.model,"openai/gpt-oss-120b");assert.equal(body.reasoning_effort,"low");assert.equal(body.max_completion_tokens,4000);assert.equal(body.temperature,0.55);
   assert.equal(body.response_format.type,"json_schema");assert.equal(body.response_format.json_schema.strict,true);
   assert.equal(body.response_format.json_schema.name,"jflt_exercises");

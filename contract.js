@@ -1,4 +1,4 @@
-export const TASKS=["exercises","grammar_explain","writing_coach","writing_review","writing_compare","reading_review","reading_understand","reading_test","translate","clarify","diagnosis"];
+export const TASKS=["exercises","grammar_explain","writing_coach","writing_review","writing_compare","reading_review","reading_understand","reading_test","translate","clarify","diagnosis","path_block"];
 const object=x=>x&&typeof x==="object"&&!Array.isArray(x);
 const str=(x,max=1600)=>typeof x==="string"&&x.trim().length>0&&x.length<=max;
 const arr=(x,max)=>Array.isArray(x)&&x.length<=max;
@@ -24,9 +24,25 @@ export function validateInput(task,d) {
     if(!arr(d.areas,8)||!d.areas.length||!d.areas.every(okArea)||!arr(d.errors,25)||!d.errors.length||!d.errors.every(okError))throw new Error("Servono le aree e almeno una risposta sbagliata del pretest (massimo 25).");
   }
   if(task==="exercises"&&d.learner!==undefined)validateLearner(d.learner,d.lesson_id);
+  if(task==="path_block")validatePathInput(d);
   return d;
 }
-export function validateReply(task,p) {
+// ---- Percorso adattivo: blocco da 5 esercizi con regola e livello assegnati dall'app ----
+export const PATH_ROLES=["main","recovery","intertwined","review"];
+export const PATH_KINDS=["choice","completion","transformation","error_correction"];
+export const PATH_STEM_MAX=220;
+export function validatePathInput(d){
+  const okSlot=(s,n)=>object(s)&&s.n===n+1&&str(s.lesson_id,100)&&str(s.rule,120)&&s.rule.startsWith(s.lesson_id+".")&&Number.isInteger(s.level)&&s.level>=1&&s.level<=4&&PATH_ROLES.includes(s.role)&&(s.group===null||/^p[1-4]$/.test(s.group||""));
+  if(!str(d.path_id,100)||!Number.isInteger(d.cycle)||d.cycle<1||d.cycle>8||!Number.isInteger(d.page)||d.page<0||d.page>2||!str(d.main_lesson,100)||!Number.isInteger(d.main_level)||d.main_level<1||d.main_level>4)throw new Error("Blocco del percorso non valido.");
+  if(!arr(d.slots,5)||d.slots.length!==5||!d.slots.every(okSlot))throw new Error("Servono 5 esercizi con lezione, regola e livello.");
+  const groups=d.slots.filter(s=>s.group);
+  if(groups.length&&(groups.length!==3||new Set(groups.map(s=>s.group)).size!==1||groups.some(s=>s.level!==4)))throw new Error("Il testo del livello 4 richiede 3 spazi dello stesso gruppo.");
+  if(d.avoid!==undefined&&(!arr(d.avoid,40)||d.avoid.some(x=>!str(x,PATH_STEM_MAX))))throw new Error("Elenco delle frasi già viste non valido.");
+  if(d.weak_rules!==undefined&&(!arr(d.weak_rules,8)||d.weak_rules.some(r=>!object(r)||!str(r.rule,120)||!Number.isInteger(r.n)||!Number.isInteger(r.correct)||r.n<1||r.correct<0||r.correct>r.n)))throw new Error("Regole deboli non valide.");
+  return d;
+}
+export const gapMark=k=>"("+k+") ___";
+export function validateReply(task,p,data=null) {
   const bad=(path,reason)=>{
     const error=new Error("La risposta del tutor è incompleta ("+path+": "+reason+"). Il lavoro è salvato; puoi riprovare.");
     error.replyIssue={path,reason};
@@ -59,6 +75,30 @@ export function validateReply(task,p) {
       kinds.add(i.kind);
     }
     if(kinds.size<3)bad("items.kind","sono richiesti almeno 3 tipi di esercizio diversi");
+  } else if(task==="path_block") {
+    needArray(p.items,"items",5);if(p.items.length!==5)bad("items","sono richiesti esattamente 5 esercizi");
+    needArray(p.passages,"passages",1);
+    const slots=data?.slots||[],group=slots.find(s=>s.group)?.group||null;
+    for(const [n,x] of p.passages.entries()){needObject(x,"passages["+n+"]");needString(x.text,"passages["+n+"].text",900);if(x.group!==group)bad("passages["+n+"].group","gruppo del testo non richiesto");}
+    if(group&&p.passages.length!==1)bad("passages","serve un testo per gli spazi del livello 4");
+    if(!group&&p.passages.length)bad("passages","il testo è previsto solo con gli spazi del livello 4");
+    let gap=0;
+    for(const [n,i] of p.items.entries()){
+      const path="items["+n+"]",slot=slots[n];
+      exercise(i,path);
+      if(i.stem.length>PATH_STEM_MAX)bad(path+".stem","consegna troppo lunga (massimo "+PATH_STEM_MAX+" caratteri)");
+      if(i.n!==n+1)bad(path+".n","numero dell'esercizio fuori ordine");
+      if(!PATH_KINDS.includes(i.kind))bad(path+".kind","tipo di esercizio non riconosciuto");
+      needArray(i.options,path+".options",4);strings(i.options,path+".options",600);
+      if(i.kind==="choice"&&(i.options.length<3||new Set(i.options).size!==i.options.length||!i.options.includes(i.answer)))bad(path+".options","servono 3 o 4 opzioni diverse che contengano la soluzione");
+      if(i.kind!=="choice"&&i.options.length)bad(path+".options","l'elenco deve essere vuoto per questo tipo di esercizio");
+      if(typeof i.group!=="string")bad(path+".group","manca il gruppo (stringa vuota se assente)");
+      if(slot){
+        if((slot.group||"")!==i.group)bad(path+".group","gruppo diverso da quello richiesto");
+        if(slot.level===1&&i.kind!=="choice")bad(path+".kind","il livello 1 richiede una scelta");
+        if(slot.group){gap++;if(i.kind!=="completion")bad(path+".kind","gli spazi del testo sono completamenti");if(!i.stem.startsWith("Spazio ("+gap+")"))bad(path+".stem","deve iniziare con «Spazio ("+gap+")»");if(!p.passages[0]?.text.includes(gapMark(gap)))bad("passages[0].text","manca lo spazio "+gapMark(gap));}
+      }
+    }
   } else if(task==="grammar_explain") {
     needString(p.summary,"summary");needString(p.form,"form");needString(p.contrast,"contrast");
     needArray(p.when,"when",4);strings(p.when,"when");if(!p.when.length)bad("when","serve almeno un uso");
@@ -152,6 +192,17 @@ export const REPLY_SCHEMAS={
   reading_test:replyObject({questions:replyList(replyObject({type:{type:"string",enum:["main_idea","detail","inference","purpose","vocabulary"]},question:replyText(400),options:replyList(replyText(300),"Esattamente 4 opzioni diverse, una sola corretta."),answer:replyText(300),quote:replyText(500),why:replyText(1200)}),"Esattamente 6 domande, almeno 4 tipi diversi.")}),
   translate:replyObject({translations:replyList(replyText(6000),"Una traduzione italiana per ogni paragrafo ricevuto, nello stesso ordine.")}),
   clarify:replyObject({expression:replyText(120),meaning_it:replyText(300),explanation:replyText(),example:replyText(500)}),
+  path_block:replyObject({
+    passages:replyList(replyObject({group:replyText(4),text:replyText(900)}),"Un testo inglese di 50–110 parole solo se ci sono slot con group, altrimenti []. Contiene gli spazi (1) ___ (2) ___ (3) ___."),
+    items:replyList(replyObject({
+      n:{type:"integer",description:"Numero dello slot, da 1 a 5, nell'ordine."},
+      kind:{type:"string",enum:["choice","completion","transformation","error_correction"]},
+      stem:replyText(220),
+      options:replyList(replyText(600),"Choice: 3 o 4 opzioni diverse. Per gli altri tipi: elenco vuoto []."),
+      answer:replyText(600),accept:transferFields.accept,why:replyText(),
+      group:{type:"string",description:"Il group dello slot (p1, p2, p3) per gli spazi del testo, altrimenti stringa vuota."}
+    }),"Esattamente 5 esercizi, uno per slot, nello stesso ordine.")
+  }),
   diagnosis:replyObject({summary:replyText(),patterns:replyList(replyObject({title:replyText(200),explanation:replyText(1200),evidence:replyText(600),lesson_ids:replyList(replyText(100),"Da 0 a 4 id di lezione copiati da quelli ricevuti.")}),"Da 1 a 4 tipi di errore, dal più importante."),advice:replyList(replyText(600),"Da 1 a 3 consigli concreti, in ordine.")})
 };
 export const SHAPES={
@@ -172,6 +223,13 @@ export const SHAPES={
   reading_test:{questions:[{type:"main_idea",question:"What is the passage mainly about?",options:["A delayed depot inspection and its practical effects","A new delivery schedule for local residents","A complaint by the council about the depot","The results of the March inspection"],answer:"A delayed depot inspection and its practical effects",quote:"The inspection of the northern depot was postponed because two officers were unavailable.",why:"Il testo parte dal rinvio dell'ispezione e ne descrive le conseguenze pratiche; le altre opzioni riprendono dettagli secondari o non presenti."},{type:"detail",question:"Why was the inspection postponed?",options:["Deliveries were delayed.","Two officers were unavailable.","The council refused to approve it.","Drivers complained about the notice."],answer:"Two officers were unavailable.",quote:"The inspection of the northern depot was postponed because two officers were unavailable.",why:"La causa è esplicita: because two officers were unavailable. Le lamentele degli autisti riguardano l'avviso, non il rinvio."},{type:"inference",question:"What can be inferred about the notice sent to drivers?",options:["It was written by the council.","It cancelled all deliveries.","It was not as clear as it should have been.","It was sent in March."],answer:"It was not as clear as it should have been.",quote:"The manager accepted that the message could have been clearer and promised a written update by Friday.",why:"Could have been clearer implica che il messaggio non era abbastanza chiaro, senza dirlo direttamente."},{type:"purpose",question:"What is the manager's attitude to the drivers' complaints?",options:["He partly accepts them.","He rejects them completely.","He ignores them.","He blames the council."],answer:"He partly accepts them.",quote:"The manager accepted that the message could have been clearer and promised a written update by Friday.",why:"Accepted che il messaggio poteva essere più chiaro e promette un aggiornamento: riconosce in parte il problema."},{type:"vocabulary",question:"In the passage, 'vague' is closest in meaning to:",options:["late","official","unclear","short"],answer:"unclear",quote:"Several drivers complained that the notice arrived late, and one described the instructions as vague.",why:"Vague indica istruzioni poco precise; late riguarda il momento di arrivo dell'avviso, non il contenuto."},{type:"detail",question:"What must visitors do until the update?",options:["Park beside the depot.","Sign in at the main gate and wait to be escorted.","Call the duty manager.","Use the loading area."],answer:"Sign in at the main gate and wait to be escorted.",quote:"Until then, visitors must sign in at the main gate and wait to be escorted.",why:"Until then rimanda all'aggiornamento di venerdì; nel frattempo i visitatori devono registrarsi e attendere un accompagnatore."}]},
   translate:{translations:["Gli agenti hanno controllato il cancello."]},
   clarify:{expression:"termine richiesto",meaning_it:"significato contestuale",explanation:"spiegazione italiana della costruzione e del registro",example:"esempio inglese originale"},
+  path_block:{passages:[{group:"p1",text:"The night shift (1) ___ at ten. By the time the patrol arrived, the alarm (2) ___ for twenty minutes, so the officers (3) ___ the building at once."}],items:[
+    {n:1,kind:"completion",stem:"Spazio (1): scrivi la forma corretta (start).",options:[],answer:"starts",accept:["starts"],why:"Orario fisso di un servizio: present simple."},
+    {n:2,kind:"completion",stem:"Spazio (2): scrivi la forma corretta (ring).",options:[],answer:"had been ringing",accept:["had been ringing"],why:"Durata fino a un momento passato: past perfect continuous."},
+    {n:3,kind:"completion",stem:"Spazio (3): scrivi la forma corretta (search).",options:[],answer:"searched",accept:["searched"],why:"Azione conclusa in sequenza nel racconto: past simple."},
+    {n:4,kind:"choice",stem:"Scegli la forma corretta: Look at those clouds. It ___ rain.",options:["is going to","will","rains"],answer:"is going to",accept:["is going to"],why:"Previsione basata su un indizio presente: going to.",group:""},
+    {n:5,kind:"error_correction",stem:"Correggi solo la parte sbagliata: She don't work on Sundays.",options:[],answer:"doesn't work",accept:["doesn't work","does not work"],why:"Con she l'ausiliare è does.",group:""}
+  ].map(i=>({group:"p1",...i}))},
   diagnosis:{summary:"Gli errori si concentrano sull'ausiliare nelle frasi negative e interrogative; i tempi verbali sono incerti soprattutto tra present simple e continuous.",patterns:[{title:"Ausiliare mancante nelle negative al passato",explanation:"Dopo did il verbo torna alla forma base e not segue l'ausiliare.",evidence:"«We not stopped» invece di «We did not stop».",lesson_ids:["negatives"]}],advice:["Parti dalla lezione sulle negazioni: 30 esercizi, poi una verifica dopo tre giorni."]}
 };
 

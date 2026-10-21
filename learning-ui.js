@@ -27,7 +27,7 @@ export function learningUI(api){
    h("ol",{class:"path-steps"},steps.map((l,i)=>h("li",{class:i===0?"current":""},h("a",{href:"#/lesson/"+l.id},h("span",{class:"step-title"},(i===0?"Adesso · ":"")+l.title),h("span",{class:"step-reason small muted"},learningReason(s,l)))))),
    link("Inizia: "+next.title,"lesson/"+next.id),
    !s.placement?.submitted_at&&link("Prima fai il pretest (circa 15 minuti)","placement","text-link"),
-   p("Ogni lezione: spiegazione, poi 30 esercizi con il tutor. La proposta si aggiorna con le tue risposte; il catalogo resta aperto se vuoi scegliere tu.","small muted"));
+   p("Ogni lezione: spiegazione, poi il percorso con il tutor a cicli di 15 domande. La proposta si aggiorna con le tue risposte; il catalogo resta aperto se vuoi scegliere tu.","small muted"));
  }
  function overview(){
   const s=getState();
