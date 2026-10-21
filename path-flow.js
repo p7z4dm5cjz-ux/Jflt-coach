@@ -4,6 +4,7 @@ import {lessonItems} from "./practice-bank.js";
 import {ruleStats} from "./path-levels.js";
 import {pathCycles,BLOCK_LAYOUT} from "./path-planner.js";
 import {PATH_STEM_MAX} from "./contract.js";
+import {stemKey} from "./item-tags.js";
 
 export const PATH_BLOCKS=BLOCK_LAYOUT.length;
 export const activePath=state=>(state.paths||[]).findLast(p=>!p.completed_at)||null;
@@ -25,7 +26,7 @@ const seenStems=state=>new Set(state.attempts.map(a=>normal(a.stem||"")));
 export function pathBlockRequest(state,path,cycle,page){
   const slots=cycle.blocks[page].map((s,i)=>({n:i+1,lesson_id:s.lesson_id,rule:s.rule,level:s.level,role:s.role,group:s.group||null}));
   const lessons=new Set(slots.map(s=>s.lesson_id));
-  const avoid=[...new Set(state.sessions.filter(s=>lessons.has(s.lesson_id)||s.items.some(i=>lessons.has(i.focus_lesson))).flatMap(s=>s.items).map(i=>i.stem).filter(stem=>stem&&stem.length<=PATH_STEM_MAX))].slice(-30);
+  const avoid=[...new Set(state.sessions.filter(s=>lessons.has(s.lesson_id)||s.items.some(i=>lessons.has(i.focus_lesson))).flatMap(s=>s.items).filter(i=>!i.group).map(i=>i.stem).filter(stem=>stem&&stem.length<=PATH_STEM_MAX))].slice(-30);
   const stats=ruleStats(state,cycle.main);
   const weak=Object.entries(stats).filter(([,s])=>s.n>=2&&s.correct/s.n<0.7).sort((a,b)=>a[1].correct/a[1].n-b[1].correct/b[1].n).slice(0,8).map(([rule,s])=>({rule,n:s.n,correct:s.correct}));
   return {path_id:path.id,cycle:cycle.n,page,main_lesson:cycle.main,main_level:cycle.level,slots,...(avoid.length?{avoid}:{}),...(weak.length?{weak_rules:weak}:{})};
@@ -34,10 +35,12 @@ export function pathBlockRequest(state,path,cycle,page){
 // Competenza per il profilo esistente: riconoscere = significato, contesto = scelta del tempo.
 export const pathSkill=(kind,level)=>level>=3?"tense_choice":kind==="choice"?"meaning":"form";
 // Esercizi di Groq pronti per la sessione: etichette dallo slot quando il controllo non le ha aggiunte.
+// Gli spazi hanno consegne simili («Spazio (1)…»): il contesto vero è il testo, quindi la prima
+// esposizione si conta su testo + spazio, non sulla consegna.
 export function pathItemsFromReply(result,slots){
   return result.items.map((item,i)=>{
-    const slot=slots[i],{n,group,...rest}=item;
-    return {...rest,rules:item.rules||[slot.rule],level:item.level||slot.level,focus_lesson:slot.lesson_id,path_role:slot.role,origin:"groq",skill:pathSkill(item.kind,slot.level),...(group?{group}:{})};
+    const slot=slots[i],{n,group,...rest}=item,text=group?result.passages.find(p=>p.group===group)?.text:null;
+    return {...rest,...(text?{context_id:"path:"+stemKey(text)+":"+stemKey(item.stem)}:{}),rules:item.rules||[slot.rule],level:item.level||slot.level,focus_lesson:slot.lesson_id,path_role:slot.role,origin:"groq",skill:pathSkill(item.kind,slot.level),...(group?{group}:{})};
   });
 }
 
@@ -64,7 +67,7 @@ export function fallbackBlock(state,slots,timestamp=Date.now()){
       ||local.sort((a,b)=>(lastSeen.get(normal(a.stem))||0)-(lastSeen.get(normal(b.stem))||0))[0];
     if(!pick)continue;
     used.add(normal(pick.stem));
-    if(pick.rules?.includes(slot.rule)&&pick.level===slot.level&&!seen.has(normal(pick.stem)))exact++;
+    if(pick.level===slot.level&&!seen.has(normal(pick.stem)))exact++;
     const {id,check,check_note,accept_added,rule_retagged,...item}=pick;
     out.push({...item,accept:[...new Set(item.accept||[item.answer])],focus_lesson:slot.lesson_id,path_role:slot.role,origin:pick.origin==="groq"?"groq":"local",...(pick.origin==="groq"?{check:"confirmed"}:{})});
   }

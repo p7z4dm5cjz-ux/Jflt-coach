@@ -32,7 +32,7 @@ export function levelState(state,lessonId){
 export function pathAnswers(state,lessonId){
   const sessions=new Map((state.sessions||[]).map(s=>[s.id,s])),seen=new Set(),rows=[];
   for(const a of state.attempts||[]){
-    const key=normal(a.stem||"");if(seen.has(key))continue;seen.add(key);
+    const key=normal(a.context_id||a.stem||"");if(seen.has(key))continue;seen.add(key);
     if(a.lesson_id!==lessonId||a.disputed||a.assisted||a.source==="legacy")continue;
     const set=sessions.get(a.session_id),item=set?.items.find(i=>i.id===a.item_id);
     if(!set?.path_id||set.assisted||set.hinted_items?.includes(a.item_id)||!set.completed_at||!item||item.doubt||!Number.isInteger(item.level)||!Array.isArray(item.rules)||!reliableItem(item,a.source))continue;
@@ -48,8 +48,9 @@ export function ruleStats(state,lessonId,{last=40}={}){
 }
 
 // Decisione a fine ciclo sulla lezione principale.
-export function cycleDecision(state,lessonId){
+export function cycleDecision(state,lessonId,level=null){
   const ls=levelState(state,lessonId);
+  if(Number.isInteger(level))ls.level=level;
   const rows=pathAnswers(state,lessonId).filter(r=>r.level===ls.level&&(!ls.changed_at||r.date>=ls.changed_at)).slice(-WINDOW);
   const n=rows.length,correct=rows.filter(r=>r.correct).length,accuracy=n?correct/n:0;
   let decision="insufficient";
@@ -59,18 +60,20 @@ export function cycleDecision(state,lessonId){
 
 // Applica la decisione allo stato (dentro repo.change). Restituisce il nuovo livello.
 export function applyDecision(state,result,timestamp=new Date().toISOString()){
-  const ls=levelState(state,result.lesson_id),from=ls.level;
+  const ls=levelState(state,result.lesson_id),from=Number.isInteger(result.level)?result.level:ls.level;
   let to=from;
   if(result.decision==="up"&&from<MAX_LEVEL)to=from+1;
   if(result.decision==="down")to=Math.max(1,from-1);
   if(result.decision==="down")ls.autonomous=false;
   ls.pending_transfer=result.transfer?true:result.decision==="down"?false:!!ls.pending_transfer;
-  if(to!==from){ls.level=to;ls.changed_at=timestamp;}
+  // Anche al livello 1 una discesa riapre la finestra: le risposte sbagliate restano alle spalle.
+  if(to!==from||result.decision==="down"){ls.level=to;ls.changed_at=timestamp;}
   ls.history=[...(ls.history||[]),{at:timestamp,from,to,decision:result.decision,n:result.n,correct:result.correct}].slice(-20);
-  // Tre cicli di fila fermi allo stesso livello: la lezione va in pausa e il percorso passa alla
-  // successiva; torna principale quando un'altra lezione va in pausa o completa il livello 4.
-  const decided=ls.history.filter(h=>h.decision!=="insufficient"&&(!ls.parked_at||h.at>ls.parked_at)).slice(-STUCK_CYCLES);
-  const stuck=decided.length===STUCK_CYCLES&&decided.every(h=>h.decision==="stay"&&h.from===to);
+  // Tre cicli di fila senza salire né scendere (anche per risposte insufficienti, per esempio senza
+  // tutor ai livelli 3-4): la lezione va in pausa e il percorso passa alla successiva; torna
+  // principale quando un'altra lezione va in pausa o completa il livello 4.
+  const recent=ls.history.filter(h=>!ls.parked_at||h.at>ls.parked_at).slice(-STUCK_CYCLES);
+  const stuck=recent.length===STUCK_CYCLES&&recent.every(h=>["stay","insufficient"].includes(h.decision)&&h.from===to&&h.to===to);
   state.lesson_levels??={};
   if(stuck||ls.pending_transfer)for(const other of Object.values(state.lesson_levels))delete other.parked;
   if(stuck){ls.parked=true;ls.parked_at=timestamp;}else delete ls.parked;
@@ -80,8 +83,7 @@ export function applyDecision(state,result,timestamp=new Date().toISOString()){
 }
 
 // Intrecciate e ripassi: 2 errori nelle ultime 3 risposte da lezione secondaria (dall'ultimo cambio
-// di livello, almeno una in questo ciclo) fanno scendere la lezione di un livello, dal livello di
-// contesto (3) se era più in alto, e tolgono l'autonomia.
+// di livello, almeno una in questo ciclo) fanno scendere la lezione di un livello e tolgono l'autonomia.
 export function secondaryCheck(state,lessonId,sessionIds,timestamp=new Date().toISOString()){
   const ls=levelState(state,lessonId);
   const rows=pathAnswers(state,lessonId).filter(r=>["intertwined","review"].includes(r.role)&&(!ls.changed_at||r.date>=ls.changed_at)).slice(-3);
@@ -89,11 +91,19 @@ export function secondaryCheck(state,lessonId,sessionIds,timestamp=new Date().to
   const wrong=rows.filter(r=>!r.correct).length;
   if(wrong<2)return null;
   const from=ls.level;
-  ls.level=Math.max(1,Math.min(from,3)-1);ls.autonomous=false;ls.pending_transfer=false;ls.changed_at=timestamp;
+  ls.level=Math.max(1,from-1);ls.autonomous=false;ls.pending_transfer=false;ls.changed_at=timestamp;
   ls.history=[...(ls.history||[]),{at:timestamp,from,to:ls.level,decision:"secondary-down",n:rows.length,correct:rows.length-wrong}].slice(-20);
   const {source,...saved}=ls;
   state.lesson_levels??={};state.lesson_levels[lessonId]=saved;
   return ls.level;
+}
+
+// Fissa il livello di partenza all'inizio del ciclo: la decisione non cambia se nel frattempo
+// cambiano impostazioni o pretest.
+export function freezeLevel(state,lessonId){
+  if(state.lesson_levels?.[lessonId])return;
+  const {source,...saved}=levelState(state,lessonId);
+  state.lesson_levels??={};state.lesson_levels[lessonId]=saved;
 }
 
 export function validateLessonLevels(levels,lessonIds){

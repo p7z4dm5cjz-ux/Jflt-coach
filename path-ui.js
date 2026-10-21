@@ -2,20 +2,22 @@
 import {LESSONS} from "./catalog.js";
 import {now} from "./engine.js";
 import {LEVELS,ruleInfo} from "./item-tags.js";
-import {levelState} from "./path-levels.js";
-import {planCycle,closeCycle,newPath,pathCycles,cycleReason,isOpen,chooseMain,ROLE_LABELS,PATH_LENGTHS,DEFAULT_LENGTH} from "./path-planner.js";
+import {levelState,freezeLevel} from "./path-levels.js";
+import {planCycle,closeCycle,newPath,pathCycles,cycleReason,isOpen,isResting,chooseMain,ROLE_LABELS,PATH_LENGTHS,DEFAULT_LENGTH} from "./path-planner.js";
 import {activePath,pathStep,pathBlockRequest,pathItemsFromReply,fallbackBlock,cycleSummary,PATH_BLOCKS} from "./path-flow.js";
 import {getToken} from "./tutor.js";
 
 const title=id=>LESSONS.find(l=>l.id===id)?.title||id;
-const decisionText={up:"Sali di livello",stay:"Resti allo stesso livello",down:"Torni al livello precedente",insufficient:"Servono altre risposte"};
+const decisionText={up:"Sali di livello",stay:"Resti allo stesso livello",down:"Torni al livello precedente",insufficient:"Servono altre risposte: la decisione arriva con il prossimo ciclo"};
 
 export function pathUI(api){
   const {h,p,card,link,button,change,goto,refresh,getState,tutor,sessionRecord}=api;
 
   async function start(length=DEFAULT_LENGTH,forced=null){
     const open=activePath(getState());
-    if(open&&!forced){await advance(open.id);return;}
+    if(open&&!forced&&pathStep(getState(),open).kind!=="done"){await advance(open.id);return;}
+    // Prima di aprire un percorso verifica che esista una lezione da proporre.
+    if(!planCycle(getState(),{previous:lastCycle(getState()),force:forced}))throw new Error("Nessuna lezione disponibile per il percorso: le lezioni con regole sono già autonome o in attesa del trasferimento.");
     const path={...newPath(length,now()),...(forced?{forced_lesson:forced}:{})};
     // Un nuovo percorso chiude quello lasciato a metà: i cicli già fatti restano salvati.
     await change(s=>{s.paths??=[];for(const old of s.paths)if(!old.completed_at)old.completed_at=now();s.paths.push(path);});
@@ -25,15 +27,17 @@ export function pathUI(api){
   // Esegue i passi automatici finché serve lo studente: un blocco da fare o un risultato da leggere.
   async function advance(pathId){
     for(let guard=0;guard<6;guard++){
-      const state=getState(),path=state.paths.find(x=>x.id===pathId),step=pathStep(state,path);
+      const state=getState(),path=state.paths.find(x=>x.id===pathId);
+      if(!path||path.completed_at){await goto("path/"+pathId);return;}
+      const step=pathStep(state,path);
       if(step.kind==="resume"){await goto("practice/"+step.session.id);return;}
       if(step.kind==="done"){await change(s=>{const x=s.paths.find(x=>x.id===pathId);x.completed_at??=now();});await goto("path/"+pathId);return;}
-      if(step.kind==="close"){await change(s=>{const c=s.paths.find(x=>x.id===pathId).cycles.at(-1);c.result=closeCycle(s,c,now());});await goto("path/"+pathId);return;}
+      if(step.kind==="close"){await change(s=>{const x=s.paths.find(x=>x.id===pathId),c=x.cycles.at(-1);c.result=closeCycle(s,c,now());if(x.cycles.length>=pathCycles(x))x.completed_at=now();});await goto("path/"+pathId);return;}
       if(step.kind==="plan"){
-        const forced=path.forced_lesson&&(path.cycles.length===0||isOpen(state,path.forced_lesson))?path.forced_lesson:null;
+        const forced=path.forced_lesson&&(path.cycles.length===0||isOpen(state,path.forced_lesson)&&!isResting(state,path.forced_lesson))?path.forced_lesson:null;
         const plan=planCycle(state,{previous:step.previous||lastCycle(state),force:forced});
         if(!plan)throw new Error("Nessuna lezione disponibile per un nuovo ciclo.");
-        await change(s=>{s.paths.find(x=>x.id===pathId).cycles.push({n:step.n,...plan,block_ids:[],result:null,created_at:now()});});
+        await change(s=>{for(const id of new Set([plan.main,...plan.roles.intertwined,...plan.roles.review]))freezeLevel(s,id);s.paths.find(x=>x.id===pathId).cycles.push({n:step.n,...plan,block_ids:[],result:null,created_at:now()});});
         continue;
       }
       if(step.kind==="block"){const id=await createBlock(pathId,step.page);await goto("practice/"+id);return;}
@@ -50,7 +54,7 @@ export function pathUI(api){
       try{const result=await tutor(state.settings,"/tutor","path_block",data);items=pathItemsFromReply(result,data.slots);passages=result.passages;}
       catch(e){note="Il tutor non ha preparato il blocco ("+String(e.message||"errore").slice(0,160)+"). Esercizi dalla banca locale: le frasi mai viste contano, le altre sono ripasso.";}
     }else note=getToken()?"Sei offline: esercizi dalla banca locale. Le frasi mai viste contano, le altre sono ripasso.":"Tutor non collegato: esercizi dalla banca locale. Collega il tutor nelle Impostazioni per i testi del livello 4 e le domande nuove.";
-    if(!items){const local=fallbackBlock(state,data.slots);items=local.items;source="local";if(local.exact<data.slots.length)note+=" Frasi nuove alla regola e al livello richiesti: "+local.exact+" su "+data.slots.length+"; le altre sono ripasso e non decidono il livello.";}
+    if(!items){const local=fallbackBlock(state,data.slots);items=local.items;source="local";if(local.exact<data.slots.length)note+=" Frasi nuove al livello richiesto: "+local.exact+" su "+data.slots.length+"; le altre sono ripasso e non decidono il livello.";}
     if(!items.length)throw new Error("Non ci sono esercizi disponibili per questo blocco.");
     const set=sessionRecord(cycle.main,items,source,{path_id:pathId,path_block:{cycle:cycle.n,page},...(passages.length?{passages}:{}),...(note?{fallback_note:note.slice(0,400)}:{})});
     await change(s=>{s.sessions.push(set);s.paths.find(x=>x.id===pathId).cycles.at(-1).block_ids.push(set.id);});
@@ -85,13 +89,25 @@ export function pathUI(api){
       h("div",{class:"actions"},Object.keys(PATH_LENGTHS).map(Number).map(m=>button("Esercita questa lezione · "+m+" min",()=>start(m,lessonId),m===DEFAULT_LENGTH?"":"secondary"))),extra);
   }
 
+  // Blocco locale non ancora risposto (per esempio dopo un errore temporaneo): si può rigenerare con il tutor.
+  async function retryBlock(sessionId){
+    const state=getState(),set=state.sessions.find(s=>s.id===sessionId),path=state.paths.find(x=>x.id===set.path_id),cycle=path.cycles.find(c=>c.n===set.path_block.cycle);
+    if(set.completed_at||Object.values(set.answers).some(v=>v.trim())||cycle.block_ids.at(-1)!==sessionId)throw new Error("Il blocco è già iniziato: completalo così com'è.");
+    const data=pathBlockRequest(state,path,cycle,set.path_block.page);
+    const result=await tutor(state.settings,"/tutor","path_block",data);
+    const items=pathItemsFromReply(result,data.slots);
+    const fresh=sessionRecord(cycle.main,items,"groq",{path_id:path.id,path_block:set.path_block,...(result.passages.length?{passages:result.passages}:{})});
+    await change(s=>{s.sessions=s.sessions.filter(x=>x.id!==sessionId);s.sessions.push(fresh);const c=s.paths.find(x=>x.id===path.id).cycles.find(c=>c.n===set.path_block.cycle);c.block_ids[c.block_ids.length-1]=fresh.id;});
+    await goto("practice/"+fresh.id);
+  }
   // Intestazione del blocco nella pagina degli esercizi.
   function practiceHeader(set){
     const s=getState(),path=s.paths?.find(x=>x.id===set.path_id),cycle=path?.cycles.find(c=>c.n===set.path_block.cycle);
     if(!cycle)return null;
     return card(p("Percorso · ciclo "+cycle.n+" di "+pathCycles(path)+" · blocco "+(set.path_block.page+1)+" di "+PATH_BLOCKS,"eyebrow"),
       h("h2",{},"Perché questo blocco"),p(cycleReason(cycle)),
-      set.fallback_note&&p(set.fallback_note,"small warning"));
+      set.fallback_note&&p(set.fallback_note,"small warning"),
+      set.source==="local"&&!set.completed_at&&!Object.values(set.answers).some(v=>v.trim())&&getToken()&&button("Riprova con il tutor",()=>retryBlock(set.id),"secondary"));
   }
   // Etichetta sopra ogni esercizio: ruolo, regola e livello.
   function itemLabel(item){
@@ -103,6 +119,7 @@ export function pathUI(api){
     return text?h("blockquote",{class:"path-passage",lang:"en"},text):null;
   }
   function continueButton(set){
+    if(getState().paths?.find(x=>x.id===set.path_id)?.completed_at)return link("Vedi il percorso","path/"+set.path_id);
     return button(set.path_block.page<PATH_BLOCKS-1?"Prossimo blocco del percorso":"Chiudi il ciclo e vedi il risultato",()=>advance(set.path_id));
   }
 
@@ -118,7 +135,7 @@ export function pathUI(api){
           r?[p(decisionText[r.decision]+": livello "+r.level+(r.to!==r.level?" → "+r.to:"")+" ("+LEVELS[r.to]+")",r.decision==="up"?"good":r.decision==="down"?"warning":""),
             p(r.n?r.correct+" corrette su "+r.n+" risposte valide al livello "+r.level+" ("+Math.round(r.accuracy*100)+"%). Per salire serve almeno l'80% su almeno 9 risposte nuove, senza aiuti.":"Nessuna risposta valida a questo livello: frasi già viste, aiuti o esercizi non verificati non contano."),
             r.transfer&&p("Livello 4 superato: la lezione attende la prova di trasferimento e lascia il posto alla successiva.","good"),
-            levelState(s,c.main).parked&&p("Tre cicli fermi allo stesso livello: la lezione va in pausa e torna più avanti, intanto resta tra ripassi e intrecciate.","small muted"),
+            r.parked&&p("Tre cicli fermi allo stesso livello: la lezione va in pausa e torna più avanti, intanto resta tra ripassi e intrecciate.","small muted"),
             r.secondary?.length>0&&p("Da riprendere: "+r.secondary.map(x=>title(x.lesson_id)+" (livello "+x.level+")").join(", ")+".","warning")]
            :p(c.block_ids.length+" blocchi su "+PATH_BLOCKS+" preparati."),
           summary.answers>0&&h("details",{},h("summary",{},summary.correct+"/"+summary.answers+" corrette nel ciclo"),h("ul",{},Object.entries(summary.byLesson).map(([id,x])=>h("li",{},title(id)+": "+x.correct+"/"+x.n+(x.assisted?" · "+x.assisted+" con aiuto":""))))),
@@ -128,5 +145,5 @@ export function pathUI(api){
         :h("div",{class:"actions"},button(step.kind==="plan"?"Inizia il ciclo "+step.n:step.kind==="close"?"Vedi il risultato del ciclo":"Continua il blocco",()=>advance(path.id)),
           button("Termina qui",async()=>{await change(x=>{x.paths.find(y=>y.id===path.id).completed_at=now();});await refresh();},"quiet"))];
   }
-  return {start,advance,homeCard,lessonCard,practiceHeader,itemLabel,passage,continueButton,page};
+  return {start,advance,retryBlock,homeCard,lessonCard,practiceHeader,itemLabel,passage,continueButton,page};
 }

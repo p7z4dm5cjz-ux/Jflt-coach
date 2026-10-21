@@ -142,7 +142,7 @@ test("intrecciata o ripasso: 2 errori su 3 fanno scendere e tolgono l'autonomia"
   assert.ok(cycle.roles.intertwined.includes("present-simple"));
   const done=answerCycle(state,cycle,slot=>slot.lesson_id!=="present-simple",{prefix:"sec"});
   const result=closeCycle(state,done,stamp());
-  assert.deepEqual(result.secondary.find(s=>s.lesson_id==="present-simple"),{lesson_id:"present-simple",level:2});
+  assert.deepEqual(result.secondary.find(s=>s.lesson_id==="present-simple"),{lesson_id:"present-simple",level:3});
   const ls=levelState(state,"present-simple");
   assert.equal(ls.autonomous,false);assert.equal(ls.history.at(-1).decision,"secondary-down");
 });
@@ -204,4 +204,26 @@ test("tre cicli fermi allo stesso livello: pausa e lezione successiva, poi ritor
   }
   assert.equal(levelState(state,next.main).pending_transfer,true);
   assert.equal(state.lesson_levels["present-simple"].parked,undefined);
+});
+
+test("revisione: insufficienti ripetuti vanno in pausa, discesa al livello 1 riapre la finestra, recupero prima della lezione scelta", () => {
+  const state=freshState();state.lesson_levels={"present-simple":saved(3)};
+  for(let n=0;n<3;n++)closeCycle(state,{main:"present-simple",level:3,roles:{intertwined:[],review:[]},block_ids:[]},stamp());
+  assert.equal(state.lesson_levels["present-simple"].parked,true);
+  assert.ok(state.lesson_levels["present-simple"].history.every(h=>h.decision==="insufficient"));
+  const low=freshState();low.lesson_levels={"present-continuous":saved(1),"present-simple":saved(2)};
+  const cycle=planCycle(low,{previous:{main:"present-continuous"}});
+  const done=answerCycle(low,cycle,always(false),{prefix:"low1"}),at=stamp(),result=closeCycle(low,done,at);
+  assert.equal(result.decision,"down");assert.equal(low.lesson_levels["present-continuous"].changed_at,at);
+  assert.equal(cycleDecision(low,"present-continuous").n,0,"le risposte prima della discesa non contano più");
+  const recovery=planCycle(low,{previous:{...done,result},force:"present-continuous"});
+  assert.equal(recovery.main,"present-simple");assert.equal(recovery.recovery_for,"present-continuous");
+});
+
+test("revisione: la decisione usa il livello con cui il ciclo è stato giocato", () => {
+  const state=freshState();state.lesson_levels={"present-simple":saved(2)};
+  const cycle=planCycle(state,{previous:{main:"present-simple"}}),done=answerCycle(state,cycle,always(true),{prefix:"lvl"});
+  state.lesson_levels["present-simple"].level=3;
+  const result=closeCycle(state,done,stamp());
+  assert.equal(result.level,2);assert.equal(result.decision,"up");assert.equal(result.to,3);
 });

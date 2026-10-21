@@ -8,18 +8,18 @@ const dom=new JSDOM(await readFile(new URL('../index.html',import.meta.url),'utf
 for(const k of ['window','document','location','Node','navigator','sessionStorage','localStorage'])Object.defineProperty(globalThis,k,{value:k==='window'?dom.window:dom.window[k],configurable:true});
 window.scrollTo=()=>{};
 const {mountApp}=await import('../app.js'),{saveToken}=await import('../tutor.js'),repo=await openRepository(new IDBFactory());
-const requests=[];
+const requests=[];let doubtFirstGap=false;
 // Groq finto: un esercizio per slot, rispettando livello e spazi del testo.
 const tutor=async(settings,path,task,data)=>{
   assert.equal(task,'path_block');requests.push(data);
   let gap=0;const group=data.slots.find(s=>s.group)?.group;
   const items=data.slots.map(s=>{
     const tag=' [c'+data.cycle+'b'+data.page+'n'+s.n+']';
-    if(s.group){gap++;return {n:s.n,kind:'completion',stem:'Spazio ('+gap+'): scrivi la forma corretta (work).'+tag,options:[],answer:'works',accept:['works'],why:'Abitudine.',group:s.group,check:'confirmed'};}
+    if(s.group){gap++;const doubt=doubtFirstGap&&gap===1;return {n:s.n,kind:'completion',stem:'Spazio ('+gap+'): scrivi la forma corretta (work).',options:[],answer:'works',accept:['works'],why:'Abitudine.',group:s.group,check:doubt?'doubt':'confirmed',...(doubt?{doubt:true,check_note:'Dubbio.'}:{})};}
     if(s.level===1)return {n:s.n,kind:'choice',stem:'Scegli la forma corretta: She ___ here.'+tag,options:['works','work','working'],answer:'works',accept:['works'],why:'Terza persona.',group:'',check:'confirmed'};
     return {n:s.n,kind:'completion',stem:'Scrivi solo la parola mancante: He ___ every day. (work)'+tag,options:[],answer:'works',accept:['works'],why:'Abitudine.',group:'',check:'confirmed'};
   });
-  return {passages:group?[{group,text:'Every morning she (1) ___ early, he (2) ___ late and they (3) ___ hard.'}]:[],items};
+  return {passages:group?[{group,text:'Every morning she (1) ___ early, he (2) ___ late and they (3) ___ hard. Cycle '+data.cycle+' block '+data.page+'.'}]:[],items};
 };
 const app=await mountApp(repo,document.getElementById('view'),tutor);
 async function until(f){for(let i=0;i<400;i++){if(f())return;await new Promise(r=>setTimeout(r,5));}throw Error('timeout '+document.getElementById('notice').textContent);}
@@ -90,4 +90,31 @@ test('lezione: «Esercita questa lezione» apre un nuovo percorso su quella lezi
   assert.ok(old.completed_at,'il percorso precedente si chiude');
   assert.equal(current.forced_lesson,'past-simple');assert.equal(current.length,30);
   assert.equal(current.cycles[0].main,'past-simple');
+});
+
+test('livello 4: il testo resta visibile se il primo spazio è escluso, e ogni spazio conta per il suo testo',async()=>{
+  saveToken('path-ui-token-longer-than-24-chars');doubtFirstGap=true;
+  await repo.change(s=>{s.lesson_levels['present-perfect-simple']={level:4,autonomous:false,pending_transfer:false,changed_at:null,history:[]};});
+  await app.goto('lesson/present-perfect-simple');
+  await until(()=>view().includes('Percorso adattivo con il tutor'));
+  click('Esercita questa lezione · 60 min');
+  await until(()=>document.querySelectorAll('.exercise').length>=2);
+  const set=repo.get().sessions.at(-1);
+  assert.equal(set.items.filter(i=>i.group).length,3);assert.ok(set.items[0].doubt);
+  assert.ok(document.querySelector('.path-passage')?.textContent.includes('(2) ___'),'il testo deve restare visibile');
+  const ids=set.items.filter(i=>i.group).map(i=>i.context_id);
+  assert.equal(new Set(ids).size,3);assert.ok(ids.every(id=>id.startsWith('path:')));
+  doubtFirstGap=false;
+});
+
+test('percorso concluso: «Nuovo percorso» parte con un solo clic',async()=>{
+  saveToken('path-ui-token-longer-than-24-chars');
+  const path=repo.get().paths.at(-1);
+  await repo.change(s=>{const x=s.paths.find(p=>p.id===path.id);x.completed_at=new Date().toISOString();});
+  await app.goto('path/'+path.id);
+  await until(()=>view().includes('Percorso concluso'));
+  const before=repo.get().paths.length;
+  click('Nuovo percorso · 45 minuti');
+  await until(()=>repo.get().paths.length===before+1&&document.querySelectorAll('.exercise').length>=3);
+  assert.equal(repo.get().paths.at(-1).length,45);
 });

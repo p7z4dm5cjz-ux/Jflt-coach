@@ -7,6 +7,7 @@ import {lessonMeta,PATH_GROUPS} from "./learning-path.js";
 import {practiceWindow,lessonEvidence} from "./grammar-checks.js";
 import {lessonRules,LEVELS} from "./item-tags.js";
 import {levelState,ruleStats,minLevelFor,MAX_LEVEL,cycleDecision,applyDecision,secondaryCheck} from "./path-levels.js";
+export const isResting=(state,id)=>!!state.lesson_levels?.[id]?.parked;
 
 export const PATH_LENGTHS={30:2,45:3,60:4},DEFAULT_LENGTH=45,BLOCK_SIZE=5,PASSAGE_GAPS=3;
 // Composizione decisa: la lezione principale pesa sempre meno blocco dopo blocco, le intrecciate crescono.
@@ -22,7 +23,6 @@ export function isOpen(state,id){
   const ls=levelState(state,id);
   return !ls.autonomous&&!ls.pending_transfer;
 }
-const resting=(state,id)=>!!state.lesson_levels?.[id]?.parked;
 // Lezioni che si possono già mescolare con la principale: serve una prova vera (livello 2 raggiunto
 // nel percorso, pretest «da confermare» o «già sicura», pratica riuscita), non il livello di partenza.
 export function mixable(state,id){
@@ -35,7 +35,7 @@ export function mixable(state,id){
 }
 
 export function chooseMain(state,{exclude=[],continueWith=null}={}){
-  const ok=id=>!exclude.includes(id)&&isOpen(state,id)&&!resting(state,id);
+  const ok=id=>!exclude.includes(id)&&isOpen(state,id)&&!isResting(state,id);
   if(continueWith&&ok(continueWith))return continueWith;
   const ranked=recommendation(state).map(l=>l.id),all=LESSONS.map(l=>l.id);
   return ranked.find(ok)||all.find(ok)||[...ranked,...all].find(id=>!exclude.includes(id)&&isOpen(state,id))||null;
@@ -82,14 +82,14 @@ export function chooseRule(state,lessonId,level,used=new Map()){
 // Un ciclo: lezione principale (o recupero), intrecciate, ripassi e i 15 slot nei 3 blocchi.
 export function planCycle(state,{previous=null,exclude=[],force=null,timestamp=Date.now()}={}){
   let main=null,recovery_for=null;
-  // «Esercita questa lezione»: la lezione scelta dallo studente, anche se già autonoma.
-  if(force&&byId.has(force)&&hasRules(force))main=force;
   const prevResult=previous?.result;
-  if(!main&&previous?.recovery_for&&isOpen(state,previous.recovery_for))main=previous.recovery_for;
-  else if(!main&&prevResult&&prevResult.decision==="down"&&prevResult.level===1&&!previous.recovery_for){
+  if(previous?.recovery_for&&isOpen(state,previous.recovery_for))main=previous.recovery_for;
+  else if(prevResult&&prevResult.decision==="down"&&prevResult.level===1&&!previous.recovery_for){
     const r=recoveryFor(state,previous.main);
     if(r){main=r;recovery_for=previous.main;}
   }
+  // «Esercita questa lezione»: la lezione scelta dallo studente, anche se già autonoma (il recupero ha la precedenza).
+  if(!main&&force&&byId.has(force)&&hasRules(force))main=force;
   main??=chooseMain(state,{exclude,continueWith:previous?.main});
   if(!main)return null;
   const ls=levelState(state,main),mainLevel=Math.min(ls.level,MAX_LEVEL);
@@ -137,14 +137,15 @@ export function cycleReason(cycle){
 // Chiusura del ciclo (dentro repo.change): decide sulla principale e controlla le secondarie.
 // cycle.block_ids: le tre sessioni da 5 del ciclo, tutte concluse.
 export function closeCycle(state,cycle,timestamp=new Date().toISOString()){
-  const result=cycleDecision(state,cycle.main);
+  const result=cycleDecision(state,cycle.main,cycle.level);
   const to=applyDecision(state,result,timestamp);
+  const parked=state.lesson_levels?.[cycle.main]?.parked_at===timestamp;
   const secondary=[];
   for(const id of new Set([...cycle.roles.intertwined,...cycle.roles.review])){
     const level=secondaryCheck(state,id,cycle.block_ids||[],timestamp);
     if(level!==null)secondary.push({lesson_id:id,level});
   }
-  return {...result,to,secondary,closed_at:timestamp};
+  return {...result,to,secondary,closed_at:timestamp,...(parked?{parked:true}:{})};
 }
 
 // Controllo dei percorsi salvati (backup e ripristino).

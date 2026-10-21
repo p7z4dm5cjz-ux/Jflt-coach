@@ -96,6 +96,7 @@ export function validateReply(task,p,data=null) {
       if(slot){
         if((slot.group||"")!==i.group)bad(path+".group","gruppo diverso da quello richiesto");
         if(slot.level===1&&i.kind!=="choice")bad(path+".kind","il livello 1 richiede una scelta");
+        if(slot.level===2&&i.kind==="choice")bad(path+".kind","il livello 2 richiede di produrre la forma");
         if(slot.group){gap++;if(i.kind!=="completion")bad(path+".kind","gli spazi del testo sono completamenti");if(!i.stem.startsWith("Spazio ("+gap+")"))bad(path+".stem","deve iniziare con «Spazio ("+gap+")»");if(!p.passages[0]?.text.includes(gapMark(gap)))bad("passages[0].text","manca lo spazio "+gapMark(gap));}
       }
     }

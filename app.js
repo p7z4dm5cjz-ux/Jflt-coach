@@ -271,6 +271,7 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
       const filled=other+here;progressLabel.textContent=filled+" di "+answerTarget+" risposte compilate"+(set.training?" · "+results.length+" verificate":"");progressBar.value=filled;
     }
     for(const [i,item] of flow.items.entries()) {
+      if(set.path_id&&item.group&&!flow.items.slice(0,i).some(x=>x.group===item.group))form.append(pathView.passage(set,item));
       if(item.doubt){form.append(h("section",{class:"exercise-excluded"},p("Esercizio "+(flow.start+i+1)+" escluso: il controllo automatico non ha confermato la soluzione. Non devi rispondere e non incide sul punteggio.","small warning check-note")));continue;}
       const value=set.answers[item.id]||"",result=locked?results.find(a=>a.item_id===item.id):null;
       const block=h("fieldset",{class:"exercise"},h("legend",{},(flow.start+i+1)+". "+(set.path_id?pathView.itemLabel(item):item.kind==="retrieval"?"Recupero lessicale":item.skill==="recognise"?"Significato":"Uso della forma")),p(item.stem,"stem"),!reliableItem(item,set.source)&&p("Controllo non disponibile: puoi esercitarti, ma questa risposta è esclusa dal punteggio e dall’avanzamento.","small warning"),item.doubt&&p(item.check_note||"Il controllo automatico non ha confermato la soluzione: l'esercizio non conta nel punteggio.","small warning check-note"));
@@ -295,7 +296,6 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
       }
       if(result)block.append(h("div",{class:"exercise-feedback"},p(result.correct?"Risposta corretta":result.disputed?"Da verificare":"Da rivedere",result.correct?"good":"warning"),p("La tua risposta: "+result.answer,"small"),!result.correct&&p(answerFeedback(item,result.answer),"answer-diagnosis"),p(result.assisted?"Con aiuto":"Senza aiuti","small muted"),p("Risposta di riferimento: "+item.answer,"formula"),item.formula&&h("h3",{},"La forma"),item.formula&&p(item.formula,"small"),h("h3",{},"Perché"),p(item.why)));
       if(result&&!result.correct&&set.source==="groq"&&item.kind!=="retrieval")block.append(result.disputed?p("Risposta segnalata: esclusa dalle priorità finché resta da verificare.","small warning"):button("La mia risposta potrebbe essere valida",async()=>{await change(s=>s.attempts.find(a=>a.id===result.id).disputed=true);await refresh();},"quiet"));
-      if(set.path_id&&item.group&&!flow.items.slice(0,i).some(x=>x.group===item.group))form.append(pathView.passage(set,item));
       form.append(block);
     }
     form.addEventListener("submit",e=>{e.preventDefault();run(async()=>{

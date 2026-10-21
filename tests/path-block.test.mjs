@@ -101,3 +101,13 @@ test("controllo del percorso: senza risposta del controllo gli esercizi restano 
   const req=pathVerificationRequest(SHAPES.path_block.items,SHAPES.path_block.passages,L4.slots,{});
   assert.ok(req.items[0].passage.includes("(1) ___"));assert.equal(req.items[3].passage,null);
 });
+
+test("revisione: livello 2 senza scelte, lezioni e regole inesistenti rifiutate senza errori del Worker", async () => {
+  const p=structuredClone(L3reply);p.items[3]={...p.items[1],n:4};
+  assert.throws(()=>validateReply("path_block",p,L3),/livello 2 richiede di produrre/);
+  for(const change of [d=>{d.main_lesson="constructor";},d=>{d.slots[0].lesson_id="__proto__";d.slots[0].rule="__proto__.use";},d=>{d.weak_rules=[{rule:"present-simple.nope",n:2,correct:0}];}]){
+    const bad=structuredClone(L3);change(bad);let calls=0;
+    const response=await handle(request(bad),env,async()=>{calls++;return provider(L3reply);});
+    assert.equal(response.status,400);assert.equal(calls,0);
+  }
+});
