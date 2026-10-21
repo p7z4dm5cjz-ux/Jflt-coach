@@ -121,3 +121,22 @@ test('percorso concluso: «Nuovo percorso» parte con un solo clic',async()=>{
   await until(()=>repo.get().paths.length===before+1&&document.querySelectorAll('.exercise').length>=3);
   assert.equal(repo.get().paths.at(-1).length,45);
 });
+
+test('Ricomincia da zero: prima il backup, poi la conferma; restano Worker, tema e codice del tutor',async()=>{
+  saveToken('path-ui-token-longer-than-24-chars');
+  await repo.change(s=>{s.settings.theme='dark';});
+  let downloads=0;globalThis.URL.createObjectURL=()=>{downloads++;return 'blob:test';};globalThis.URL.revokeObjectURL=()=>{};
+  await app.goto('settings');
+  await until(()=>view().includes('Ricomincia da zero'));
+  assert.ok(repo.get().attempts.length>0&&repo.get().paths.length>0);
+  click('Prepara il backup e ricomincia');
+  await until(()=>buttons().some(b=>b.textContent==='Sì, cancella tutti i progressi'));
+  assert.equal(downloads,1);assert.ok(repo.get().attempts.length>0,'niente viene cancellato prima della conferma');
+  click('Sì, cancella tutti i progressi');
+  await until(()=>repo.get().attempts.length===0);
+  const s=repo.get();
+  assert.deepEqual([s.sessions.length,s.paths,s.lesson_levels,s.placement,s.settings.starting_level],[0,undefined,undefined,null,undefined]);
+  assert.equal(s.settings.theme,'dark');assert.equal(s.settings.endpoint,'https://jflt-coach.crl-r90.workers.dev');
+  assert.equal((await import('../tutor.js')).getToken(),'path-ui-token-longer-than-24-chars');
+  await until(()=>location.hash==='#/home');
+});

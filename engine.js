@@ -5,7 +5,7 @@ import {PARTICLE_ALTERNATIVES,BASE_MEANING_DISTRACTORS} from "./phrasal-extensio
 import {normal,correct} from "./answer-normal.js";
 import {lessonEvidence,practiceWindow} from "./grammar-checks.js";
 export {normal,correct} from "./answer-normal.js";
-export const VERSION = "1.16.1";
+export const VERSION = "1.16.2";
 export const API_VERSION = 1;
 export const LEGACY_STORES = ["settings","diag_responses","diag_texts","profile","requests","grammar_sets","grammar_answers","tasks","texts","feedback","error_log","cards","transfer_checks","device_tests","to_verify"];
 export const now = () => new Date().toISOString();
@@ -18,6 +18,13 @@ export function endpoint(value) {
 }
 export function freshState() {
   return {id:"main",version:2,release:VERSION,created_at:now(),updated_at:now(),settings:{endpoint:"https://jflt-coach.crl-r90.workers.dev",daily_minutes:20,theme:"auto"},placement:null,attempts:[],sessions:[],writings:[],writing_courses:[],lesson_studies:[],readings:[],vocabulary:[],daily_plans:[],legacy:null};
+}
+// Ricominciare da zero: nuovo archivio con le sole preferenze tecniche (Worker, tema, minuti).
+// Il codice del tutor sta fuori dall'archivio e resta sul dispositivo.
+export function resetProgress(state) {
+  const fresh=freshState(),old=state?.settings||{};
+  fresh.settings={...fresh.settings,...(old.endpoint?{endpoint:old.endpoint}:{}),...(old.theme?{theme:old.theme}:{}),...(old.daily_minutes?{daily_minutes:old.daily_minutes}:{})};
+  return fresh;
 }
 export function migrate(stores) {
   const s=freshState(), old=stores?.settings?.find(v=>v.id==="main"), l=old?.learning||{};

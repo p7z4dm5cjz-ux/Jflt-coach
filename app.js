@@ -9,7 +9,7 @@ import {LESSONS,PHRASALS,VOCABULARY,PATTERNS,STAGES} from "./catalog.js";
 import {PHRASAL_SCENARIOS} from "./phrasal-extension.js";
 import {bookContext} from "./bookshelf.js";
 import {QUESTIONS,orderedQuestions,orderedOptions,AREAS,PHRASAL_TARGETS,newAdaptivePlacement,adaptiveNext,adaptiveProgress} from "./placement.js";
-import {VERSION,now,uid,countWords,normal,correct,endpoint,newPlacement,placementProfile,recommendation,learningPath,addTerm,recordReview,recoveryItems,phrasalItems,writingReady,sanitizeFeedback,GENRES,dailyPlan,dailyWritingTopic,localDay} from "./engine.js";
+import {VERSION,now,uid,resetProgress,countWords,normal,correct,endpoint,newPlacement,placementProfile,recommendation,learningPath,addTerm,recordReview,recoveryItems,phrasalItems,writingReady,sanitizeFeedback,GENRES,dailyPlan,dailyWritingTopic,localDay} from "./engine.js";
 import {dailyPractice} from "./daily-practice.js";
 import {grammarItems,lessonItems} from "./practice-bank.js";
 import {answerHint} from "./answer-normal.js";
@@ -617,11 +617,22 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
     const file=h("input",{type:"file",id:"backup-file",accept:".json,application/json"});
     const preview=h("div",{});let candidate=null;
     file.onchange=()=>run(async()=>{candidate=null;preview.replaceChildren();if(!file.files[0])return;const parsed=parseBackup(await file.files[0].text());candidate=parsed;preview.replaceChildren(p("Backup valido: "+parsed.writings.length+" scritti, "+parsed.attempts.length+" tentativi, "+parsed.vocabulary.length+" termini."),button("Importa questo backup",async()=>{if(!candidate)return;await repo.replace(candidate);state=repo.get();candidate=null;notify("Backup importato. Il token del tutor resta sul dispositivo.");await refresh();},"secondary"),p("L'importazione sostituisce i dati della nuova app. Esporta prima una copia dei progressi attuali.","warning"));});
+    const downloadBackup=async()=>{const text=await repo.backup(),blob=new Blob([text],{type:"application/json"}),url=URL.createObjectURL(blob),a=h("a",{href:url,download:"jflt-progressi-"+now().slice(0,10)+".json"});document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+    // Ricomincia da zero in due passi: prima il backup scaricato, poi la conferma esplicita.
+    const resetArea=h("div",{class:"reset-confirm"});
+    const resetCard=h("section",{class:"card danger-zone"},h("h2",{},"Ricomincia da zero"),
+      p("Cancella da questo dispositivo pretest, esercizi, percorsi, livelli, scritti, letture e lessico. Restano il codice del tutor, l'indirizzo del Worker, il tema e i minuti del piano."),
+      button("Prepara il backup e ricomincia",async()=>{await downloadBackup();resetArea.replaceChildren(
+        p("Backup scaricato: controlla di averlo salvato (su iPhone in File → Download). Poi conferma.","warning"),
+        button("Sì, cancella tutti i progressi",async()=>{await repo.replace(resetProgress(repo.get()));state=repo.get();notify("Progressi cancellati. Scegli il livello di partenza o fai il pretest per ricominciare.");await goto("home");},"danger"),
+        button("Annulla",async()=>{resetArea.replaceChildren();},"quiet"));},"secondary"),
+      resetArea);
     return [title("IMPOSTAZIONI","Ritmo, aspetto e tutor.","I progressi restano su questo dispositivo. Il tutor usa il tuo Worker Cloudflare e Groq."),
       startingLevelCard(),
       card(h("h2",{},"Il tuo ritmo"),h("label",{for:"theme-preference"},"Aspetto"),theme,h("label",{for:"daily-minutes"},"Tempo indicativo del piano quotidiano"),minutes,p("Automatico segue il tema del dispositivo. Un piano già iniziato mantiene obiettivo e contenuti fino a fine giornata.","small muted")),
       card(h("h2",{},"Collega il tutor"),h("label",{for:"endpoint"},"Indirizzo Worker"),address,h("label",{for:"token"},"Codice personale del tutor"),token,h("label",{class:"inline-check"},remember,"Ricorda il codice su questo dispositivo"),button("Salva collegamento",verifyConnection),button("Rimuovi il codice dal dispositivo",async()=>{saveToken("");healthCheckGeneration++;health=null;healthError="";groq=null;notify("Codice rimosso da questo dispositivo.");await refresh();},"quiet"),p("La chiave Groq va nei secret Cloudflare. Qui si inserisce solo il codice personale APP_TOKEN; non viene incluso nei backup.","small muted")),
-      statusBox,card(h("h2",{},"Proteggi i tuoi progressi"),button("Esporta backup JSON",async()=>{const text=await repo.backup(),blob=new Blob([text],{type:"application/json"}),url=URL.createObjectURL(blob),a=h("a",{href:url,download:"jflt-progressi-"+now().slice(0,10)+".json"});document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);notify("Backup preparato. Conserva il file scaricato.");},"secondary"),h("label",{for:"backup-file"},"Importa un backup"),file,preview,p("Gli aggiornamenti dell'app conservano i tuoi dati. Il backup serve per cambiare dispositivo e per passare da Safari all'app sulla schermata Home: su iPhone le due hanno archivi separati.","muted")),
+      statusBox,card(h("h2",{},"Proteggi i tuoi progressi"),button("Esporta backup JSON",async()=>{await downloadBackup();notify("Backup preparato. Conserva il file scaricato.");},"secondary"),h("label",{for:"backup-file"},"Importa un backup"),file,preview,p("Gli aggiornamenti dell'app conservano i tuoi dati. Il backup serve per cambiare dispositivo e per passare da Safari all'app sulla schermata Home: su iPhone le due hanno archivi separati.","muted")),
+      resetCard,
       card(h("h2",{},"Studio senza connessione"),p("Lezioni, pretest, esercizi originali, lessico e bozze funzionano offline dopo il primo caricamento. Le richieste Groq partono solo quando premi un comando del tutor."),button("Cerca aggiornamenti",async()=>{const reg=await navigator.serviceWorker?.getRegistration();if(!reg)throw new Error("Aggiornamenti disponibili dopo la pubblicazione HTTPS dell'app.");await reg.update();notify("Controllo avviato. Se arriva una nuova versione comparirà un avviso.");},"quiet")),link("Vedi i progressi","progress","text-link")];
   }
   async function render() {

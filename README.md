@@ -1,3 +1,7 @@
+# Versione 1.16.2: ricomincia da zero
+
+- In Impostazioni, «Ricomincia da zero»: prima scarica il backup, poi chiede una conferma esplicita e cancella da questo dispositivo pretest, esercizi, percorsi, livelli, scritti, letture e lessico. Restano il codice del tutor, l'indirizzo del Worker, il tema e i minuti del piano. Un backup si può reimportare per tornare indietro.
+
 # Versione 1.16.1: livello di partenza e motivi più chiari nel percorso
 
 - **Livello di partenza dalle prove recenti:** se nelle ultime 6 risposte verificate ne hai almeno 5 corrette senza aiuti, la lezione parte almeno dal livello 2 anche quando il pretest la segnava da ripassare. Vale anche per un livello già fissato all'avvio di un ciclo ma mai deciso da un ciclo concluso; una decisione del percorso non viene scavalcata.
