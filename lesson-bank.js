@@ -318,7 +318,7 @@ export const LESSON_BANK={
       C("use","Chiedi a un superiore il permesso di uscire prima. Scegli la frase più adatta.",["Would it be possible to leave early today?","Leave early today.","I want leave early today."],"Would it be possible to leave early today?","Richiesta formale e cortese."),
       C("use","Su un cartello vieti di fumare. Scegli la frase corretta.",["Do not smoke here.","Not smoke here.","Don't smoking here."],"Do not smoke here.","Imperativo negativo: do not + verbo base."),
       O("word_order","Metti le parole in ordine e scrivi la frase: you / me / could / help / please","Could you help me please",["Could you please help me"],"Could you + verbo base."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: late / be / don't / tomorrow","Don't be late tomorrow",[],"Imperativo negativo con be: don't be.")
+      O("word_order","Metti le parole in ordine e scrivi la frase: late / be / don't / tomorrow","Don't be late tomorrow",["Tomorrow don't be late"],"Imperativo negativo con be: don't be.")
     ],
     check:[
       O("form","Scrivi solo la parola mancante: ___ we start the meeting now? (proposta)","Shall",[],"Proposta: shall we...?"),
@@ -400,7 +400,7 @@ export const LESSON_BANK={
       C("use","Nel rapporto descrivi la scena all'arrivo. Scegli la frase corretta.",["When we arrived, two men were standing at the door.","When we arrived, two men stood stand at the door.","When we were arriving, two men stand at the door."],"When we arrived, two men were standing at the door.","Evento (arrived) + sfondo (were standing)."),
       C("use","Racconti una sequenza di azioni. Scegli la frase corretta.",["He opened the door, looked around and left.","He was opening the door, was looking around and was leaving.","He opens the door, looked around and left."],"He opened the door, looked around and left.","Sequenza di azioni concluse: past simple."),
       O("word_order","Metti le parole in ordine e scrivi la frase: was sleeping / the alarm / when / went off / I","I was sleeping when the alarm went off",["When the alarm went off I was sleeping"],"Sfondo + when + evento."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: the file / she / yesterday / sent","She sent the file yesterday",[],"Past simple con yesterday.")
+      O("word_order","Metti le parole in ordine e scrivi la frase: the file / she / yesterday / sent","She sent the file yesterday",["Yesterday she sent the file"],"Past simple con yesterday.")
     ],
     check:[
       O("form","Scrivi solo le parole mancanti, al past continuous: What ___ at eight last night? (you do)","were you doing",[],"Domanda al past continuous."),
@@ -488,7 +488,7 @@ export const LESSON_BANK={
       C("use","Il telefono squilla e ti offri di rispondere. Scegli la frase corretta.",["I'll answer it.","I'm going to answer it since yesterday.","I answer it tomorrow."],"I'll answer it.","Offerta immediata: will."),
       C("use","Comunichi un piano concordato per sabato. Scegli la frase corretta.",["We're visiting the base on Saturday.","We visit the base on Saturday maybe.","We'll visiting the base on Saturday."],"We're visiting the base on Saturday.","Accordo fissato: present continuous."),
       O("word_order","Metti le parole in ordine e scrivi la frase: going to / we / move / are / next year","We are going to move next year",["Next year we are going to move"],"Be going to + verbo base."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: call / I'll / tomorrow / you","I'll call you tomorrow",[],"Will + verbo base.")
+      O("word_order","Metti le parole in ordine e scrivi la frase: call / I'll / tomorrow / you","I'll call you tomorrow",["Tomorrow I'll call you"],"Will + verbo base.")
     ],
     check:[
       O("form","Scrivi solo le parole mancanti, con going to: She ___ medicine at university. (study)","is going to study",[],"Intenzione: going to."),
@@ -1013,10 +1013,10 @@ export const LESSON_BANK={
       C("meaning","Scegli che cosa significa: By 9 tomorrow I'll have taught two classes.",["entro le nove avrò già fatto due lezioni","alle nove inizierò due lezioni","farò due lezioni dopo le nove"],"entro le nove avrò già fatto due lezioni","Future perfect: completato entro."),
       C("tense_choice","Scegli la forma corretta: By the end of the year she ___ here for ten years.",["will have worked","will be working","works"],"will have worked","Durata fino a un punto futuro: future perfect."),
       C("tense_choice","Scegli la forma corretta: Don't call at eight. We ___ dinner.",["will be having","will have had","have"],"will be having","In corso alle otto: future continuous."),
-      C("use","Assicuri il responsabile sulla scadenza. Scegli la frase corretta.",["We will have completed the checks by noon.","We will completed the checks by noon.","We will be complete the checks by noon."],"We will have completed the checks by noon.","Scadenza con by: future perfect."),
-      C("use","Chiedi gentilmente se un collega userà la sala domani. Scegli la frase più cortese.",["Will you be using the meeting room tomorrow?","Will you have using the meeting room tomorrow?","Are you use the meeting room tomorrow?"],"Will you be using the meeting room tomorrow?","Future continuous: domanda cortese sui piani."),
+      C("use","Il responsabile vuole tutti i controlli conclusi entro mezzogiorno. Scegli la rassicurazione pertinente.",["We will have completed all the checks by noon.", "We will start the checks at noon.", "We will still be checking the equipment at noon."],"We will have completed all the checks by noon.","Will have completed indica completamento entro la scadenza; le altre frasi indicano inizio o lavoro ancora in corso."),
+      C("use","Vuoi sapere se la sala sarà occupata dal collega domani; non gli stai chiedendo di usarla. Scegli la domanda più adatta.",["Will you be using the meeting room tomorrow?", "Could you use the meeting room tomorrow?", "Did you use the meeting room yesterday?"],"Will you be using the meeting room tomorrow?","Will you be using chiede dei programmi. Could you use è una richiesta; did you use riguarda un uso passato."),
       O("word_order","Metti le parole in ordine e scrivi la frase: will have / by then / left / they","They will have left by then",["By then they will have left"],"Future perfect + by then."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: be waiting / will / I / at the entrance","I will be waiting at the entrance",[],"Future continuous.")
+      O("word_order","Metti le parole in ordine e scrivi la frase: be waiting / will / I / at the entrance","I will be waiting at the entrance",["At the entrance I will be waiting"],"Future continuous.")
     ],
     check:[
       O("form","Scrivi solo le parole mancanti, al future perfect: By 2030 the city ___ a new metro. (build)","will have built",[],"Completato entro il 2030."),
@@ -1134,7 +1134,7 @@ export const LESSON_BANK={
       C("meaning","Scegli che cosa significa: The suspect was being questioned.",["l'interrogatorio era in corso","è stato interrogato ieri, poi è finito","interrogherà qualcuno"],"l'interrogatorio era in corso","Passivo past continuous."),
       C("tense_choice","Scegli la forma corretta: The windows ___ yesterday.",["were cleaned","cleaned","were clean"],"were cleaned","Passivo passato."),
       C("use","Avvisi che il pagamento deve essere effettuato entro lunedì. Scegli la frase corretta.",["Payment must be made by Monday.","Payment must make by Monday.","Payment must been made by Monday."],"Payment must be made by Monday.","Modale + be + participio."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: will / tomorrow / the results / be announced","The results will be announced tomorrow",[],"Passivo futuro.")
+      O("word_order","Metti le parole in ordine e scrivi la frase: will / tomorrow / the results / be announced","The results will be announced tomorrow",["Tomorrow the results will be announced"],"Passivo futuro.")
     ]
   },
   reported:{
@@ -2078,8 +2078,8 @@ export const LESSON_BANK={
     train:[
       C("tense_choice","Guarda quelle nuvole! Scegli la forma corretta: It ___ rain.",["is going to","rained","has rained"],"is going to","Previsione basata su prove: going to."),
       C("tense_choice","Hai già deciso. Scegli la forma corretta: I ___ buy a new car next year.",["am going to","will decide to","buy"],"am going to","Intenzione già decisa."),
-      C("use","Racconti i tuoi programmi per l'estate. Scegli la frase corretta.",["We're going to visit Scotland in August.","We going to visit Scotland in August.","We're go to visit Scotland in August."],"We're going to visit Scotland in August.","Be going to + verbo base."),
-      C("use","Avvisi un collega di un pericolo imminente. Scegli la frase corretta.",["Careful! That box is going to fall.","Careful! That box falls.","Careful! That box is going fall."],"Careful! That box is going to fall.","Prova evidente: going to."),
+      C("use","Hai deciso di visitare la Scozia in agosto; il viaggio deve ancora avvenire. Scegli il messaggio che comunica questa intenzione.",["We're going to visit Scotland in August.", "We visited Scotland last August.", "We aren't going to visit Scotland in August."],"We're going to visit Scotland in August.","Going to comunica un'intenzione futura. Le altre frasi descrivono un viaggio passato oppure negano il progetto."),
+      C("use","Una scatola sta scivolando verso il bordo. Scegli l'avviso che prevede una caduta imminente.",["Careful! That box is going to fall.", "That box fell a moment ago.", "That box has already fallen."],"Careful! That box is going to fall.","La caduta non è ancora avvenuta: going to collega la previsione all'indizio visibile. Le altre frasi la presentano come già avvenuta."),
       O("word_order","Metti le parole in ordine e scrivi la frase: not / going to / we're / wait","We're not going to wait",[],"Negativa di going to."),
       O("word_order","Metti le parole in ordine e scrivi la domanda: going to / are / what / you / do","What are you going to do",[],"Wh- + be + soggetto + going to.")
     ]
@@ -2088,9 +2088,9 @@ export const LESSON_BANK={
     train:[
       C("tense_choice","È già in agenda. Scegli la forma corretta: I ___ the dentist on Friday.",["am seeing","saw","have seen"],"am seeing","Appuntamento fissato: present continuous."),
       C("tense_choice","Scegli la forma corretta: The train ___ at 7.15 tomorrow.",["leaves","left","has left"],"leaves","Orario ufficiale: present simple."),
-      C("use","Rifiuti un invito perché hai già un impegno. Scegli la frase corretta.",["Sorry, I'm meeting my sister tonight.","Sorry, I meet my sister tonight usually.","Sorry, I'm meet my sister tonight."],"Sorry, I'm meeting my sister tonight.","Impegno organizzato."),
+      C("use","Hai già organizzato di incontrare tua sorella stasera. Scegli il messaggio che rifiuta l'invito per questo impegno.",["Sorry, I'm meeting my sister tonight.", "I met my sister last night, so I'm free tonight.", "I haven't made any plans for tonight."],"Sorry, I'm meeting my sister tonight.","Il present continuous comunica l'impegno fissato. Le altre frasi indicano un incontro passato oppure assenza di programmi."),
       C("use","Comunichi l'orario del corso. Scegli la frase corretta.",["The course starts on 3 March.","The course is start on 3 March.","The course starting on 3 March."],"The course starts on 3 March.","Calendario: present simple."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: flying / we're / on Monday / to Paris","We're flying to Paris on Monday",[],"Present continuous per accordi."),
+      O("word_order","Metti le parole in ordine e scrivi la frase: flying / we're / on Monday / to Paris","We're flying to Paris on Monday",["On Monday we're flying to Paris"],"Present continuous per accordi."),
       O("word_order","Metti le parole in ordine e scrivi la domanda: you / are / tonight / doing / what","What are you doing tonight",[],"Domanda sui piani.")
     ]
   },
@@ -2098,9 +2098,9 @@ export const LESSON_BANK={
     train:[
       C("tense_choice","Scegli la forma corretta: At 10 tomorrow I ___ in a meeting.",["will be sitting","sat","have sat"],"will be sitting","In corso a un momento futuro."),
       C("tense_choice","Scegli la forma corretta: ___ you be using the car tonight?",["Will","Are","Do"],"Will","Domanda cortese sui piani."),
-      C("use","Avvisi che domani pomeriggio non sarai raggiungibile. Scegli la frase corretta.",["I'll be travelling all afternoon tomorrow.","I'll travel all afternoon tomorrow being.","I'm travel all afternoon tomorrow."],"I'll be travelling all afternoon tomorrow.","Attività in corso nel futuro."),
-      C("use","Chiedi gentilmente se un collega passerà dall'ufficio postale. Scegli la frase più cortese.",["Will you be going past the post office later?","Will you going past the post office later?","Are you be going past the post office later?"],"Will you be going past the post office later?","Future continuous: domanda cortese."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: will / working / be / I / late tonight","I will be working late tonight",[],"Will be + -ing."),
+      C("use","Domani viaggerai dalle 13 alle 18. Scegli il messaggio che spiega perché alle 15 non potrai rispondere.",["I'll be travelling at three tomorrow.", "I'll have finished travelling by three tomorrow.", "I finished travelling at three yesterday."],"I'll be travelling at three tomorrow.","Alle 15 il viaggio sarà in corso. Will have finished lo presenta come già concluso; finished yesterday riguarda ieri."),
+      C("use","Chiedi se passare dall'ufficio postale fa già parte del programma del collega, senza chiedergli di cambiare percorso. Scegli la domanda più adatta.",["Will you be going past the post office later?", "Could you go to the post office for me?", "Did you go past the post office earlier?"],"Will you be going past the post office later?","La prima domanda riguarda un programma futuro; could you go chiede di fare una commissione, did you go riguarda il passato."),
+      O("word_order","Metti le parole in ordine e scrivi la frase: will / working / be / I / late tonight","I will be working late tonight",["Late tonight I will be working"],"Will be + -ing."),
       O("word_order","Metti le parole in ordine e scrivi la frase: this time next week / be / we'll / on holiday","This time next week we'll be on holiday",["We'll be on holiday this time next week"],"This time next week.")
     ]
   },
@@ -2108,7 +2108,7 @@ export const LESSON_BANK={
     train:[
       C("tense_choice","Scegli la forma corretta: By the time you arrive, we ___ dinner.",["will have finished","finished","had finished"],"will have finished","Completato prima di un momento futuro."),
       C("tense_choice","Scegli la forma corretta: ___ you have finished by six?",["Will","Do","Are"],"Will","Domanda al future perfect."),
-      C("use","Rassicuri il cliente sulla consegna. Scegli la frase corretta.",["We will have delivered the goods by Friday.","We will delivered the goods by Friday.","We will have deliver the goods by Friday."],"We will have delivered the goods by Friday.","Will have + participio."),
+      C("use","Il cliente deve ricevere la merce entro venerdì. Scegli il messaggio che conferma il rispetto della scadenza.",["We will have delivered the goods by Friday.", "We will send the goods after Friday.", "We will start packing the goods on Friday."],"We will have delivered the goods by Friday.","By Friday indica che la consegna sarà completata entro venerdì. Spedire dopo o iniziare a imballare venerdì non garantisce questa scadenza."),
       C("use","Calcoli un obiettivo di risparmio. Scegli la frase corretta.",["By December I'll have saved enough for the trip.","By December I'll save enough for the trip since.","By December I've saved enough for the trip next."],"By December I'll have saved enough for the trip.","By + future perfect."),
       O("word_order","Metti le parole in ordine e scrivi la frase: will have / they / by then / gone home","They will have gone home by then",["By then they will have gone home"],"Future perfect."),
       O("word_order","Metti le parole in ordine e scrivi la frase: won't / she / have finished / by noon","She won't have finished by noon",["By noon she won't have finished"],"Negativa del future perfect.")

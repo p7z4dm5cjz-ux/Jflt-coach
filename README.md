@@ -1,3 +1,10 @@
+# Revisione 1.13.2: bozze salvate e qualità degli esercizi
+
+- I nuovi percorsi registrano la versione delle consegne. Per le vecchie bozze autonome senza questo dato, l'app conserva il testo e chiede quale fosse la consegna originale prima di inviarlo al tutor. Non indovina dal numero del tentativo. Queste bozze restano allenamento; una nuova unità consente una prova autonoma tracciata.
+- I vecchi tentativi oltre il limite della banca non causano più accessi a una consegna inesistente. I backup precedenti restano importabili.
+- Aggiunte sette varianti valide nei riordini, compresa “Tomorrow I'll call you”.
+- Riscritti otto esercizi di uso dei futuri: alternative grammaticali con significati diversi e spiegazioni del contrasto. Gli esercizi iniziali sulla costruzione conservano alternative di forma. Non è una revisione linguistica completa di tutta la banca.
+
 # Revisione 1.13.1: verifica di coerenza
 
 - **Classificazione corretta:** quattro esercizi a scelta sull'ordine delle parole (frase e aggettivi) erano registrati come "scelta"; ora contano come ordine delle parole. La scelta della punteggiatura con however conta come forma. Nella lezione sulla frase base è stato aggiunto un esercizio di significato per mantenere la copertura.

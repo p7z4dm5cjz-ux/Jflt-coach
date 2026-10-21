@@ -294,3 +294,18 @@ test("1.12: spiegazione di un termine noto usa il contesto finale dell'articolo"
  await visit('reading/'+id);input('#reading-term',term);const before=calls.length;click('Spiega nel contesto');await until(()=>calls.length>before&&document.getElementById('reading-meaning').value==='Significato nel passaggio');
  assert.equal(calls.at(-1).task,'clarify');assert.ok(calls.at(-1).data.context.includes('The relevant sentence'));assert.ok(calls.at(-1).data.context.includes(term));
 });
+
+test('Una vecchia bozza con molti tentativi si apre e permette di confermare la consegna senza perdere testo',async()=>{
+ const {newCourse}=await import('../writing-course.js');
+ const c=newCourse('email-request');
+ c.stage=4;c.rounds[4]=99;delete c.assignment_version;c.drafts[4]='My original draft must remain available.';
+ await repo.change(s=>s.writing_courses.push(c));await visit('course/'+c.id);
+ assert.equal(document.querySelector('#course-draft').value,c.drafts[4]);
+ assert.ok(document.querySelector('#original-task'));
+ assert.ok(document.querySelector('#course-advance').disabled);
+ const select=document.querySelector('#original-task');select.value='3';select.dispatchEvent(new window.Event('change',{bubbles:true}));
+ await until(()=>!document.querySelector('#original-task'));
+ assert.equal(document.querySelector('#course-draft').value,c.drafts[4]);
+ assert.equal(repo.get().writing_courses.find(x=>x.id===c.id).task_indices[4],3);
+ assert.ok(document.querySelector('#course-advance').disabled);
+});

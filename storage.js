@@ -30,9 +30,12 @@ export function validateState(s) {
   if(s.writing_courses!==undefined) {
     if(!Array.isArray(s.writing_courses))throw new Error("Percorsi di scrittura non validi.");
     for(const c of s.writing_courses) {
+      if(c.assignment_version!==undefined&&![2,3].includes(c.assignment_version))throw new Error("Versione delle consegne non valida.");
+      if(c.task_indices!==undefined&&(!c.task_indices||typeof c.task_indices!=="object"||Array.isArray(c.task_indices)||Object.entries(c.task_indices).some(([k,v])=>!["4","5"].includes(k)||!Number.isInteger(v)||v<1||v>9)))throw new Error("Consegne salvate non valide.");
       if(c?.grammar_lesson_id!==undefined&&!LESSONS.some(l=>l.id===c.grammar_lesson_id))throw new Error("Lezione del percorso non riconosciuta.");
       const unit=WRITING_UNITS.find(u=>u.id===c?.unit_id),validText=x=>typeof x==="string"&&x.length<=6000,validStage=x=>Number.isInteger(x)&&x>=0&&x<=5,validRound=x=>Number.isInteger(x)&&x>=0&&x<=1000;
       if(!unit||typeof c.id!=="string"||!validStage(c.stage)||!Array.isArray(c.drafts)||c.drafts.length!==6||!c.drafts.every(validText)||!Array.isArray(c.rounds)||c.rounds.length!==6||!c.rounds.every(validRound)||!validDate(c.created_at)||c.completed_at!==null&&!validDate(c.completed_at)||!c.preparation||typeof c.preparation.checked!=="boolean"||!c.preparation.answers||typeof c.preparation.answers!=="object"||Array.isArray(c.preparation.answers)||!Array.isArray(c.reviews)||!Array.isArray(c.checks)||!Array.isArray(c.archives))throw new Error("Un percorso di scrittura non è valido.");
+      if(c.task_indices&&Object.values(c.task_indices).some(index=>index>=unit.tasks.length))throw new Error("Consegne salvate non valide.");
       for(const [id,index] of Object.entries(c.preparation.answers))if(!unit.preparation.some(q=>q.id===id&&Number.isInteger(index)&&index>=0&&index<q.options.length))throw new Error("Una risposta sul modello non è valida.");
       for(const [index,r] of c.reviews.entries()) {
         if(typeof r.id!=="string"||!validStage(r.stage)||r.stage>c.stage||!validRound(r.round)||r.round>c.rounds[r.stage]||!validText(r.text)||!validDate(r.created_at)||typeof r.assisted!=="boolean"||!["hint","review"].includes(r.mode)||typeof r.question!=="string"||r.question.length>500)throw new Error("Una revisione del percorso non è valida.");
