@@ -221,6 +221,15 @@ export function progressDecision(rows){
 }
 export const ASSESSMENT_SCHEMA=replyObject({mode:{type:"string",enum:["diagnose","consolidate","hold","advance"]},focus:{type:"string",enum:ADAPTIVE_SKILLS},reason:replyText(700),goal:replyText(500),evidence_ids:replyList(replyText(200),"Da zero a 8 id realmente presenti in learner.evidence. Vuoto solo senza prove."),item_skills:replyList({type:"string",enum:ADAPTIVE_SKILLS},"Esattamente 6 competenze, una per esercizio nell'ordine.")});
 export const ADAPTIVE_EXERCISES_SCHEMA=replyObject({...REPLY_SCHEMAS.exercises.properties,assessment:ASSESSMENT_SCHEMA});
+// Una proposta di Groq che contraddice le regole viene ricondotta alla modalità ammessa invece di
+// far fallire il blocco: senza prove serve una diagnosi; senza i requisiti si mantiene la difficoltà.
+export const HOLD_REASON="Difficoltà mantenuta: per aumentarla servono almeno cinque risposte corrette sulle ultime sei verificate, senza aiuti e senza errori più recenti.";
+export function settleAssessment(a,learner){
+ if(!object(a)||!object(learner)||!Array.isArray(learner.evidence))return {assessment:a,changed:null};
+ if(!learner.evidence.length&&a.mode!=="diagnose")return {assessment:{...a,mode:"diagnose",evidence_ids:[],reason:"Mancano risposte su questa lezione: il blocco serve a verificare il punto di partenza."},changed:a.mode+"->diagnose"};
+ if(a.mode==="advance"&&!progressDecision(learner.evidence.filter(e=>e.source==="practice")).can_advance)return {assessment:{...a,mode:"hold",reason:HOLD_REASON},changed:"advance->hold"};
+ return {assessment:a,changed:null};
+}
 export function validateAssessment(a,learner){
  if(!object(a)||!["diagnose","consolidate","hold","advance"].includes(a.mode)||!ADAPTIVE_SKILLS.includes(a.focus)||!str(a.reason,700)||!str(a.goal,500)||!arr(a.evidence_ids,8)||!a.evidence_ids.every(id=>str(id,200))||!arr(a.item_skills,6)||a.item_skills.length!==6||!a.item_skills.every(s=>ADAPTIVE_SKILLS.includes(s)))throw new Error("Valutazione adattiva incompleta.");
  if(learner){const ids=new Set(learner.evidence.map(e=>e.id));if(a.evidence_ids.some(id=>!ids.has(id))||ids.size&&!a.evidence_ids.length)throw new Error("Valutazione senza riscontro nelle risposte.");if(!ids.size&&a.mode!=="diagnose")throw new Error("Senza prove serve una verifica iniziale.");if(a.mode==='advance'&&!progressDecision(learner.evidence.filter(e=>e.source==='practice')).can_advance)throw new Error("Servono almeno cinque risposte corrette sulle ultime sei verificate, senza aiuti e senza errori più recenti, per aumentare la difficoltà.");

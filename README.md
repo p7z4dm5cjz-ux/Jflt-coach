@@ -1,3 +1,9 @@
+# Revisione 1.14.1: fase 0 del tutor adattivo
+
+- **Nessun blocco perso per una proposta non ammessa:** se Groq propone di aumentare la difficoltà senza i requisiti, il Worker la riconduce a "mantieni" (con il motivo standard) invece di rifiutare la risposta; senza prove la riconduce a una diagnosi. Prove inventate restano un errore. La correzione è registrata nella diagnostica (`assessment_adjusted`).
+- **Prompt allineato alla regola reale:** advance solo se `learner.progression.can_advance` è vero (5 corrette sulle ultime 6 verificate, senza aiuti e senza errori più recenti). Revisione prompt `groq-adaptive-v15`.
+- **Controllo con un altro modello, se configurato:** la variabile Cloudflare `VERIFY_MODEL` sceglie il modello del controllo alla cieca (deve supportare JSON schema rigoroso, per esempio `qwen/qwen3.8-27b`, in anteprima su Groq). Se non risponde, il controllo torna al modello che genera. Senza la variabile il comportamento è invariato.
+
 # Revisione linguistica 1.14.0
 
 Corrette 93 voci della banca per competenze: completamenti, varianti, contesti, distrattori e spiegazioni. Il riordino accetta le virgole nelle varianti già previste, senza accettare sequenze arbitrarie. Le risposte di riferimento delle verifiche riservate conservano gli stessi valori.
