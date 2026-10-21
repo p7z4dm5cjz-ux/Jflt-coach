@@ -1,3 +1,9 @@
+# Revisione linguistica 1.14.0
+
+Corrette 93 voci della banca per competenze: completamenti, varianti, contesti, distrattori e spiegazioni. Il riordino accetta le virgole nelle varianti già previste, senza accettare sequenze arbitrarie. Le risposte di riferimento delle verifiche riservate conservano gli stessi valori.
+
+Il [rapporto di revisione](audit/REVISIONE-1.14.0.md) distingue controlli automatici e revisione linguistica; il [registro](audit/linguistic-review-1.14.0.json) contiene ogni voce prima e dopo. Non è una certificazione linguistica delle risposte future di Groq.
+
 # Revisione 1.13.2: bozze salvate e qualità degli esercizi
 
 - I nuovi percorsi registrano la versione delle consegne. Per le vecchie bozze autonome senza questo dato, l'app conserva il testo e chiede quale fosse la consegna originale prima di inviarlo al tutor. Non indovina dal numero del tentativo. Queste bozze restano allenamento; una nuova unità consente una prova autonoma tracciata.

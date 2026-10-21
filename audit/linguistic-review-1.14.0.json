@@ -1,0 +1,2140 @@
+[
+  {
+    "id": "pronouns-train-8",
+    "reason": "Rimossa variante che omette o sostituisce una parola fornita",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: to / gave / the keys / me / she",
+      "answer": "She gave the keys to me",
+      "accept": [
+        "She gave me the keys"
+      ],
+      "why": "Verbo + oggetto + to + persona."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: to / gave / the keys / me / she",
+      "answer": "She gave the keys to me",
+      "accept": [],
+      "why": "Verbo + oggetto + to + persona."
+    }
+  },
+  {
+    "id": "pronouns-check-5",
+    "reason": "Rimossa variante che omette o sostituisce una parola fornita",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: us / they / to / the results / sent",
+      "answer": "They sent the results to us",
+      "accept": [
+        "They sent us the results"
+      ],
+      "why": "Verbo + oggetto + to + persona."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: us / they / to / the results / sent",
+      "answer": "They sent the results to us",
+      "accept": [],
+      "why": "Verbo + oggetto + to + persona."
+    }
+  },
+  {
+    "id": "some-any-train-3",
+    "reason": "Contesto esplicito per distinguere le alternative",
+    "before": {
+      "skill": "tense_choice",
+      "stem": "Scegli la forma corretta: Is there ___ in the room?",
+      "options": [
+        "anybody",
+        "somebody",
+        "nobody"
+      ],
+      "answer": "anybody",
+      "why": "Domanda neutra: anybody."
+    },
+    "after": {
+      "skill": "tense_choice",
+      "stem": "Non sai se ci sia qualcuno e non ti aspetti una risposta particolare: scegli la domanda neutra. Scegli la forma corretta: Is there ___ in the room?",
+      "options": [
+        "anybody",
+        "somebody",
+        "nobody"
+      ],
+      "answer": "anybody",
+      "why": "Domanda neutra: anybody."
+    }
+  },
+  {
+    "id": "some-any-check-0",
+    "reason": "Esplicitata la lettura neutra",
+    "before": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante, some o any: Have you got ___ change?",
+      "answer": "any",
+      "accept": [],
+      "why": "Domanda neutra: any."
+    },
+    "after": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante, some o any, in una domanda neutra senza aspettativa di risposta positiva: Have you got ___ change?",
+      "answer": "any",
+      "accept": [],
+      "why": "Domanda neutra: any."
+    }
+  },
+  {
+    "id": "quantifiers-train-2",
+    "reason": "Significato più preciso, senza deduzioni non garantite",
+    "before": {
+      "skill": "meaning",
+      "stem": "Scegli che cosa significa: We have a few days left.",
+      "options": [
+        "alcuni giorni, abbastanza",
+        "quasi nessun giorno",
+        "molti giorni"
+      ],
+      "answer": "alcuni giorni, abbastanza",
+      "why": "A few = alcuni (valore positivo)."
+    },
+    "after": {
+      "skill": "meaning",
+      "stem": "Scegli che cosa significa: We have a few days left.",
+      "options": [
+        "alcuni giorni, un piccolo numero",
+        "quasi nessun giorno",
+        "molti giorni"
+      ],
+      "answer": "alcuni giorni, un piccolo numero",
+      "why": "A few indica alcuni giorni, con valore positivo rispetto a few. Non dice da solo se siano sufficienti."
+    }
+  },
+  {
+    "id": "questions-train-0",
+    "reason": "Contesto esplicito per distinguere le alternative; Istruzione di risposta prima del contesto",
+    "before": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: ___ you work on Saturdays?",
+      "answer": "Do",
+      "accept": [],
+      "why": "Domanda al present simple con you: do."
+    },
+    "after": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: ___ you work on Saturdays? (Usa il present simple)",
+      "answer": "Do",
+      "accept": [],
+      "why": "Domanda al present simple con you: do."
+    }
+  },
+  {
+    "id": "questions-check-4",
+    "reason": "Contesto esplicito per distinguere le alternative",
+    "before": {
+      "skill": "use",
+      "stem": "Chiedi chi ha scritto il rapporto. Scegli la frase corretta.",
+      "options": [
+        "Who wrote the report?",
+        "Who did write the report?",
+        "Who wrote did the report?"
+      ],
+      "answer": "Who wrote the report?",
+      "why": "Who soggetto: niente did."
+    },
+    "after": {
+      "skill": "use",
+      "stem": "Usa una domanda neutra, senza enfasi o contrasto. Chiedi chi ha scritto il rapporto. Scegli la frase corretta.",
+      "options": [
+        "Who wrote the report?",
+        "Who did write the report?",
+        "Who wrote did the report?"
+      ],
+      "answer": "Who wrote the report?",
+      "why": "Who soggetto: niente did."
+    }
+  },
+  {
+    "id": "prepositions-train-4",
+    "reason": "Contesto esplicito per distinguere le alternative; rimosso in dalle alternative perché può indicare movimento",
+    "before": {
+      "skill": "tense_choice",
+      "stem": "Scegli la forma corretta: He walked ___ the room.",
+      "options": [
+        "into",
+        "in",
+        "at"
+      ],
+      "answer": "into",
+      "why": "Movimento verso l'interno: into."
+    },
+    "after": {
+      "skill": "tense_choice",
+      "stem": "Il movimento va dal corridoio verso l’interno della stanza. Scegli la forma corretta: He walked ___ the room.",
+      "options": [
+        "into",
+        "out of",
+        "towards"
+      ],
+      "answer": "into",
+      "why": "Into indica l’ingresso; out of indica l’uscita; towards indica la direzione senza affermare che la persona entri."
+    }
+  },
+  {
+    "id": "possessives-compounds-check-1",
+    "reason": "Istruzione compatibile con risposte di più parole",
+    "before": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: It was a ___ flight. (two hours → aggettivo composto)",
+      "answer": "two-hour",
+      "accept": [
+        "two hour"
+      ],
+      "why": "Aggettivo composto: two-hour."
+    },
+    "after": {
+      "skill": "form",
+      "stem": "Scrivi solo ciò che manca: It was a ___ flight. (two hours → aggettivo composto)",
+      "answer": "two-hour",
+      "accept": [
+        "two hour"
+      ],
+      "why": "Aggettivo composto: two-hour."
+    }
+  },
+  {
+    "id": "have-forms-check-0",
+    "reason": "Contesto esplicito per distinguere le alternative; Istruzione di risposta prima del contesto",
+    "before": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: ___ your brother have a job?",
+      "answer": "Does",
+      "accept": [],
+      "why": "Have lessicale: does nelle domande."
+    },
+    "after": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: ___ your brother have a job? (Usa il present simple)",
+      "answer": "Does",
+      "accept": [],
+      "why": "Have lessicale: does nelle domande."
+    }
+  },
+  {
+    "id": "imperatives-requests-check-1",
+    "reason": "Istruzione compatibile con risposte di più parole",
+    "before": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante, per rendere negativo l'ordine: ___ touch the screen.",
+      "answer": "Don't",
+      "accept": [
+        "Do not"
+      ],
+      "why": "Imperativo negativo: don't."
+    },
+    "after": {
+      "skill": "form",
+      "stem": "Scrivi solo ciò che manca, per rendere negativo l'ordine: ___ touch the screen.",
+      "answer": "Don't",
+      "accept": [
+        "Do not"
+      ],
+      "why": "Imperativo negativo: don't."
+    }
+  },
+  {
+    "id": "space-movement-train-1",
+    "reason": "Alternative distinguibili per significato",
+    "before": {
+      "skill": "tense_choice",
+      "stem": "Scegli la forma corretta: The cat jumped ___ the box.",
+      "options": [
+        "into",
+        "in",
+        "at"
+      ],
+      "answer": "into",
+      "why": "Movimento verso l'interno: into."
+    },
+    "after": {
+      "skill": "tense_choice",
+      "stem": "Il gatto era fuori dalla scatola e ci è entrato saltando. Scegli la preposizione che esprime questo ingresso: The cat jumped ___ the box.",
+      "options": [
+        "into",
+        "out of",
+        "over"
+      ],
+      "answer": "into",
+      "why": "Into indica l’ingresso nella scatola; out of indica l’uscita, over il salto al di sopra. In può talvolta esprimere ingresso: per questo non è usato come alternativa errata."
+    }
+  },
+  {
+    "id": "space-movement-train-2",
+    "reason": "Contesto esplicito per distinguere le alternative",
+    "before": {
+      "skill": "tense_choice",
+      "stem": "Scegli la forma corretta: We drove ___ the tunnel.",
+      "options": [
+        "through",
+        "across",
+        "over"
+      ],
+      "answer": "through",
+      "why": "Dentro e da un capo all'altro: through."
+    },
+    "after": {
+      "skill": "tense_choice",
+      "stem": "Avete percorso il tunnel al suo interno, da un’estremità all’altra. Scegli la forma corretta: We drove ___ the tunnel.",
+      "options": [
+        "through",
+        "across",
+        "over"
+      ],
+      "answer": "through",
+      "why": "Dentro e da un capo all'altro: through."
+    }
+  },
+  {
+    "id": "space-movement-check-0",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: The plane flew ___ the mountains. (sopra, senza toccare)",
+      "answer": "over",
+      "accept": [],
+      "why": "Sopra e oltre: over."
+    },
+    "after": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: The plane flew ___ the mountains. (sopra, senza toccare)",
+      "answer": "over",
+      "accept": [
+        "above"
+      ],
+      "why": "Over e above possono indicare una posizione più alta senza contatto. Over può anche suggerire il passaggio da una parte all’altra."
+    }
+  },
+  {
+    "id": "space-movement-check-3",
+    "reason": "Contesto esplicito per distinguere le alternative",
+    "before": {
+      "skill": "tense_choice",
+      "stem": "Scegli la forma corretta: They walked ___ the river to the bridge.",
+      "options": [
+        "along",
+        "across",
+        "into"
+      ],
+      "answer": "along",
+      "why": "Lungo: along."
+    },
+    "after": {
+      "skill": "tense_choice",
+      "stem": "Sono rimasti sulla riva, seguendo il corso del fiume fino al ponte, senza attraversarlo. Scegli la forma corretta: They walked ___ the river to the bridge.",
+      "options": [
+        "along",
+        "across",
+        "into"
+      ],
+      "answer": "along",
+      "why": "Lungo: along."
+    }
+  },
+  {
+    "id": "basic-connectors-train-1",
+    "reason": "Contesto esplicito per distinguere le alternative",
+    "before": {
+      "skill": "tense_choice",
+      "stem": "Scegli il connettivo corretto: I like tea, ___ I don't like coffee.",
+      "options": [
+        "but",
+        "so",
+        "because"
+      ],
+      "answer": "but",
+      "why": "Contrasto: but."
+    },
+    "after": {
+      "skill": "tense_choice",
+      "stem": "Esprimi un contrasto tra le due preferenze, non una causa o una conseguenza. Scegli il connettivo corretto: I like tea, ___ I don't like coffee.",
+      "options": [
+        "but",
+        "so",
+        "because"
+      ],
+      "answer": "but",
+      "why": "Contrasto: but."
+    }
+  },
+  {
+    "id": "basic-connectors-train-6",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: because / missed / the bus / we / were / we / late",
+      "answer": "We were late because we missed the bus",
+      "accept": [
+        "We missed the bus because we were late"
+      ],
+      "why": "Effetto + because + causa."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: because / missed / the bus / we / were / we / late",
+      "answer": "We were late because we missed the bus",
+      "accept": [
+        "We missed the bus because we were late",
+        "Because we missed the bus we were late"
+      ],
+      "why": "Effetto + because + causa."
+    }
+  },
+  {
+    "id": "past-train-4",
+    "reason": "Contesto esplicito per distinguere le alternative",
+    "before": {
+      "skill": "tense_choice",
+      "stem": "Scegli la forma corretta: While they ___ , it started to rain.",
+      "options": [
+        "were walking",
+        "walked",
+        "walk"
+      ],
+      "answer": "were walking",
+      "why": "Sfondo in corso: past continuous."
+    },
+    "after": {
+      "skill": "tense_choice",
+      "stem": "Descrivi la camminata come attività già in corso quando ha iniziato a piovere. Scegli la forma corretta: While they ___ , it started to rain.",
+      "options": [
+        "were walking",
+        "walked",
+        "walk"
+      ],
+      "answer": "were walking",
+      "why": "Sfondo in corso: past continuous."
+    }
+  },
+  {
+    "id": "past-train-5",
+    "reason": "Contesto esplicito per distinguere le alternative",
+    "before": {
+      "skill": "tense_choice",
+      "stem": "Scegli la forma corretta: Last summer we ___ to Spain.",
+      "options": [
+        "went",
+        "were going",
+        "go"
+      ],
+      "answer": "went",
+      "why": "Evento concluso con tempo preciso: past simple."
+    },
+    "after": {
+      "skill": "tense_choice",
+      "stem": "Racconta un viaggio concluso, non un’attività vista mentre si svolgeva. Scegli la forma corretta: Last summer we ___ to Spain.",
+      "options": [
+        "went",
+        "were going",
+        "go"
+      ],
+      "answer": "went",
+      "why": "Evento concluso con tempo preciso: past simple."
+    }
+  },
+  {
+    "id": "perfect-simple-train-8",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: already / the tickets / bought / have / we",
+      "answer": "We have already bought the tickets",
+      "accept": [],
+      "why": "Already tra have e participio."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: already / the tickets / bought / have / we",
+      "answer": "We have already bought the tickets",
+      "accept": [
+        "We have bought the tickets already"
+      ],
+      "why": "Already tra have e participio."
+    }
+  },
+  {
+    "id": "perfect-continuous-train-5",
+    "reason": "Contesto esplicito per distinguere le alternative",
+    "before": {
+      "skill": "tense_choice",
+      "stem": "Scegli la forma corretta: She ___ ten reports this week.",
+      "options": [
+        "has written",
+        "has been writing",
+        "is writing ten"
+      ],
+      "answer": "has written",
+      "why": "Quantità precisa: simple."
+    },
+    "after": {
+      "skill": "tense_choice",
+      "stem": "Tutti e dieci i rapporti sono completi: metti in evidenza il risultato raggiunto. Scegli la forma corretta: She ___ ten reports this week.",
+      "options": [
+        "has written",
+        "has been writing",
+        "is writing ten"
+      ],
+      "answer": "has written",
+      "why": "Quantità precisa: simple."
+    }
+  },
+  {
+    "id": "perfect-continuous-train-7",
+    "reason": "Contesto esplicito per distinguere le alternative",
+    "before": {
+      "skill": "use",
+      "stem": "Nel rapporto indichi quanti controlli sono stati fatti. Scegli la frase corretta.",
+      "options": [
+        "We have carried out five checks.",
+        "We have been carrying out five checks.",
+        "We are carrying out five checks since."
+      ],
+      "answer": "We have carried out five checks.",
+      "why": "Numero di azioni completate: simple."
+    },
+    "after": {
+      "skill": "use",
+      "stem": "Tutti e cinque i controlli sono conclusi: metti in evidenza il risultato. Nel rapporto indichi quanti controlli sono stati fatti. Scegli la frase corretta.",
+      "options": [
+        "We have carried out five checks.",
+        "We have been carrying out five checks.",
+        "We are carrying out five checks since."
+      ],
+      "answer": "We have carried out five checks.",
+      "why": "Numero di azioni completate: simple."
+    }
+  },
+  {
+    "id": "perfect-continuous-train-8",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: for two hours / been / they / have / talking",
+      "answer": "They have been talking for two hours",
+      "accept": [],
+      "why": "Have been + -ing + for."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: for two hours / been / they / have / talking",
+      "answer": "They have been talking for two hours",
+      "accept": [
+        "For two hours they have been talking"
+      ],
+      "why": "Have been + -ing + for."
+    }
+  },
+  {
+    "id": "perfect-continuous-check-5",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: has / she / since January / here / been working",
+      "answer": "She has been working here since January",
+      "accept": [],
+      "why": "Since + punto di partenza."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: has / she / since January / here / been working",
+      "answer": "She has been working here since January",
+      "accept": [
+        "Since January she has been working here"
+      ],
+      "why": "Since + punto di partenza."
+    }
+  },
+  {
+    "id": "past-perfect-train-8",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: had / before / she / the email / I called / read",
+      "answer": "She had read the email before I called",
+      "accept": [],
+      "why": "Past perfect + before + past simple."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: had / before / she / the email / I called / read",
+      "answer": "She had read the email before I called",
+      "accept": [
+        "Before I called she had read the email"
+      ],
+      "why": "Past perfect + before + past simple."
+    }
+  },
+  {
+    "id": "future-check-5",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: at 7 / leaves / the bus / tomorrow",
+      "answer": "The bus leaves at 7 tomorrow",
+      "accept": [
+        "Tomorrow the bus leaves at 7"
+      ],
+      "why": "Orario fisso: present simple."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: at 7 / leaves / the bus / tomorrow",
+      "answer": "The bus leaves at 7 tomorrow",
+      "accept": [
+        "Tomorrow the bus leaves at 7",
+        "Tomorrow at 7 the bus leaves",
+        "At 7 tomorrow the bus leaves",
+        "The bus leaves tomorrow at 7"
+      ],
+      "why": "Orario fisso: present simple."
+    }
+  },
+  {
+    "id": "used-to-train-1",
+    "reason": "Soluzione incompleta: mancava up",
+    "before": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: She isn't used to ___ so early. (get up)",
+      "answer": "getting",
+      "accept": [],
+      "why": "Be used to + -ing."
+    },
+    "after": {
+      "skill": "form",
+      "stem": "Scrivi solo le parole mancanti: She isn't used to ___ so early. (get up)",
+      "answer": "getting up",
+      "accept": [],
+      "why": "Be used to richiede la forma in -ing: get up diventa getting up. La particella up resta perché get up significa alzarsi."
+    }
+  },
+  {
+    "id": "phrasal-basics-check-5",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: picked / at the station / her / up / I",
+      "answer": "I picked her up at the station",
+      "accept": [],
+      "why": "Pick up separabile: pick her up."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: picked / at the station / her / up / I",
+      "answer": "I picked her up at the station",
+      "accept": [
+        "At the station I picked her up"
+      ],
+      "why": "Pick up separabile: pick her up."
+    }
+  },
+  {
+    "id": "quantifiers-of-train-5",
+    "reason": "Rimossa variante che omette o sostituisce una parola fornita",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: of / all / the rooms / were / checked",
+      "answer": "All of the rooms were checked",
+      "accept": [
+        "All the rooms were checked"
+      ],
+      "why": "All (of) the + plurale."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: of / all / the rooms / were / checked",
+      "answer": "All of the rooms were checked",
+      "accept": [],
+      "why": "All (of) the + plurale."
+    }
+  },
+  {
+    "id": "perfect-adverbs-check-0",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: Have you finished ___? (già, in domanda)",
+      "answer": "yet",
+      "accept": [],
+      "why": "Yet a fine domanda."
+    },
+    "after": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: Have you finished ___? (già, in domanda)",
+      "answer": "yet",
+      "accept": [
+        "already"
+      ],
+      "why": "Yet chiede se qualcosa di atteso è avvenuto; already può esprimere sorpresa perché è avvenuto prima del previsto. La consegna consente entrambe le letture."
+    }
+  },
+  {
+    "id": "degree-adverbs-train-6",
+    "reason": "Rimossa variante che omette o sostituisce una parola fornita",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: an / quite / interesting / it was / idea",
+      "answer": "It was quite an interesting idea",
+      "accept": [
+        "It was a quite interesting idea"
+      ],
+      "why": "Quite an + aggettivo + nome."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: an / quite / interesting / it was / idea",
+      "answer": "It was quite an interesting idea",
+      "accept": [],
+      "why": "Quite an + aggettivo + nome."
+    }
+  },
+  {
+    "id": "passive-train-9",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: are / every night / the doors / locked",
+      "answer": "The doors are locked every night",
+      "accept": [],
+      "why": "Passivo presente."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: are / every night / the doors / locked",
+      "answer": "The doors are locked every night",
+      "accept": [
+        "Every night the doors are locked"
+      ],
+      "why": "Passivo presente."
+    }
+  },
+  {
+    "id": "passive-check-3",
+    "reason": "Contesto esplicito per distinguere le alternative",
+    "before": {
+      "skill": "tense_choice",
+      "stem": "Scegli la forma corretta: The windows ___ yesterday.",
+      "options": [
+        "were cleaned",
+        "cleaned",
+        "were clean"
+      ],
+      "answer": "were cleaned",
+      "why": "Passivo passato."
+    },
+    "after": {
+      "skill": "tense_choice",
+      "stem": "Descrivi l’azione svolta dagli addetti alle pulizie ieri, non lo stato delle finestre. Scegli la forma corretta: The windows ___ yesterday.",
+      "options": [
+        "were cleaned",
+        "cleaned",
+        "were clean"
+      ],
+      "answer": "were cleaned",
+      "why": "Passivo passato."
+    }
+  },
+  {
+    "id": "reported-train-0",
+    "reason": "Contesto esplicito per distinguere le alternative; Istruzione di risposta prima del contesto",
+    "before": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: She said, 'I am busy.' → She said that she ___ busy.",
+      "answer": "was",
+      "accept": [],
+      "why": "Backshift: am → was."
+    },
+    "after": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: She said, 'I am busy.' → She said that she ___ busy. (Applica l’arretramento dei tempi (backshift))",
+      "answer": "was",
+      "accept": [],
+      "why": "Backshift: am → was. In questo esercizio si richiede il backshift; nel discorso reale può essere omesso se la situazione è ancora attuale."
+    }
+  },
+  {
+    "id": "reported-train-4",
+    "reason": "Contesto esplicito per distinguere le alternative",
+    "before": {
+      "skill": "tense_choice",
+      "stem": "Scegli la forma corretta: 'I have finished.' → He said he ___ finished.",
+      "options": [
+        "had",
+        "has",
+        "have"
+      ],
+      "answer": "had",
+      "why": "Present perfect → past perfect."
+    },
+    "after": {
+      "skill": "tense_choice",
+      "stem": "Applica l’arretramento dei tempi (backshift). Scegli la forma corretta: 'I have finished.' → He said he ___ finished.",
+      "options": [
+        "had",
+        "has",
+        "have"
+      ],
+      "answer": "had",
+      "why": "Present perfect → past perfect. In questo esercizio si richiede il backshift; nel discorso reale può essere omesso se la situazione è ancora attuale."
+    }
+  },
+  {
+    "id": "reported-train-7",
+    "reason": "Contesto esplicito per distinguere le alternative; Istruzione di risposta prima del contesto",
+    "before": {
+      "skill": "use",
+      "stem": "Riscrivi la frase in discorso indiretto, iniziando con She said: 'I will send it tomorrow.'",
+      "answer": "She said she would send it the next day",
+      "accept": [
+        "She said that she would send it the next day",
+        "She said she would send it the following day",
+        "She said that she would send it the following day"
+      ],
+      "why": "Will → would, tomorrow → the next day."
+    },
+    "after": {
+      "skill": "use",
+      "stem": "Riscrivi la frase in discorso indiretto, iniziando con She said: 'I will send it tomorrow.' (Riferisci le parole alcuni giorni dopo, applicando il backshift)",
+      "answer": "She said she would send it the next day",
+      "accept": [
+        "She said that she would send it the next day",
+        "She said she would send it the following day",
+        "She said that she would send it the following day"
+      ],
+      "why": "Will → would, tomorrow → the next day."
+    }
+  },
+  {
+    "id": "reported-check-0",
+    "reason": "Contesto esplicito per distinguere le alternative; Istruzione di risposta prima del contesto",
+    "before": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: 'I can drive.' → He said he ___ drive.",
+      "answer": "could",
+      "accept": [],
+      "why": "Can → could."
+    },
+    "after": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: 'I can drive.' → He said he ___ drive. (Applica l’arretramento dei tempi (backshift))",
+      "answer": "could",
+      "accept": [],
+      "why": "Can → could. In questo esercizio si richiede il backshift; nel discorso reale può essere omesso se la situazione è ancora attuale."
+    }
+  },
+  {
+    "id": "reported-check-3",
+    "reason": "Contesto esplicito per distinguere le alternative",
+    "before": {
+      "skill": "tense_choice",
+      "stem": "Scegli la forma corretta: 'We are leaving.' → They said they ___ leaving.",
+      "options": [
+        "were",
+        "are",
+        "had"
+      ],
+      "answer": "were",
+      "why": "Are → were."
+    },
+    "after": {
+      "skill": "tense_choice",
+      "stem": "Applica l’arretramento dei tempi (backshift). Scegli la forma corretta: 'We are leaving.' → They said they ___ leaving.",
+      "options": [
+        "were",
+        "are",
+        "had"
+      ],
+      "answer": "were",
+      "why": "Are → were. In questo esercizio si richiede il backshift; nel discorso reale può essere omesso se la situazione è ancora attuale."
+    }
+  },
+  {
+    "id": "relatives-train-2",
+    "reason": "Significato più preciso, senza deduzioni non garantite",
+    "before": {
+      "skill": "meaning",
+      "stem": "Scegli che cosa significa: My sister, who lives in Turin, is a nurse.",
+      "options": [
+        "ho una sorella e vive a Torino (informazione aggiunta)",
+        "ho più sorelle: parlo di quella di Torino",
+        "mia sorella non vive a Torino"
+      ],
+      "answer": "ho una sorella e vive a Torino (informazione aggiunta)",
+      "why": "Relativa tra virgole: informazione in più."
+    },
+    "after": {
+      "skill": "meaning",
+      "stem": "Scegli che cosa significa: My sister, who lives in Turin, is a nurse.",
+      "options": [
+        "il fatto che viva a Torino è un’informazione aggiunta",
+        "ho più sorelle: parlo di quella di Torino",
+        "mia sorella non vive a Torino"
+      ],
+      "answer": "il fatto che viva a Torino è un’informazione aggiunta",
+      "why": "Le virgole presentano la relativa come informazione aggiuntiva su una persona già identificata. La frase non dimostra da sola quante sorelle abbia chi parla."
+    }
+  },
+  {
+    "id": "relatives-train-3",
+    "reason": "Significato più preciso, senza deduzioni non garantite",
+    "before": {
+      "skill": "meaning",
+      "stem": "Scegli che cosa significa: My sister who lives in Turin is a nurse.",
+      "options": [
+        "ho più sorelle: parlo di quella di Torino",
+        "ho una sola sorella",
+        "mia sorella si trasferisce a Torino"
+      ],
+      "answer": "ho più sorelle: parlo di quella di Torino",
+      "why": "Senza virgole: identifica quale."
+    },
+    "after": {
+      "skill": "meaning",
+      "stem": "Scegli che cosa significa: My sister who lives in Turin is a nurse.",
+      "options": [
+        "specifico quale sorella intendo: quella che vive a Torino",
+        "ho una sola sorella",
+        "mia sorella si trasferisce a Torino"
+      ],
+      "answer": "specifico quale sorella intendo: quella che vive a Torino",
+      "why": "La relativa senza virgole serve a identificare la persona. Spesso distingue fra più persone, ma non fornisce da sola un censimento della famiglia."
+    }
+  },
+  {
+    "id": "clauses-train-9",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: because / was / the road / closed / we were late",
+      "answer": "We were late because the road was closed",
+      "accept": [],
+      "why": "Effetto + because + causa."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: because / was / the road / closed / we were late",
+      "answer": "We were late because the road was closed",
+      "accept": [
+        "Because the road was closed we were late"
+      ],
+      "why": "Effetto + because + causa."
+    }
+  },
+  {
+    "id": "clauses-check-0",
+    "reason": "Istruzione compatibile con risposte di più parole",
+    "before": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: ___ she was tired, she kept working. (sebbene)",
+      "answer": "Although",
+      "accept": [
+        "Though",
+        "Even though"
+      ],
+      "why": "Contrasto: although."
+    },
+    "after": {
+      "skill": "form",
+      "stem": "Scrivi solo ciò che manca: ___ she was tired, she kept working. (sebbene)",
+      "answer": "Although",
+      "accept": [
+        "Though",
+        "Even though"
+      ],
+      "why": "Contrasto: although."
+    }
+  },
+  {
+    "id": "clauses-check-1",
+    "reason": "Istruzione compatibile con risposte di più parole",
+    "before": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: We waited until the rain ___. (stop, passato)",
+      "answer": "stopped",
+      "accept": [
+        "had stopped"
+      ],
+      "why": "Until + passato."
+    },
+    "after": {
+      "skill": "form",
+      "stem": "Scrivi solo ciò che manca: We waited until the rain ___. (stop, passato)",
+      "answer": "stopped",
+      "accept": [
+        "had stopped"
+      ],
+      "why": "Until + passato."
+    }
+  },
+  {
+    "id": "clauses-check-3",
+    "reason": "Contesto esplicito per distinguere le alternative",
+    "before": {
+      "skill": "tense_choice",
+      "stem": "Scegli la forma corretta: She took a taxi ___ she was late.",
+      "options": [
+        "because",
+        "although",
+        "despite"
+      ],
+      "answer": "because",
+      "why": "Causa: because."
+    },
+    "after": {
+      "skill": "tense_choice",
+      "stem": "Indica il motivo per cui ha preso il taxi. Scegli la forma corretta: She took a taxi ___ she was late.",
+      "options": [
+        "because",
+        "although",
+        "despite"
+      ],
+      "answer": "because",
+      "why": "Causa: because."
+    }
+  },
+  {
+    "id": "linkers-train-0",
+    "reason": "Istruzione compatibile con risposte di più parole",
+    "before": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: The plan is cheap. ___, it is very effective. (inoltre)",
+      "answer": "Moreover",
+      "accept": [
+        "Furthermore",
+        "In addition"
+      ],
+      "why": "Aggiunta formale: moreover."
+    },
+    "after": {
+      "skill": "form",
+      "stem": "Scrivi solo ciò che manca: The plan is cheap. ___, it is very effective. (inoltre)",
+      "answer": "Moreover",
+      "accept": [
+        "Furthermore",
+        "In addition"
+      ],
+      "why": "Aggiunta formale: moreover."
+    }
+  },
+  {
+    "id": "linkers-train-5",
+    "reason": "Contesto esplicito per distinguere le alternative",
+    "before": {
+      "skill": "tense_choice",
+      "stem": "Scegli il connettivo corretto: ___, I would recommend the second option.",
+      "options": [
+        "In conclusion",
+        "For example",
+        "Moreover than"
+      ],
+      "answer": "In conclusion",
+      "why": "Conclusione: in conclusion."
+    },
+    "after": {
+      "skill": "tense_choice",
+      "stem": "È l’ultima frase del testo: introduci una sintesi conclusiva, non un esempio. Scegli il connettivo corretto: ___, I would recommend the second option.",
+      "options": [
+        "In conclusion",
+        "For example",
+        "Moreover than"
+      ],
+      "answer": "In conclusion",
+      "why": "Conclusione: in conclusion."
+    }
+  },
+  {
+    "id": "linkers-check-0",
+    "reason": "Istruzione compatibile con risposte di più parole",
+    "before": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: Prices rose. ___, sales fell. (di conseguenza)",
+      "answer": "Consequently",
+      "accept": [
+        "Therefore",
+        "As a result"
+      ],
+      "why": "Conseguenza."
+    },
+    "after": {
+      "skill": "form",
+      "stem": "Scrivi solo ciò che manca: Prices rose. ___, sales fell. (di conseguenza)",
+      "answer": "Consequently",
+      "accept": [
+        "Therefore",
+        "As a result"
+      ],
+      "why": "Conseguenza."
+    }
+  },
+  {
+    "id": "comparative-patterns-check-0",
+    "reason": "Istruzione compatibile con risposte di più parole",
+    "before": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: The test was ___ harder than I expected. (molto)",
+      "answer": "much",
+      "accept": [
+        "far",
+        "a lot"
+      ],
+      "why": "Much + comparativo."
+    },
+    "after": {
+      "skill": "form",
+      "stem": "Scrivi solo ciò che manca: The test was ___ harder than I expected. (molto)",
+      "answer": "much",
+      "accept": [
+        "far",
+        "a lot"
+      ],
+      "why": "Much + comparativo."
+    }
+  },
+  {
+    "id": "generic-reciprocal-train-5",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: enjoy / yourselves / at the party",
+      "answer": "Enjoy yourselves at the party",
+      "accept": [],
+      "why": "Yourselves: plurale."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: enjoy / yourselves / at the party",
+      "answer": "Enjoy yourselves at the party",
+      "accept": [
+        "At the party enjoy yourselves"
+      ],
+      "why": "Yourselves: plurale."
+    }
+  },
+  {
+    "id": "complex-verb-patterns-check-1",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "form",
+      "stem": "Scrivi solo le parole mancanti, al passivo: Nobody likes ___ . (criticise)",
+      "answer": "being criticised",
+      "accept": [
+        "being criticized"
+      ],
+      "why": "Gerundio passivo."
+    },
+    "after": {
+      "skill": "form",
+      "stem": "Scrivi solo le parole mancanti, al passivo: Nobody likes ___ . (criticise)",
+      "answer": "being criticised",
+      "accept": [
+        "being criticized",
+        "to be criticised",
+        "to be criticized"
+      ],
+      "why": "Like ammette sia -ing sia to + infinito. Qui sono valide being criticised e to be criticised, entrambe passive; sono accettate anche le grafie americane con -z-."
+    }
+  },
+  {
+    "id": "ever-relatives-check-5",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: visit / whenever / you can / us",
+      "answer": "Visit us whenever you can",
+      "accept": [],
+      "why": "Whenever."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: visit / whenever / you can / us",
+      "answer": "Visit us whenever you can",
+      "accept": [
+        "Whenever you can visit us"
+      ],
+      "why": "Whenever."
+    }
+  },
+  {
+    "id": "lexical-contrasts-train-2",
+    "reason": "Contesto esplicito per distinguere le alternative",
+    "before": {
+      "skill": "tense_choice",
+      "stem": "Scegli la forma corretta: Can I ___ your charger for an hour?",
+      "options": [
+        "borrow",
+        "lend",
+        "rent"
+      ],
+      "answer": "borrow",
+      "why": "Borrow = prendere in prestito."
+    },
+    "after": {
+      "skill": "tense_choice",
+      "stem": "Chiedi un prestito gratuito e prometti di restituire il caricatore. Scegli la forma corretta: Can I ___ your charger for an hour?",
+      "options": [
+        "borrow",
+        "lend",
+        "rent"
+      ],
+      "answer": "borrow",
+      "why": "Borrow = prendere in prestito."
+    }
+  },
+  {
+    "id": "lexical-contrasts-train-4",
+    "reason": "Consegna coerente con chi riceve il promemoria",
+    "before": {
+      "skill": "use",
+      "stem": "Ricordi una regola a qualcuno. Scegli la frase corretta.",
+      "options": [
+        "Please remind me to call the client.",
+        "Please remember me to call the client.",
+        "Please remind to me to call the client."
+      ],
+      "answer": "Please remind me to call the client.",
+      "why": "Remind + persona + to."
+    },
+    "after": {
+      "skill": "use",
+      "stem": "Chiedi a qualcuno di ricordarti di chiamare il cliente. Scegli la frase corretta.",
+      "options": [
+        "Please remind me to call the client.",
+        "Please remember me to call the client.",
+        "Please remind to me to call the client."
+      ],
+      "answer": "Please remind me to call the client.",
+      "why": "Remind + persona + to."
+    }
+  },
+  {
+    "id": "review-narrative-train-5",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: had been waiting / for an hour / she / when he arrived",
+      "answer": "She had been waiting for an hour when he arrived",
+      "accept": [],
+      "why": "Past perfect continuous."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: had been waiting / for an hour / she / when he arrived",
+      "answer": "She had been waiting for an hour when he arrived",
+      "accept": [
+        "When he arrived she had been waiting for an hour"
+      ],
+      "why": "Past perfect continuous."
+    }
+  },
+  {
+    "id": "review-narrative-check-5",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: was / she / when / the call came / sleeping",
+      "answer": "She was sleeping when the call came",
+      "accept": [],
+      "why": "Continuous + simple."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: was / she / when / the call came / sleeping",
+      "answer": "She was sleeping when the call came",
+      "accept": [
+        "When the call came she was sleeping"
+      ],
+      "why": "Continuous + simple."
+    }
+  },
+  {
+    "id": "nominalisation-train-8",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: of the building / the evacuation / quickly / was completed",
+      "answer": "The evacuation of the building was completed quickly",
+      "accept": [],
+      "why": "Nome + of."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: of the building / the evacuation / quickly / was completed",
+      "answer": "The evacuation of the building was completed quickly",
+      "accept": [
+        "The evacuation of the building was quickly completed"
+      ],
+      "why": "Nome + of."
+    }
+  },
+  {
+    "id": "cohesion-check-3",
+    "reason": "Contesto esplicito per distinguere le alternative",
+    "before": {
+      "skill": "tense_choice",
+      "stem": "Scegli il connettivo corretto: The test is short. ___, it is quite difficult.",
+      "options": [
+        "Nonetheless",
+        "Therefore",
+        "Moreover"
+      ],
+      "answer": "Nonetheless",
+      "why": "Contrasto."
+    },
+    "after": {
+      "skill": "tense_choice",
+      "stem": "Segnala un contrasto con l’aspettativa che un test breve sia facile. Scegli il connettivo corretto: The test is short. ___, it is quite difficult.",
+      "options": [
+        "Nonetheless",
+        "Therefore",
+        "Moreover"
+      ],
+      "answer": "Nonetheless",
+      "why": "Contrasto."
+    }
+  },
+  {
+    "id": "advanced-present-train-5",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: being / you're / unusually quiet / today",
+      "answer": "You're being unusually quiet today",
+      "accept": [],
+      "why": "Be + being: comportamento temporaneo."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: being / you're / unusually quiet / today",
+      "answer": "You're being unusually quiet today",
+      "accept": [
+        "Today you’re being unusually quiet"
+      ],
+      "why": "Be + being: comportamento temporaneo."
+    }
+  },
+  {
+    "id": "advanced-subjunctive-check-5",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: were / I / richer / would travel more / I",
+      "answer": "Were I richer I would travel more",
+      "accept": [],
+      "why": "Inversione con were."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: were / I / richer / would travel more / I",
+      "answer": "Were I richer I would travel more",
+      "accept": [
+        "I would travel more were I richer"
+      ],
+      "why": "Inversione con were."
+    }
+  },
+  {
+    "id": "advanced-perfect-check-3",
+    "reason": "Contesto esplicito per distinguere le alternative",
+    "before": {
+      "skill": "tense_choice",
+      "stem": "Scegli la forma corretta: I ___ three emails this morning (ed è ancora mattina).",
+      "options": [
+        "have written",
+        "have been writing",
+        "wrote yesterday"
+      ],
+      "answer": "have written",
+      "why": "Periodo non concluso, numero: simple."
+    },
+    "after": {
+      "skill": "tense_choice",
+      "stem": "Tutte e tre le email sono già complete e inviate: indica il risultato. Scegli la forma corretta: I ___ three emails this morning (ed è ancora mattina).",
+      "options": [
+        "have written",
+        "have been writing",
+        "wrote yesterday"
+      ],
+      "answer": "have written",
+      "why": "Periodo non concluso, numero: simple."
+    }
+  },
+  {
+    "id": "advanced-word-order-train-3",
+    "reason": "Contesto esplicito per distinguere le alternative",
+    "before": {
+      "skill": "use",
+      "stem": "Descrivi una scena in modo letterario. Scegli la frase corretta.",
+      "options": [
+        "Into the room walked a tall man.",
+        "Into the room a tall man did walk.",
+        "Into the room walked he."
+      ],
+      "answer": "Into the room walked a tall man.",
+      "why": "Inversione con soggetto nome, non pronome."
+    },
+    "after": {
+      "skill": "use",
+      "stem": "Usa l’inversione completa: il verbo deve precedere il soggetto nominale. Descrivi una scena in modo letterario. Scegli la frase corretta.",
+      "options": [
+        "Into the room walked a tall man.",
+        "Into the room a tall man did walk.",
+        "Into the room walked he."
+      ],
+      "answer": "Into the room walked a tall man.",
+      "why": "Inversione con soggetto nome, non pronome."
+    }
+  },
+  {
+    "id": "advanced-word-order-train-6",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: try as / we might / we couldn't open it",
+      "answer": "Try as we might we couldn't open it",
+      "accept": [],
+      "why": "Try as we might = per quanto provassimo."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: try as / we might / we couldn't open it",
+      "answer": "Try as we might we couldn't open it",
+      "accept": [
+        "We couldn’t open it try as we might"
+      ],
+      "why": "Try as we might = per quanto provassimo."
+    }
+  },
+  {
+    "id": "advanced-word-order-check-5",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: on the corner / a small café / stood",
+      "answer": "On the corner stood a small café",
+      "accept": [],
+      "why": "Inversione dopo luogo."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: on the corner / a small café / stood",
+      "answer": "On the corner stood a small café",
+      "accept": [
+        "A small café stood on the corner"
+      ],
+      "why": "Inversione dopo luogo."
+    }
+  },
+  {
+    "id": "advanced-agreement-train-2",
+    "reason": "Eliminata ambiguità del nome collettivo staff",
+    "before": {
+      "skill": "tense_choice",
+      "stem": "Scegli la forma corretta: Neither the manager nor the staff ___ aware of the problem.",
+      "options": [
+        "were",
+        "was",
+        "be"
+      ],
+      "answer": "were",
+      "why": "Neither ... nor: concorda con il più vicino."
+    },
+    "after": {
+      "skill": "tense_choice",
+      "stem": "Scegli la forma corretta: Neither the manager nor the staff members ___ aware of the problem.",
+      "options": [
+        "were",
+        "was",
+        "be"
+      ],
+      "answer": "were",
+      "why": "Con neither ... nor si usa qui la concordanza con il soggetto più vicino, staff members, esplicitamente plurale. Staff da solo può invece avere concordanza singolare o plurale."
+    }
+  },
+  {
+    "id": "review-perspective-check-5",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: be meeting / will / the director / we / at ten",
+      "answer": "We will be meeting the director at ten",
+      "accept": [],
+      "why": "Future continuous."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: be meeting / will / the director / we / at ten",
+      "answer": "We will be meeting the director at ten",
+      "accept": [
+        "At ten we will be meeting the director"
+      ],
+      "why": "Future continuous."
+    }
+  },
+  {
+    "id": "present-simple-train-4",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: usually / she / by train / travels",
+      "answer": "She usually travels by train",
+      "accept": [],
+      "why": "Avverbio di frequenza prima del verbo."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: usually / she / by train / travels",
+      "answer": "She usually travels by train",
+      "accept": [
+        "Usually she travels by train"
+      ],
+      "why": "Avverbio di frequenza prima del verbo."
+    }
+  },
+  {
+    "id": "present-continuous-train-1",
+    "reason": "Contesto esplicito per distinguere le alternative",
+    "before": {
+      "skill": "tense_choice",
+      "stem": "Scegli la forma corretta: This week I ___ from home.",
+      "options": [
+        "am working",
+        "work every week",
+        "worked"
+      ],
+      "answer": "am working",
+      "why": "Situazione temporanea."
+    },
+    "after": {
+      "skill": "tense_choice",
+      "stem": "È un’attività temporanea in corso questa settimana. Scegli la forma corretta: This week I ___ from home.",
+      "options": [
+        "am working",
+        "work every week",
+        "worked"
+      ],
+      "answer": "am working",
+      "why": "Situazione temporanea."
+    }
+  },
+  {
+    "id": "present-continuous-train-4",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: are / at the moment / we / waiting",
+      "answer": "We are waiting at the moment",
+      "accept": [],
+      "why": "Be + -ing."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: are / at the moment / we / waiting",
+      "answer": "We are waiting at the moment",
+      "accept": [
+        "At the moment we are waiting"
+      ],
+      "why": "Be + -ing."
+    }
+  },
+  {
+    "id": "past-continuous-train-0",
+    "reason": "Contesto esplicito per distinguere le alternative",
+    "before": {
+      "skill": "tense_choice",
+      "stem": "Scegli la forma corretta: I ___ dinner when you called.",
+      "options": [
+        "was having",
+        "had",
+        "have had"
+      ],
+      "answer": "was having",
+      "why": "Azione in corso interrotta."
+    },
+    "after": {
+      "skill": "tense_choice",
+      "stem": "La cena era già in corso al momento della telefonata: descrivi lo sfondo. Scegli la forma corretta: I ___ dinner when you called.",
+      "options": [
+        "was having",
+        "had",
+        "have had"
+      ],
+      "answer": "was having",
+      "why": "Azione in corso interrotta."
+    }
+  },
+  {
+    "id": "past-continuous-train-1",
+    "reason": "Contesto esplicito per distinguere le alternative",
+    "before": {
+      "skill": "tense_choice",
+      "stem": "Scegli la forma corretta: While she was reading, the lights ___ out.",
+      "options": [
+        "went",
+        "were going",
+        "go"
+      ],
+      "answer": "went",
+      "why": "Azione breve che interrompe: past simple."
+    },
+    "after": {
+      "skill": "tense_choice",
+      "stem": "Lo spegnimento delle luci è un singolo evento concluso durante la lettura. Scegli la forma corretta: While she was reading, the lights ___ out.",
+      "options": [
+        "went",
+        "were going",
+        "go"
+      ],
+      "answer": "went",
+      "why": "Azione breve che interrompe: past simple."
+    }
+  },
+  {
+    "id": "past-continuous-train-4",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: was raining / it / when we left",
+      "answer": "It was raining when we left",
+      "accept": [],
+      "why": "Sfondo + evento."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: was raining / it / when we left",
+      "answer": "It was raining when we left",
+      "accept": [
+        "When we left it was raining"
+      ],
+      "why": "Sfondo + evento."
+    }
+  },
+  {
+    "id": "present-perfect-continuous-train-4",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: have been / we / since nine / working",
+      "answer": "We have been working since nine",
+      "accept": [],
+      "why": "Since + punto di inizio."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: have been / we / since nine / working",
+      "answer": "We have been working since nine",
+      "accept": [
+        "Since nine we have been working"
+      ],
+      "why": "Since + punto di inizio."
+    }
+  },
+  {
+    "id": "future-will-train-4",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: won't / probably / she / come",
+      "answer": "She probably won't come",
+      "accept": [],
+      "why": "Probably prima di won't."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: won't / probably / she / come",
+      "answer": "She probably won't come",
+      "accept": [
+        "Probably she won’t come"
+      ],
+      "why": "Probably prima di won't."
+    }
+  },
+  {
+    "id": "adjectives-train-6",
+    "reason": "Distrattori di significato invece di posizioni avverbiali discutibili",
+    "before": {
+      "skill": "use",
+      "stem": "Dici che di solito arrivi presto. Scegli la frase corretta.",
+      "options": [
+        "I usually arrive early.",
+        "I arrive usually early.",
+        "Usually I early arrive."
+      ],
+      "answer": "I usually arrive early.",
+      "why": "Avverbio di frequenza prima del verbo principale."
+    },
+    "after": {
+      "skill": "use",
+      "stem": "Di solito arrivi presto, ma non sempre. Scegli la frase che conserva questo significato.",
+      "options": [
+        "I usually arrive early.",
+        "I never arrive early.",
+        "I always arrive late."
+      ],
+      "answer": "I usually arrive early.",
+      "why": "Usually indica ciò che succede abitualmente; never significa mai, always late significa sempre in ritardo."
+    }
+  },
+  {
+    "id": "adjectives-check-4",
+    "reason": "Distrattori di significato invece di posizioni avverbiali discutibili",
+    "before": {
+      "skill": "use",
+      "stem": "Vuoi dire che spesso lavori fino a tardi. Scegli la frase corretta.",
+      "options": [
+        "I often work late.",
+        "I work often late.",
+        "Often I late work."
+      ],
+      "answer": "I often work late.",
+      "why": "Often prima del verbo."
+    },
+    "after": {
+      "skill": "use",
+      "stem": "Spesso lavori fino a tardi. Scegli la frase che conserva questo significato.",
+      "options": [
+        "I often work late.",
+        "I rarely work late.",
+        "I never work late."
+      ],
+      "answer": "I often work late.",
+      "why": "Often significa spesso; rarely significa raramente, never significa mai."
+    }
+  },
+  {
+    "id": "comparison-train-5",
+    "reason": "Alternative grammaticali con significati distinti",
+    "before": {
+      "skill": "use",
+      "stem": "Confronti due offerte nel rapporto. Scegli la frase corretta.",
+      "options": [
+        "The second offer is cheaper than the first.",
+        "The second offer is more cheap than the first.",
+        "The second offer is cheaper that the first."
+      ],
+      "answer": "The second offer is cheaper than the first.",
+      "why": "Cheap → cheaper than."
+    },
+    "after": {
+      "skill": "use",
+      "stem": "La seconda offerta costa meno della prima. Scegli la frase che riporta correttamente il confronto.",
+      "options": [
+        "The second offer is cheaper than the first.",
+        "The second offer is more expensive than the first.",
+        "The second offer is as expensive as the first."
+      ],
+      "answer": "The second offer is cheaper than the first.",
+      "why": "Cheaper than indica un prezzo minore; more expensive un prezzo maggiore; as expensive lo stesso prezzo."
+    }
+  },
+  {
+    "id": "comparison-check-4",
+    "reason": "Eliminata variante valida more busy dalle risposte errate",
+    "before": {
+      "skill": "use",
+      "stem": "Dici che quest'anno sei più impegnato. Scegli la frase corretta.",
+      "options": [
+        "I am busier this year.",
+        "I am more busy this year.",
+        "I am busyer this year."
+      ],
+      "answer": "I am busier this year.",
+      "why": "Busy → busier."
+    },
+    "after": {
+      "skill": "use",
+      "stem": "Dici che quest'anno sei più impegnato. Scegli la frase corretta.",
+      "options": [
+        "I am busier this year.",
+        "I am less busy this year.",
+        "I am as busy as last year."
+      ],
+      "answer": "I am busier this year.",
+      "why": "Busier indica maggiore impegno. Less busy indica meno impegno; as busy indica lo stesso livello. More busy non è usato come distrattore errato."
+    }
+  },
+  {
+    "id": "present-train-3",
+    "reason": "Significato più preciso, senza deduzioni non garantite",
+    "before": {
+      "skill": "meaning",
+      "stem": "Scegli che cosa significa: He works in a bank.",
+      "options": [
+        "è il suo lavoro stabile",
+        "ci lavora solo oggi",
+        "ci ha lavorato in passato"
+      ],
+      "answer": "è il suo lavoro stabile",
+      "why": "Present simple: situazione stabile."
+    },
+    "after": {
+      "skill": "meaning",
+      "stem": "Scegli che cosa significa: He works in a bank.",
+      "options": [
+        "presenta il lavoro in banca come situazione abituale",
+        "ci lavora solo oggi",
+        "ci ha lavorato in passato"
+      ],
+      "answer": "presenta il lavoro in banca come situazione abituale",
+      "why": "Il present simple descrive qui il lavoro abituale. Non garantisce che il posto sia permanente."
+    }
+  },
+  {
+    "id": "past-train-2",
+    "reason": "Significato più preciso, senza deduzioni non garantite",
+    "before": {
+      "skill": "meaning",
+      "stem": "Scegli che cosa significa: I was reading when she called.",
+      "options": [
+        "leggevo e la chiamata mi ha interrotto",
+        "ho finito di leggere e poi lei ha chiamato",
+        "leggevo spesso quando chiamava"
+      ],
+      "answer": "leggevo e la chiamata mi ha interrotto",
+      "why": "Past continuous: sfondo; past simple: evento."
+    },
+    "after": {
+      "skill": "meaning",
+      "stem": "Scegli che cosa significa: I was reading when she called.",
+      "options": [
+        "la lettura era in corso quando lei ha chiamato",
+        "ho finito di leggere e poi lei ha chiamato",
+        "leggevo spesso quando chiamava"
+      ],
+      "answer": "la lettura era in corso quando lei ha chiamato",
+      "why": "Il past continuous presenta la lettura come sfondo alla chiamata. Non dice necessariamente che la persona abbia smesso di leggere."
+    }
+  },
+  {
+    "id": "perfect-simple-check-4",
+    "reason": "Eliminata variante americana dalle risposte errate",
+    "before": {
+      "skill": "use",
+      "stem": "Dici a un collega che non hai ancora ricevuto la mail. Scegli la frase corretta.",
+      "options": [
+        "I haven't received your email yet.",
+        "I didn't receive your email yet.",
+        "I haven't receive your email yet."
+      ],
+      "answer": "I haven't received your email yet.",
+      "why": "Yet + present perfect negativo."
+    },
+    "after": {
+      "skill": "use",
+      "stem": "Dici a un collega che non hai ancora ricevuto la mail. Scegli la frase corretta.",
+      "options": [
+        "I haven't received your email yet.",
+        "I received your email yesterday.",
+        "I haven't receive your email yet."
+      ],
+      "answer": "I haven't received your email yet.",
+      "why": "La prima frase dice che la mail non è ancora arrivata. La seconda dice che è arrivata ieri; nella terza manca il participio received. Il past simple con yet è possibile in inglese americano e non è trattato come errore."
+    }
+  },
+  {
+    "id": "may-might-train-0",
+    "reason": "Consegna coerente con entrambi i modali accettati",
+    "before": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante, per esprimere una possibilità: It ___ rain later, so take an umbrella. (may/must)",
+      "answer": "may",
+      "accept": [
+        "might"
+      ],
+      "why": "Possibilità: may o might."
+    },
+    "after": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante, per esprimere una possibilità: It ___ rain later, so take an umbrella. (may o might)",
+      "answer": "may",
+      "accept": [
+        "might"
+      ],
+      "why": "Possibilità: may o might."
+    }
+  },
+  {
+    "id": "may-might-train-1",
+    "reason": "Consegna coerente con entrambi i modali accettati",
+    "before": {
+      "skill": "form",
+      "stem": "Scrivi solo le parole mancanti, con might al passato: She ___ the bus. That's why she's late. (miss)",
+      "answer": "might have missed",
+      "accept": [
+        "may have missed"
+      ],
+      "why": "Possibilità nel passato: might have + participio."
+    },
+    "after": {
+      "skill": "form",
+      "stem": "Scrivi solo le parole mancanti, con may o might riferito al passato: She ___ the bus. That's why she's late. (miss)",
+      "answer": "might have missed",
+      "accept": [
+        "may have missed"
+      ],
+      "why": "Possibilità nel passato: might have + participio."
+    }
+  },
+  {
+    "id": "may-might-check-0",
+    "reason": "Consegna coerente con entrambi i modali accettati",
+    "before": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante, per esprimere una possibilità: We ___ go to the beach if it's sunny. (might/must)",
+      "answer": "might",
+      "accept": [
+        "may"
+      ],
+      "why": "Possibilità: might."
+    },
+    "after": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante, per esprimere una possibilità: We ___ go to the beach if it's sunny. (may o might)",
+      "answer": "might",
+      "accept": [
+        "may"
+      ],
+      "why": "Possibilità: might."
+    }
+  },
+  {
+    "id": "may-might-check-1",
+    "reason": "Consegna coerente con entrambi i modali accettati",
+    "before": {
+      "skill": "form",
+      "stem": "Scrivi solo le parole mancanti, con may al passato: He ___ the message. He hasn't replied. (not see)",
+      "answer": "may not have seen",
+      "accept": [
+        "might not have seen"
+      ],
+      "why": "Possibilità negativa nel passato."
+    },
+    "after": {
+      "skill": "form",
+      "stem": "Scrivi solo le parole mancanti, con may o might riferito al passato: He ___ the message. He hasn't replied. (not see)",
+      "answer": "may not have seen",
+      "accept": [
+        "might not have seen"
+      ],
+      "why": "Possibilità negativa nel passato."
+    }
+  },
+  {
+    "id": "stative-dynamic-train-4",
+    "reason": "Alternative di significato senza vietare ogni uso dinamico",
+    "before": {
+      "skill": "use",
+      "stem": "In un'email esprimi accordo. Scegli la frase corretta.",
+      "options": [
+        "I agree with your proposal.",
+        "I'm agreeing with your proposal.",
+        "I am agree with your proposal."
+      ],
+      "answer": "I agree with your proposal.",
+      "why": "Agree è di stato: simple."
+    },
+    "after": {
+      "skill": "use",
+      "stem": "Esprimi la tua attuale opinione favorevole sulla proposta. Scegli la frase che la comunica.",
+      "options": [
+        "I agree with your proposal.",
+        "I disagree with your proposal.",
+        "I have not decided whether I agree with your proposal."
+      ],
+      "answer": "I agree with your proposal.",
+      "why": "I agree esprime accordo; I disagree disaccordo; l’ultima frase lascia il giudizio in sospeso. Il continuous non è sempre impossibile, ma non è necessario per questa opinione."
+    }
+  },
+  {
+    "id": "deduction-train-6",
+    "reason": "Distinta la deduzione forte dalla possibilità prudente; Azione richiesta esplicita",
+    "before": {
+      "skill": "use",
+      "stem": "Nel rapporto deduci, con prudenza, come è entrato il ladro. Scegli la frase più adatta.",
+      "options": [
+        "The intruder must have entered through the window.",
+        "The intruder must entered through the window.",
+        "The intruder must to have entered through the window."
+      ],
+      "answer": "The intruder must have entered through the window.",
+      "why": "Must have + participio."
+    },
+    "after": {
+      "skill": "use",
+      "stem": "Gli indizi ti rendono quasi certo che il ladro sia entrato dalla finestra. Esprimi questa deduzione sul passato. Scegli la frase più adatta.",
+      "options": [
+        "The intruder must have entered through the window.",
+        "The intruder must entered through the window.",
+        "The intruder must to have entered through the window."
+      ],
+      "answer": "The intruder must have entered through the window.",
+      "why": "Must have + participio esprime una deduzione forte sul passato, non una semplice possibilità. Per una possibilità meno certa si possono usare may/might/could have."
+    }
+  },
+  {
+    "id": "wish-train-0",
+    "reason": "Consegna coerente con le varianti di registro ammesse",
+    "before": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: I wish I ___ taller. (be, forma formale)",
+      "answer": "were",
+      "accept": [
+        "was"
+      ],
+      "why": "Wish + past per il presente."
+    },
+    "after": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: I wish I ___ taller. (be, desiderio irreale presente)",
+      "answer": "were",
+      "accept": [
+        "was"
+      ],
+      "why": "Wish + passato esprime un desiderio irreale nel presente. Were è la forma tradizionale, soprattutto formale; was è comune in contesti meno formali."
+    }
+  },
+  {
+    "id": "linkers-train-6",
+    "reason": "Alternative grammaticali con diverse funzioni testuali; Azione richiesta esplicita",
+    "before": {
+      "skill": "use",
+      "stem": "Nel testo argomentativo aggiungi un secondo argomento. Scegli la frase più adatta.",
+      "options": [
+        "Furthermore, the new system saves time.",
+        "But furthermore, the new system saves time.",
+        "Furthermore the new system, saves time."
+      ],
+      "answer": "Furthermore, the new system saves time.",
+      "why": "Furthermore + virgola."
+    },
+    "after": {
+      "skill": "use",
+      "stem": "Hai già elencato un vantaggio. Aggiungine un altro, senza introdurre né un contrasto né una conclusione. Scegli la frase più adatta.",
+      "options": [
+        "Furthermore, the new system saves time.",
+        "However, the new system saves time.",
+        "In conclusion, the new system saves time."
+      ],
+      "answer": "Furthermore, the new system saves time.",
+      "why": "Furthermore aggiunge un argomento; however introduce un contrasto; in conclusion segnala una conclusione."
+    }
+  },
+  {
+    "id": "participles-check-5",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: not / what to say / knowing / she stayed silent",
+      "answer": "Not knowing what to say she stayed silent",
+      "accept": [],
+      "why": "Not + -ing."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: not / what to say / knowing / she stayed silent",
+      "answer": "Not knowing what to say she stayed silent",
+      "accept": [
+        "She stayed silent not knowing what to say"
+      ],
+      "why": "Not + -ing."
+    }
+  },
+  {
+    "id": "nominalisation-check-0",
+    "reason": "Construction non deriva da build con -ing come richiesto",
+    "before": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: The ___ of the bridge will take two years. (trasforma build in un nome, -ing)",
+      "answer": "building",
+      "accept": [
+        "construction"
+      ],
+      "why": "Build → building."
+    },
+    "after": {
+      "skill": "form",
+      "stem": "Scrivi solo la parola mancante: The ___ of the bridge will take two years. (trasforma build in un nome, -ing)",
+      "answer": "building",
+      "accept": [],
+      "why": "Build → building."
+    }
+  },
+  {
+    "id": "advanced-past-train-1",
+    "reason": "Significato più preciso, senza deduzioni non garantite",
+    "before": {
+      "skill": "meaning",
+      "stem": "Scegli che cosa significa: We had hoped to finish by noon.",
+      "options": [
+        "speravamo di finire a mezzogiorno, ma non è successo",
+        "abbiamo finito a mezzogiorno",
+        "finiremo a mezzogiorno"
+      ],
+      "answer": "speravamo di finire a mezzogiorno, ma non è successo",
+      "why": "Past perfect: speranza non realizzata."
+    },
+    "after": {
+      "skill": "meaning",
+      "stem": "Scegli che cosa significa: We had hoped to finish by noon.",
+      "options": [
+        "avevamo sperato di finire entro mezzogiorno",
+        "abbiamo finito a mezzogiorno",
+        "finiremo a mezzogiorno"
+      ],
+      "answer": "avevamo sperato di finire entro mezzogiorno",
+      "why": "Had hoped colloca la speranza prima di un momento passato. Spesso suggerisce una speranza delusa, ma senza altro contesto non dimostra che il lavoro non sia stato finito."
+    }
+  },
+  {
+    "id": "advanced-will-would-should-train-5",
+    "reason": "Varianti valide mancanti",
+    "before": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: wouldn't / the car / this morning / start",
+      "answer": "The car wouldn't start this morning",
+      "accept": [],
+      "why": "Wouldn't = rifiuto passato."
+    },
+    "after": {
+      "skill": "word_order",
+      "stem": "Metti le parole in ordine e scrivi la frase: wouldn't / the car / this morning / start",
+      "answer": "The car wouldn't start this morning",
+      "accept": [
+        "This morning the car wouldn't start"
+      ],
+      "why": "Wouldn't = rifiuto passato."
+    }
+  },
+  {
+    "id": "advanced-perfect-train-0",
+    "reason": "Alternative distinguibili senza inferire una lettura incompleta",
+    "before": {
+      "skill": "meaning",
+      "stem": "Scegli che cosa significa: I've been reading your report.",
+      "options": [
+        "l'ho letto in parte, ci ho lavorato",
+        "l'ho letto tutto e finito",
+        "lo leggerò"
+      ],
+      "answer": "l'ho letto in parte, ci ho lavorato",
+      "why": "Continuous: attività, non necessariamente finita."
+    },
+    "after": {
+      "skill": "meaning",
+      "stem": "Scegli che cosa significa: I've been reading your report.",
+      "options": [
+        "ho dedicato tempo alla lettura, senza precisare se ho finito",
+        "la lettura è sicuramente completa",
+        "inizierò a leggere in futuro"
+      ],
+      "answer": "ho dedicato tempo alla lettura, senza precisare se ho finito",
+      "why": "Il continuous mette in evidenza l’attività recente. Da solo non afferma né esclude che il rapporto sia stato letto fino alla fine."
+    }
+  }
+]

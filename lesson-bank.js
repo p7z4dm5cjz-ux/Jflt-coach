@@ -90,7 +90,7 @@ export const LESSON_BANK={
       C("use","Vuoi dire che hai fatto il lavoro senza aiuto. Scegli la frase corretta.",["I did it myself.","I did it me.","I did it mine."],"I did it myself.","Myself sottolinea che l'hai fatto da solo."),
       C("use","Restituisci un fascicolo a un collega. Scegli la frase corretta.",["This file is yours.","This file is your.","This file is you."],"This file is yours.","Senza nome dopo: yours."),
       O("use","Correggi l'errore e riscrivi tutta la frase: Me and Paolo are on duty today.","Paolo and I are on duty today",["I and Paolo are on duty today"],"Al soggetto serve I; per cortesia si mette per ultimo."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: to / gave / the keys / me / she","She gave the keys to me",["She gave me the keys"],"Verbo + oggetto + to + persona."),
+      O("word_order","Metti le parole in ordine e scrivi la frase: to / gave / the keys / me / she","She gave the keys to me",[],"Verbo + oggetto + to + persona."),
       O("word_order","Metti le parole in ordine e scrivi la frase: introduced / to / themselves / the group / they","They introduced themselves to the group",[],"Riflessivo dopo il verbo.")
     ],
     check:[
@@ -99,7 +99,7 @@ export const LESSON_BANK={
       C("meaning","Scegli a chi si riferisce it in: The car is old, but it still works.",["all'auto","a chi parla","al lavoro"],"all'auto","It sostituisce un nome singolare."),
       C("tense_choice","Scegli la forma corretta: They enjoyed ___ at the party.",["themselves","them","theirs"],"themselves","Godersela: enjoy oneself."),
       C("use","Vuoi indicare che il cane è di tua sorella. Scegli la frase corretta.",["The dog is hers.","The dog is her.","The dog is she."],"The dog is hers.","Possessivo senza nome: hers."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: us / they / to / the results / sent","They sent the results to us",["They sent us the results"],"Verbo + oggetto + to + persona.")
+      O("word_order","Metti le parole in ordine e scrivi la frase: us / they / to / the results / sent","They sent the results to us",[],"Verbo + oggetto + to + persona.")
     ]
   },
   "some-any":{
@@ -107,7 +107,7 @@ export const LESSON_BANK={
       O("form","Scrivi solo la parola mancante, some o any: We don't have ___ milk left.","any",[],"Nelle negative: any."),
       O("form","Scrivi solo la parola mancante, some o any: I bought ___ apples this morning.","some",[],"Affermativa: some."),
       C("meaning","Scegli che cosa significa: You can take any seat.",["un posto qualsiasi","nessun posto","alcuni posti"],"un posto qualsiasi","Any in frase affermativa = qualunque."),
-      C("tense_choice","Scegli la forma corretta: Is there ___ in the room?",["anybody","somebody","nobody"],"anybody","Domanda neutra: anybody."),
+      C("tense_choice","Non sai se ci sia qualcuno e non ti aspetti una risposta particolare: scegli la domanda neutra. Scegli la forma corretta: Is there ___ in the room?",["anybody","somebody","nobody"],"anybody","Domanda neutra: anybody."),
       C("tense_choice","Scegli la forma corretta: There is ___ at the door. Can you open it?",["someone","anyone","no one"],"someone","Affermativa con una persona precisa: someone."),
       C("use","Offri un caffè a un ospite. Scegli la frase più naturale.",["Would you like some coffee?","Would you like any coffee?","Would you like no coffee?"],"Would you like some coffee?","Nelle offerte si usa some."),
       C("use","Dici che non hai visto nessuno. Scegli la frase corretta.",["I didn't see anyone.","I didn't see no one.","I didn't see someone."],"I didn't see anyone.","Con not si usa anyone; no one già nega."),
@@ -116,7 +116,7 @@ export const LESSON_BANK={
       O("word_order","Metti le parole in ordine e scrivi la frase: left / something / she / on the desk","She left something on the desk",[],"Affermativa: something.")
     ],
     check:[
-      O("form","Scrivi solo la parola mancante, some o any: Have you got ___ change?","any",[],"Domanda neutra: any."),
+      O("form","Scrivi solo la parola mancante, some o any, in una domanda neutra senza aspettativa di risposta positiva: Have you got ___ change?","any",[],"Domanda neutra: any."),
       O("form","Scrivi solo la parola mancante: There is ___ wrong with the printer. (= qualcosa)","something",[],"Affermativa: something."),
       C("meaning","Scegli che cosa significa: Anybody can join the course.",["chiunque","nessuno","qualcuno in particolare"],"chiunque","Anybody in affermativa = chiunque."),
       C("tense_choice","Scegli la forma corretta: I can't find my keys ___.",["anywhere","somewhere","nowhere"],"anywhere","Con can't: anywhere."),
@@ -128,7 +128,7 @@ export const LESSON_BANK={
     train:[
       O("form","Scrivi solo la parola mancante, much o many: How ___ people came?","many",[],"People è numerabile: many."),
       O("form","Scrivi solo la parola mancante, few o little: There is very ___ water left.","little",[],"Water è non numerabile: little."),
-      C("meaning","Scegli che cosa significa: We have a few days left.",["alcuni giorni, abbastanza","quasi nessun giorno","molti giorni"],"alcuni giorni, abbastanza","A few = alcuni (valore positivo)."),
+      C("meaning","Scegli che cosa significa: We have a few days left.",["alcuni giorni, un piccolo numero","quasi nessun giorno","molti giorni"],"alcuni giorni, un piccolo numero","A few indica alcuni giorni, con valore positivo rispetto a few. Non dice da solo se siano sufficienti."),
       C("meaning","Scegli che cosa significa: Few people came.",["quasi nessuno è venuto","sono venute alcune persone","sono venuti tutti"],"quasi nessuno è venuto","Few senza a = pochi, valore negativo."),
       C("tense_choice","Scegli la forma corretta: ___ officer received a badge.",["Each","All","Both"],"Each","Each + nome singolare."),
       C("use","Al telefono chiedi quanto costa il biglietto. Scegli la frase corretta.",["How much is the ticket?","How many is the ticket?","How much are the ticket?"],"How much is the ticket?","Per i prezzi: how much."),
@@ -154,7 +154,7 @@ export const LESSON_BANK={
       C("tense_choice","Scegli la forma corretta: The soup smells ___.",["good","well","goodly"],"good","Dopo i verbi dei sensi si usa l'aggettivo."),
       C("tense_choice","Scegli la forma corretta: She speaks English ___.",["fluently","fluent","more fluent"],"fluently","Il verbo speak si descrive con un avverbio."),
       C("use","Descrivi un collega che lavora con precisione. Scegli la frase corretta.",["He is a careful worker.","He is a carefully worker.","He is a worker careful."],"He is a careful worker.","Aggettivo prima del nome."),
-      C("use","Dici che di solito arrivi presto. Scegli la frase corretta.",["I usually arrive early.","I arrive usually early.","Usually I early arrive."],"I usually arrive early.","Avverbio di frequenza prima del verbo principale."),
+      C("use","Di solito arrivi presto, ma non sempre. Scegli la frase che conserva questo significato.",["I usually arrive early.","I never arrive early.","I always arrive late."],"I usually arrive early.","Usually indica ciò che succede abitualmente; never significa mai, always late significa sempre in ritardo."),
       O("use","Correggi l'errore e riscrivi tutta la frase: She answered the question quick.","She answered the question quickly",[],"Serve l'avverbio: quickly."),
       O("word_order","Metti le parole in ordine e scrivi la frase: late / is / never / she","She is never late",[],"Con be l'avverbio di frequenza va dopo."),
       O("word_order","Metti le parole in ordine e scrivi la frase: a / old / car / beautiful / they have","They have a beautiful old car",[],"Opinione prima dell'età.")
@@ -164,7 +164,7 @@ export const LESSON_BANK={
       O("form","Scrivi solo la parola mancante: She did ___ in the exam. (good → avverbio)","well",[],"L'avverbio di good è well."),
       C("meaning","Scegli che cosa significa: He hardly slept.",["ha dormito pochissimo","ha dormito molto","ha dormito profondamente"],"ha dormito pochissimo","Hardly = quasi per niente."),
       C("tense_choice","Scegli la forma corretta: The music sounds ___.",["loud","loudly","louder than"],"loud","Sound come verbo dei sensi + aggettivo."),
-      C("use","Vuoi dire che spesso lavori fino a tardi. Scegli la frase corretta.",["I often work late.","I work often late.","Often I late work."],"I often work late.","Often prima del verbo."),
+      C("use","Spesso lavori fino a tardi. Scegli la frase che conserva questo significato.",["I often work late.","I rarely work late.","I never work late."],"I often work late.","Often significa spesso; rarely significa raramente, never significa mai."),
       O("word_order","Metti le parole in ordine e scrivi la frase: always / she / on time / is","She is always on time",[],"Con be l'avverbio va dopo il verbo.")
     ]
   },
@@ -175,7 +175,7 @@ export const LESSON_BANK={
       C("meaning","Scegli che cosa significa: The train is not as fast as the plane.",["l'aereo è più veloce","il treno è più veloce","sono veloci uguali"],"l'aereo è più veloce","Not as ... as = meno ... di."),
       C("tense_choice","Scegli la forma corretta: This method is ___ than the old one.",["more reliable","reliabler","most reliable"],"more reliable","Aggettivo lungo: more + aggettivo."),
       C("tense_choice","Scegli la forma corretta: Today is ___ day of the year.",["the hottest","the hotter","hottest"],"the hottest","Superlativo: the + -est (con doppia t)."),
-      C("use","Confronti due offerte nel rapporto. Scegli la frase corretta.",["The second offer is cheaper than the first.","The second offer is more cheap than the first.","The second offer is cheaper that the first."],"The second offer is cheaper than the first.","Cheap → cheaper than."),
+      C("use","La seconda offerta costa meno della prima. Scegli la frase che riporta correttamente il confronto.",["The second offer is cheaper than the first.","The second offer is more expensive than the first.","The second offer is as expensive as the first."],"The second offer is cheaper than the first.","Cheaper than indica un prezzo minore; more expensive un prezzo maggiore; as expensive lo stesso prezzo."),
       C("use","Dici che il problema è peggiorato. Scegli la frase corretta.",["The situation is worse than yesterday.","The situation is badder than yesterday.","The situation is more bad than yesterday."],"The situation is worse than yesterday.","Bad → worse."),
       O("use","Correggi l'errore e riscrivi tutta la frase: She is more taller than her brother.","She is taller than her brother",[],"Non si usano insieme more e -er."),
       O("word_order","Metti le parole in ordine e scrivi la frase: than / is / expensive / this one / more / that one","This one is more expensive than that one",["That one is more expensive than this one"],"More + aggettivo + than."),
@@ -186,13 +186,13 @@ export const LESSON_BANK={
       O("form","Scrivi solo le parole mancanti: It was ___ film I have ever seen. (good, superlativo)","the best",[],"Good → the best."),
       C("meaning","Scegli che cosa significa: Paolo is as old as Marco.",["hanno la stessa età","Paolo è più vecchio","Marco è più vecchio"],"hanno la stessa età","As ... as = uguaglianza."),
       C("tense_choice","Scegli la forma corretta: This exercise is ___ than the first.",["more difficult","difficulter","most difficult"],"more difficult","Aggettivo lungo: more."),
-      C("use","Dici che quest'anno sei più impegnato. Scegli la frase corretta.",["I am busier this year.","I am more busy this year.","I am busyer this year."],"I am busier this year.","Busy → busier."),
+      C("use","Dici che quest'anno sei più impegnato. Scegli la frase corretta.",["I am busier this year.","I am less busy this year.","I am as busy as last year."],"I am busier this year.","Busier indica maggiore impegno. Less busy indica meno impegno; as busy indica lo stesso livello. More busy non è usato come distrattore errato."),
       O("word_order","Metti le parole in ordine e scrivi la frase: the / in / most / is / the team / she / experienced","She is the most experienced in the team",[],"Superlativo lungo: the most + aggettivo.")
     ]
   },
   questions:{
     train:[
-      O("form","Scrivi solo la parola mancante: ___ you work on Saturdays?","Do",[],"Domanda al present simple con you: do."),
+      O("form","Scrivi solo la parola mancante: ___ you work on Saturdays? (Usa il present simple)","Do",[],"Domanda al present simple con you: do."),
       O("form","Scrivi solo la parola mancante: ___ she call you yesterday?","Did",[],"Domanda al past simple: did."),
       C("meaning","Scegli che cosa chiede: Who called the manager?",["chi ha chiamato il responsabile","chi ha chiamato il responsabile, ma lui stesso","il responsabile chi ha chiamato"],"chi ha chiamato il responsabile","Senza did, who è il soggetto."),
       C("meaning","Scegli che cosa chiede: Who did the manager call?",["chi è stato chiamato dal responsabile","chi ha chiamato il responsabile","se il responsabile ha chiamato"],"chi è stato chiamato dal responsabile","Con did, who è l'oggetto."),
@@ -208,7 +208,7 @@ export const LESSON_BANK={
       O("form","Scrivi solo la parola mancante: Where ___ you going now?","are",[],"Present continuous: are."),
       C("meaning","Scegli che cosa chiede: What happened?",["che cosa è successo","che cosa hai fatto","che cosa è stato fatto a te"],"che cosa è successo","What soggetto: niente did."),
       C("tense_choice","Scegli la forma corretta: How often ___ you train?",["do","does","are"],"do","You al present simple: do."),
-      C("use","Chiedi chi ha scritto il rapporto. Scegli la frase corretta.",["Who wrote the report?","Who did write the report?","Who wrote did the report?"],"Who wrote the report?","Who soggetto: niente did."),
+      C("use","Usa una domanda neutra, senza enfasi o contrasto. Chiedi chi ha scritto il rapporto. Scegli la frase corretta.",["Who wrote the report?","Who did write the report?","Who wrote did the report?"],"Who wrote the report?","Who soggetto: niente did."),
       O("word_order","Metti le parole in ordine e scrivi la domanda: did / when / the meeting / finish","When did the meeting finish",[],"Wh- + did + soggetto + verbo base.")
     ]
   },
@@ -218,7 +218,7 @@ export const LESSON_BANK={
       O("form","Scrivi solo la parola mancante: She was born ___ 1990. (preposizione)","in",[],"Con gli anni: in."),
       C("meaning","Scegli che cosa significa: I'll be there by six.",["al più tardi alle sei","dalle sei in poi","verso le sei, forse dopo"],"al più tardi alle sei","By = entro."),
       C("tense_choice","Scegli la forma corretta: The meeting starts ___ 9 a.m.",["at","in","on"],"at","Con gli orari: at."),
-      C("tense_choice","Scegli la forma corretta: He walked ___ the room.",["into","in","at"],"into","Movimento verso l'interno: into."),
+      C("tense_choice","Il movimento va dal corridoio verso l’interno della stanza. Scegli la forma corretta: He walked ___ the room.",["into","out of","towards"],"into","Into indica l’ingresso; out of indica l’uscita; towards indica la direzione senza affermare che la persona entri."),
       C("use","Dici che lavori qui dal 2021. Scegli la frase corretta.",["I have worked here since 2021.","I have worked here for 2021.","I have worked here from 2021."],"I have worked here since 2021.","Punto di partenza: since."),
       C("use","Dai un appuntamento per il pomeriggio. Scegli la frase corretta.",["Let's meet in the afternoon.","Let's meet on the afternoon.","Let's meet at the afternoon."],"Let's meet in the afternoon.","Parti del giorno: in the afternoon."),
       O("use","Correggi l'errore e riscrivi tutta la frase: We arrived to the airport late.","We arrived at the airport late",[],"Arrive at per un luogo preciso."),
@@ -265,7 +265,7 @@ export const LESSON_BANK={
     ],
     check:[
       O("form","Scrivi solo la parola mancante, con il genitivo: This is ___ phone. (Anna)","Anna's",[],"Possesso: Anna's."),
-      O("form","Scrivi solo la parola mancante: It was a ___ flight. (two hours → aggettivo composto)","two-hour",["two hour"],"Aggettivo composto: two-hour."),
+      O("form","Scrivi solo ciò che manca: It was a ___ flight. (two hours → aggettivo composto)","two-hour",["two hour"],"Aggettivo composto: two-hour."),
       C("meaning","Scegli che cosa significa: my parents' house",["la casa dei miei genitori","la casa di mio padre","le case dei miei genitori"],"la casa dei miei genitori","Apostrofo dopo la s: plurale."),
       C("tense_choice","Scegli la forma corretta: ___ coat is on the chair?",["Whose","Who's","Who"],"Whose","Possesso: whose."),
       C("use","Indichi la stanza degli ospiti. Scegli la frase corretta.",["the guests' room","the guest's rooms of","the room's guests"],"the guests' room","Più ospiti: guests'."),
@@ -283,7 +283,7 @@ export const LESSON_BANK={
       O("word_order","Metti le parole in ordine e scrivi la domanda: have / does / a garden / she","Does she have a garden",[],"Domanda con have lessicale: does + have.")
     ],
     check:[
-      O("form","Scrivi solo la parola mancante: ___ your brother have a job?","Does",[],"Have lessicale: does nelle domande."),
+      O("form","Scrivi solo la parola mancante: ___ your brother have a job? (Usa il present simple)","Does",[],"Have lessicale: does nelle domande."),
       O("form","Scrivi solo le parole mancanti, con have al present continuous: They ___ a meeting right now.","are having",[],"Attività in corso: are having."),
       C("meaning","Scegli che cosa significa: We didn't have time.",["non avevamo tempo","non abbiamo il tempo","non avremo tempo"],"non avevamo tempo","Didn't have: passato."),
       C("tense_choice","Scegli la forma corretta: She ___ a new phone.",["has got","have got","is having got"],"has got","Terza persona: has got."),
@@ -322,7 +322,7 @@ export const LESSON_BANK={
     ],
     check:[
       O("form","Scrivi solo la parola mancante: ___ we start the meeting now? (proposta)","Shall",[],"Proposta: shall we...?"),
-      O("form","Scrivi solo la parola mancante, per rendere negativo l'ordine: ___ touch the screen.","Don't",["Do not"],"Imperativo negativo: don't."),
+      O("form","Scrivi solo ciò che manca, per rendere negativo l'ordine: ___ touch the screen.","Don't",["Do not"],"Imperativo negativo: don't."),
       C("meaning","Scegli che cosa esprime: Would you like a coffee?",["un'offerta","una richiesta di aiuto","un ordine"],"un'offerta","Would you like...? = offerta."),
       C("tense_choice","Chiedi il permesso in modo cortese. Scegli la forma corretta.",["May I come in?","May I to come in?","May I coming in?"],"May I come in?","May I + verbo base."),
       C("use","Chiedi a un collega di aspettare un momento. Scegli la frase più cortese.",["Could you wait a moment, please?","Wait a moment.","You wait a moment."],"Could you wait a moment, please?","Richiesta cortese."),
@@ -332,18 +332,18 @@ export const LESSON_BANK={
   "space-movement":{
     train:[
       C("meaning","Scegli che cosa significa: She ran across the road.",["ha attraversato la strada correndo","ha corso lungo la strada","ha corso sotto la strada"],"ha attraversato la strada correndo","Across = da una parte all'altra."),
-      C("tense_choice","Scegli la forma corretta: The cat jumped ___ the box.",["into","in","at"],"into","Movimento verso l'interno: into."),
-      C("tense_choice","Scegli la forma corretta: We drove ___ the tunnel.",["through","across","over"],"through","Dentro e da un capo all'altro: through."),
+      C("tense_choice","Il gatto era fuori dalla scatola e ci è entrato saltando. Scegli la preposizione che esprime questo ingresso: The cat jumped ___ the box.",["into","out of","over"],"into","Into indica l’ingresso nella scatola; out of indica l’uscita, over il salto al di sopra. In può talvolta esprimere ingresso: per questo non è usato come alternativa errata."),
+      C("tense_choice","Avete percorso il tunnel al suo interno, da un’estremità all’altra. Scegli la forma corretta: We drove ___ the tunnel.",["through","across","over"],"through","Dentro e da un capo all'altro: through."),
       C("use","Dai indicazioni a un visitatore. Scegli la frase corretta.",["Go past the bank and turn left.","Go pass the bank and turn left.","Go by the bank turning left at."],"Go past the bank and turn left.","Go past = superare passando davanti."),
       C("use","Descrivi dove si trova il bar. Scegli la frase corretta.",["The café is opposite the station.","The café is opposite to of the station.","The café is in opposite the station."],"The café is opposite the station.","Opposite + luogo, senza of."),
       O("word_order","Metti le parole in ordine e scrivi la frase: the hill / walked / up / we","We walked up the hill",[],"Movimento verso l'alto: up."),
       O("word_order","Metti le parole in ordine e scrivi la frase: out of / she / the building / ran","She ran out of the building",[],"Uscire da: out of.")
     ],
     check:[
-      O("form","Scrivi solo la parola mancante: The plane flew ___ the mountains. (sopra, senza toccare)","over",[],"Sopra e oltre: over."),
+      O("form","Scrivi solo la parola mancante: The plane flew ___ the mountains. (sopra, senza toccare)","over",["above"],"Over e above possono indicare una posizione più alta senza contatto. Over può anche suggerire il passaggio da una parte all’altra."),
       O("form","Scrivi solo la parola mancante: He went ___ the stairs to the basement. (giù)","down",[],"Verso il basso: down."),
       C("meaning","Scegli che cosa significa: The house is between the school and the park.",["in mezzo ai due","dietro ai due","davanti ai due"],"in mezzo ai due","Between = tra due elementi."),
-      C("tense_choice","Scegli la forma corretta: They walked ___ the river to the bridge.",["along","across","into"],"along","Lungo: along."),
+      C("tense_choice","Sono rimasti sulla riva, seguendo il corso del fiume fino al ponte, senza attraversarlo. Scegli la forma corretta: They walked ___ the river to the bridge.",["along","across","into"],"along","Lungo: along."),
       C("use","Dici a un collega dove hai parcheggiato. Scegli la frase corretta.",["I parked behind the building.","I parked behind of the building.","I parked at behind the building."],"I parked behind the building.","Behind senza of."),
       O("word_order","Metti le parole in ordine e scrivi la frase: towards / the exit / she / walked","She walked towards the exit",[],"Direzione: towards.")
     ]
@@ -351,12 +351,12 @@ export const LESSON_BANK={
   "basic-connectors":{
     train:[
       C("meaning","Scegli che cosa esprime so in: It was late, so we left.",["una conseguenza","una causa","un contrasto"],"una conseguenza","So introduce la conseguenza."),
-      C("tense_choice","Scegli il connettivo corretto: I like tea, ___ I don't like coffee.",["but","so","because"],"but","Contrasto: but."),
+      C("tense_choice","Esprimi un contrasto tra le due preferenze, non una causa o una conseguenza. Scegli il connettivo corretto: I like tea, ___ I don't like coffee.",["but","so","because"],"but","Contrasto: but."),
       C("tense_choice","Scegli il connettivo corretto: She stayed at home ___ she was ill.",["because","so","or"],"because","Causa: because."),
       C("use","Nel rapporto unisci due fatti in sequenza. Scegli la frase corretta.",["The alarm rang and the staff left the building.","The alarm rang but the staff left the building because.","The alarm rang or the staff left the building."],"The alarm rang and the staff left the building.","Aggiunta e sequenza: and."),
       C("use","Proponi due alternative al cliente. Scegli la frase corretta.",["You can pay by card or in cash.","You can pay by card but in cash.","You can pay by card so in cash."],"You can pay by card or in cash.","Alternativa: or."),
       O("word_order","Metti le parole in ordine e scrivi la frase: tired / so / was / I / went to bed early / I","I was tired so I went to bed early",[],"Causa, so, conseguenza."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: because / missed / the bus / we / were / we / late","We were late because we missed the bus",["We missed the bus because we were late"],"Effetto + because + causa.")
+      O("word_order","Metti le parole in ordine e scrivi la frase: because / missed / the bus / we / were / we / late","We were late because we missed the bus",["We missed the bus because we were late","Because we missed the bus we were late"],"Effetto + because + causa.")
     ],
     check:[
       O("form","Scrivi solo la parola mancante: The road was closed, ___ we took another route. (conseguenza)","so",[],"Conseguenza: so."),
@@ -372,7 +372,7 @@ export const LESSON_BANK={
       O("form","Scrivi solo le parole mancanti, al present continuous: Look! It ___. (snow)","is snowing",[],"Azione in corso adesso: is + -ing."),
       O("form","Scrivi solo la parola mancante, al present simple: Water ___ at 100 degrees. (boil)","boils",[],"Fatto generale: present simple."),
       C("meaning","Scegli che cosa significa: I'm staying with my cousin this month.",["una situazione temporanea","un'abitudine di sempre","un piano già passato"],"una situazione temporanea","Present continuous: situazione temporanea."),
-      C("meaning","Scegli che cosa significa: He works in a bank.",["è il suo lavoro stabile","ci lavora solo oggi","ci ha lavorato in passato"],"è il suo lavoro stabile","Present simple: situazione stabile."),
+      C("meaning","Scegli che cosa significa: He works in a bank.",["presenta il lavoro in banca come situazione abituale","ci lavora solo oggi","ci ha lavorato in passato"],"presenta il lavoro in banca come situazione abituale","Il present simple descrive qui il lavoro abituale. Non garantisce che il posto sia permanente."),
       C("tense_choice","Scegli la forma corretta: Quiet, please. The officer ___ to the witness.",["is talking","talks","talk"],"is talking","In questo momento: present continuous."),
       C("tense_choice","Scegli la forma corretta: I ___ what you mean.",["understand","am understanding","understanding"],"understand","Understand è un verbo di stato: present simple."),
       C("use","Descrivi la tua routine in un'email. Scegli la frase corretta.",["I usually start work at eight.","I am usually starting work at eight.","I usually starting work at eight."],"I usually start work at eight.","Routine: present simple."),
@@ -393,10 +393,10 @@ export const LESSON_BANK={
     train:[
       O("form","Scrivi solo le parole mancanti, al past continuous: At ten last night we ___ TV. (watch)","were watching",[],"Azione in corso a un'ora passata."),
       O("form","Scrivi solo la parola mancante, al past simple: The phone ___ while I was cooking. (ring)","rang",[],"Evento breve che interrompe: past simple."),
-      C("meaning","Scegli che cosa significa: I was reading when she called.",["leggevo e la chiamata mi ha interrotto","ho finito di leggere e poi lei ha chiamato","leggevo spesso quando chiamava"],"leggevo e la chiamata mi ha interrotto","Past continuous: sfondo; past simple: evento."),
+      C("meaning","Scegli che cosa significa: I was reading when she called.",["la lettura era in corso quando lei ha chiamato","ho finito di leggere e poi lei ha chiamato","leggevo spesso quando chiamava"],"la lettura era in corso quando lei ha chiamato","Il past continuous presenta la lettura come sfondo alla chiamata. Non dice necessariamente che la persona abbia smesso di leggere."),
       C("meaning","Scegli che cosa significa: When she called, I read the message.",["prima ha chiamato, poi ho letto","stavo leggendo durante la chiamata","avevo già letto"],"prima ha chiamato, poi ho letto","Due past simple: azioni in sequenza."),
-      C("tense_choice","Scegli la forma corretta: While they ___ , it started to rain.",["were walking","walked","walk"],"were walking","Sfondo in corso: past continuous."),
-      C("tense_choice","Scegli la forma corretta: Last summer we ___ to Spain.",["went","were going","go"],"went","Evento concluso con tempo preciso: past simple."),
+      C("tense_choice","Descrivi la camminata come attività già in corso quando ha iniziato a piovere. Scegli la forma corretta: While they ___ , it started to rain.",["were walking","walked","walk"],"were walking","Sfondo in corso: past continuous."),
+      C("tense_choice","Racconta un viaggio concluso, non un’attività vista mentre si svolgeva. Scegli la forma corretta: Last summer we ___ to Spain.",["went","were going","go"],"went","Evento concluso con tempo preciso: past simple."),
       C("use","Nel rapporto descrivi la scena all'arrivo. Scegli la frase corretta.",["When we arrived, two men were standing at the door.","When we arrived, two men stood stand at the door.","When we were arriving, two men stand at the door."],"When we arrived, two men were standing at the door.","Evento (arrived) + sfondo (were standing)."),
       C("use","Racconti una sequenza di azioni. Scegli la frase corretta.",["He opened the door, looked around and left.","He was opening the door, was looking around and was leaving.","He opens the door, looked around and left."],"He opened the door, looked around and left.","Sequenza di azioni concluse: past simple."),
       O("word_order","Metti le parole in ordine e scrivi la frase: was sleeping / the alarm / when / went off / I","I was sleeping when the alarm went off",["When the alarm went off I was sleeping"],"Sfondo + when + evento."),
@@ -421,7 +421,7 @@ export const LESSON_BANK={
       C("tense_choice","Scegli la forma corretta: ___ you ever ___ to Japan?",["Have / been","Did / go","Were / been"],"Have / been","Esperienza con ever: present perfect."),
       C("use","Aggiorni il responsabile: il lavoro è appena finito. Scegli la frase corretta.",["We have just finished the inspection.","We just have finished the inspection yesterday.","We finished just the inspection now."],"We have just finished the inspection.","Just + present perfect."),
       C("use","Nel rapporto indichi quando è successo. Scegli la frase corretta.",["The incident happened at 10:30.","The incident has happened at 10:30.","The incident has been happen at 10:30."],"The incident happened at 10:30.","Ora precisa: past simple."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: already / the tickets / bought / have / we","We have already bought the tickets",[],"Already tra have e participio."),
+      O("word_order","Metti le parole in ordine e scrivi la frase: already / the tickets / bought / have / we","We have already bought the tickets",["We have bought the tickets already"],"Already tra have e participio."),
       O("word_order","Metti le parole in ordine e scrivi la frase: in 2019 / moved / to Rome / they","They moved to Rome in 2019",["In 2019 they moved to Rome"],"Anno preciso: past simple.")
     ],
     check:[
@@ -429,7 +429,7 @@ export const LESSON_BANK={
       O("form","Scrivi solo la parola mancante, al past simple: They ___ here two years ago. (arrive)","arrived",[],"Ago: past simple."),
       C("meaning","Scegli che cosa significa: I've worked here since May.",["lavoro qui da maggio e ci lavoro ancora","ho lavorato qui a maggio","lavorerò qui da maggio"],"lavoro qui da maggio e ci lavoro ancora","Present perfect + since: dura fino a ora."),
       C("tense_choice","Scegli la forma corretta: When ___ you start this job?",["did","have","has"],"did","When: past simple."),
-      C("use","Dici a un collega che non hai ancora ricevuto la mail. Scegli la frase corretta.",["I haven't received your email yet.","I didn't receive your email yet.","I haven't receive your email yet."],"I haven't received your email yet.","Yet + present perfect negativo."),
+      C("use","Dici a un collega che non hai ancora ricevuto la mail. Scegli la frase corretta.",["I haven't received your email yet.","I received your email yesterday.","I haven't receive your email yet."],"I haven't received your email yet.","La prima frase dice che la mail non è ancora arrivata. La seconda dice che è arrivata ieri; nella terza manca il participio received. Il past simple con yet è possibile in inglese americano e non è trattato come errore."),
       O("word_order","Metti le parole in ordine e scrivi la frase: never / I / flown / have / before","I have never flown before",[],"Never tra have e participio.")
     ]
   },
@@ -440,10 +440,10 @@ export const LESSON_BANK={
       C("meaning","Scegli che cosa significa: I've been painting the kitchen.",["l'attività è durata e forse non è finita","ho finito di dipingere tutta la cucina","dipingo la cucina ogni anno"],"l'attività è durata e forse non è finita","Continuous: processo e durata."),
       C("meaning","Scegli che cosa significa: I've painted the kitchen.",["il lavoro è finito","ci sto ancora lavorando","lo farò domani"],"il lavoro è finito","Simple: risultato completato."),
       C("tense_choice","Scegli la forma corretta: How long ___ you ___ for the bus?",["have / been waiting","have / waited a lot","did / wait now"],"have / been waiting","Durata fino a ora: present perfect continuous."),
-      C("tense_choice","Scegli la forma corretta: She ___ ten reports this week.",["has written","has been writing","is writing ten"],"has written","Quantità precisa: simple."),
+      C("tense_choice","Tutti e dieci i rapporti sono completi: metti in evidenza il risultato raggiunto. Scegli la forma corretta: She ___ ten reports this week.",["has written","has been writing","is writing ten"],"has written","Quantità precisa: simple."),
       C("use","Spieghi perché hai le mani sporche. Scegli la frase corretta.",["I've been repairing the bike.","I've repaired the bike since an hour.","I repair the bike for an hour."],"I've been repairing the bike.","Effetto visibile di un'attività recente: continuous."),
-      C("use","Nel rapporto indichi quanti controlli sono stati fatti. Scegli la frase corretta.",["We have carried out five checks.","We have been carrying out five checks.","We are carrying out five checks since."],"We have carried out five checks.","Numero di azioni completate: simple."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: for two hours / been / they / have / talking","They have been talking for two hours",[],"Have been + -ing + for."),
+      C("use","Tutti e cinque i controlli sono conclusi: metti in evidenza il risultato. Nel rapporto indichi quanti controlli sono stati fatti. Scegli la frase corretta.",["We have carried out five checks.","We have been carrying out five checks.","We are carrying out five checks since."],"We have carried out five checks.","Numero di azioni completate: simple."),
+      O("word_order","Metti le parole in ordine e scrivi la frase: for two hours / been / they / have / talking","They have been talking for two hours",["For two hours they have been talking"],"Have been + -ing + for."),
       O("word_order","Metti le parole in ordine e scrivi la domanda: have / how long / you / been / learning English","How long have you been learning English",[],"How long + present perfect continuous.")
     ],
     check:[
@@ -452,7 +452,7 @@ export const LESSON_BANK={
       C("meaning","Scegli che cosa significa: He's been calling you all morning.",["ha chiamato più volte per tutta la mattina","ha chiamato una volta","chiamerà domattina"],"ha chiamato più volte per tutta la mattina","Continuous: ripetizione nel tempo."),
       C("tense_choice","Scegli la forma corretta: I ___ my keys. Can you help me?",["have lost","have been losing","am losing"],"have lost","Risultato attuale: simple."),
       C("use","Dici che stai cercando casa da mesi. Scegli la frase corretta.",["I've been looking for a flat for months.","I look for a flat for months.","I've looked for a flat since months."],"I've been looking for a flat for months.","Durata: continuous + for."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: has / she / since January / here / been working","She has been working here since January",[],"Since + punto di partenza.")
+      O("word_order","Metti le parole in ordine e scrivi la frase: has / she / since January / here / been working","She has been working here since January",["Since January she has been working here"],"Since + punto di partenza.")
     ]
   },
   "past-perfect":{
@@ -465,7 +465,7 @@ export const LESSON_BANK={
       C("tense_choice","Scegli la forma corretta: They ___ for an hour when the bus finally came.",["had been waiting","have been waiting","were wait"],"had been waiting","Durata fino a un momento passato."),
       C("use","Nel rapporto chiarisci l'ordine dei fatti. Scegli la frase corretta.",["The guard said that someone had opened the gate.","The guard said that someone has opened the gate before.","The guard said that someone opens the gate."],"The guard said that someone had opened the gate.","Fatto precedente al racconto: past perfect."),
       C("use","Racconti che era la prima volta in aereo. Scegli la frase corretta.",["I had never flown before that trip.","I have never flown before that trip.","I never fly before that trip."],"I had never flown before that trip.","Esperienza fino a un momento passato."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: had / before / she / the email / I called / read","She had read the email before I called",[],"Past perfect + before + past simple."),
+      O("word_order","Metti le parole in ordine e scrivi la frase: had / before / she / the email / I called / read","She had read the email before I called",["Before I called she had read the email"],"Past perfect + before + past simple."),
       O("word_order","Metti le parole in ordine e scrivi la frase: by the time / had ended / arrived / the meeting / we","The meeting had ended by the time we arrived",["By the time we arrived the meeting had ended"],"By the time + past simple.")
     ],
     check:[
@@ -496,13 +496,13 @@ export const LESSON_BANK={
       C("meaning","Scegli che cosa significa: I'll help you with that.",["un'offerta fatta ora","un piano di settimane fa","un orario fisso"],"un'offerta fatta ora","Will per offerte."),
       C("tense_choice","Hai già prenotato il volo. Scegli la forma corretta: We ___ to Paris on Friday.",["are flying","will fly maybe","fly would"],"are flying","Accordo fissato: present continuous."),
       C("use","Prometti di inviare il documento. Scegli la frase corretta.",["I'll send it this afternoon.","I send it this afternoon, promise.","I'm sending it since this afternoon."],"I'll send it this afternoon.","Promessa: will."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: at 7 / leaves / the bus / tomorrow","The bus leaves at 7 tomorrow",["Tomorrow the bus leaves at 7"],"Orario fisso: present simple.")
+      O("word_order","Metti le parole in ordine e scrivi la frase: at 7 / leaves / the bus / tomorrow","The bus leaves at 7 tomorrow",["Tomorrow the bus leaves at 7","Tomorrow at 7 the bus leaves","At 7 tomorrow the bus leaves","The bus leaves tomorrow at 7"],"Orario fisso: present simple.")
     ]
   },
   "used-to":{
     train:[
       O("form","Scrivi solo le parole mancanti: I ___ smoke, but I stopped years ago. (used to)","used to",[],"Abitudine passata finita: used to."),
-      O("form","Scrivi solo la parola mancante: She isn't used to ___ so early. (get up)","getting",[],"Be used to + -ing."),
+      O("form","Scrivi solo le parole mancanti: She isn't used to ___ so early. (get up)","getting up",[],"Be used to richiede la forma in -ing: get up diventa getting up. La particella up resta perché get up significa alzarsi."),
       C("meaning","Scegli che cosa significa: I used to live in Naples.",["vivevo a Napoli, ora no","vivo a Napoli da poco","sono abituato a vivere a Napoli"],"vivevo a Napoli, ora no","Used to: passato non più vero."),
       C("meaning","Scegli che cosa significa: I'm used to living alone.",["sono abituato a vivere da solo","vivevo da solo","vivrò da solo"],"sono abituato a vivere da solo","Be used to + -ing: familiarità."),
       C("tense_choice","Scegli la forma corretta: When we were children, we ___ play in the street.",["would","are used to","get used to"],"would","Would per azioni ripetute nel passato."),
@@ -523,8 +523,8 @@ export const LESSON_BANK={
   },
   "may-might":{
     train:[
-      O("form","Scrivi solo la parola mancante, per esprimere una possibilità: It ___ rain later, so take an umbrella. (may/must)","may",["might"],"Possibilità: may o might."),
-      O("form","Scrivi solo le parole mancanti, con might al passato: She ___ the bus. That's why she's late. (miss)","might have missed",["may have missed"],"Possibilità nel passato: might have + participio."),
+      O("form","Scrivi solo la parola mancante, per esprimere una possibilità: It ___ rain later, so take an umbrella. (may o might)","may",["might"],"Possibilità: may o might."),
+      O("form","Scrivi solo le parole mancanti, con may o might riferito al passato: She ___ the bus. That's why she's late. (miss)","might have missed",["may have missed"],"Possibilità nel passato: might have + participio."),
       C("meaning","Scegli che cosa significa: He might come to the party.",["forse verrà","verrà sicuramente","non può venire"],"forse verrà","Might = possibilità."),
       C("meaning","Scegli che cosa significa: May I use your phone?",["chiedo il permesso","faccio una previsione","esprimo un obbligo"],"chiedo il permesso","May I...? = permesso."),
       C("tense_choice","Non sei sicuro. Scegli la forma corretta: The office ___ be closed on Sunday.",["might","must","has to"],"might","Incertezza: might."),
@@ -535,8 +535,8 @@ export const LESSON_BANK={
       O("word_order","Metti le parole in ordine e scrivi la frase: be / the answer / could / wrong","The answer could be wrong",[],"Could + be + aggettivo.")
     ],
     check:[
-      O("form","Scrivi solo la parola mancante, per esprimere una possibilità: We ___ go to the beach if it's sunny. (might/must)","might",["may"],"Possibilità: might."),
-      O("form","Scrivi solo le parole mancanti, con may al passato: He ___ the message. He hasn't replied. (not see)","may not have seen",["might not have seen"],"Possibilità negativa nel passato."),
+      O("form","Scrivi solo la parola mancante, per esprimere una possibilità: We ___ go to the beach if it's sunny. (may o might)","might",["may"],"Possibilità: might."),
+      O("form","Scrivi solo le parole mancanti, con may o might riferito al passato: He ___ the message. He hasn't replied. (not see)","may not have seen",["might not have seen"],"Possibilità negativa nel passato."),
       C("meaning","Scegli che cosa significa: It could be true.",["è possibile che sia vero","è certamente vero","è impossibile che sia vero"],"è possibile che sia vero","Could = possibilità."),
       C("tense_choice","Scegli la forma corretta: She ___ be at home; I'm not sure.",["may","must","mustn't"],"may","Incertezza: may."),
       C("use","Chiedi educatamente il permesso di sederti. Scegli la frase corretta.",["May I sit here?","May I to sit here?","Might I sitting here?"],"May I sit here?","May I + verbo base."),
@@ -584,7 +584,7 @@ export const LESSON_BANK={
       C("meaning","Scegli che cosa significa: Please look into the complaint.",["esamina il reclamo","ignora il reclamo","scrivi il reclamo"],"esamina il reclamo","Look into = indagare, esaminare."),
       C("tense_choice","Scegli la forma corretta: The music is loud. Can you turn ___?",["it down","down it","it"],"it down","Pronome tra verbo e particella."),
       C("use","Chiedi a un collega di scoprire l'orario. Scegli la frase corretta.",["Can you find out the time of the meeting?","Can you find the time out of the meeting?","Can you find up the time of the meeting?"],"Can you find out the time of the meeting?","Find out = scoprire."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: picked / at the station / her / up / I","I picked her up at the station",[],"Pick up separabile: pick her up.")
+      O("word_order","Metti le parole in ordine e scrivi la frase: picked / at the station / her / up / I","I picked her up at the station",["At the station I picked her up"],"Pick up separabile: pick her up.")
     ]
   },
   "question-meaning":{
@@ -670,7 +670,7 @@ export const LESSON_BANK={
       C("tense_choice","Scegli la forma corretta: ___ people like long meetings.",["Few","Few of","A few of"],"Few","Gruppo generico: few + nome, senza of."),
       C("use","Nel rapporto dici che entrambe le porte erano chiuse. Scegli la frase corretta.",["Both of the doors were locked.","Both of doors were locked.","Both the door was locked."],"Both of the doors were locked.","Both of + the + plurale."),
       C("use","Dici che nessuno degli studenti era assente. Scegli la frase corretta.",["None of the students were absent.","No of the students were absent.","None students were absent."],"None of the students were absent.","None of + the + plurale."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: of / all / the rooms / were / checked","All of the rooms were checked",["All the rooms were checked"],"All (of) the + plurale."),
+      O("word_order","Metti le parole in ordine e scrivi la frase: of / all / the rooms / were / checked","All of the rooms were checked",[],"All (of) the + plurale."),
       O("word_order","Metti le parole in ordine e scrivi la frase: of them / speaks / neither / French","Neither of them speaks French",[],"Neither of + verbo singolare (formale).")
     ],
     check:[
@@ -783,7 +783,7 @@ export const LESSON_BANK={
       C("meaning","Scegli che cosa significa: I think the offer is good.",["è la mia opinione","ci sto riflettendo adesso","ci ho pensato ieri"],"è la mia opinione","Think di stato = opinione: present simple."),
       C("tense_choice","Scegli la forma corretta: This bag ___ to my colleague.",["belongs","is belonging","belonging"],"belongs","Belong è un verbo di stato."),
       C("use","Al telefono dici che stai assaggiando il piatto. Scegli la frase corretta.",["I'm tasting the sauce now.","I taste the sauce now, it is tasting.","I'm taste the sauce now."],"I'm tasting the sauce now.","Taste come azione: continuous."),
-      C("use","In un'email esprimi accordo. Scegli la frase corretta.",["I agree with your proposal.","I'm agreeing with your proposal.","I am agree with your proposal."],"I agree with your proposal.","Agree è di stato: simple."),
+      C("use","Esprimi la tua attuale opinione favorevole sulla proposta. Scegli la frase che la comunica.",["I agree with your proposal.","I disagree with your proposal.","I have not decided whether I agree with your proposal."],"I agree with your proposal.","I agree esprime accordo; I disagree disaccordo; l’ultima frase lascia il giudizio in sospeso. Il continuous non è sempre impossibile, ma non è necessario per questa opinione."),
       O("word_order","Metti le parole in ordine e scrivi la frase: a great time / we / are having","We are having a great time",[],"Have come esperienza: continuous possibile."),
       O("word_order","Metti le parole in ordine e scrivi la frase: the answer / know / don't / I","I don't know the answer",[],"Know è di stato: simple.")
     ],
@@ -826,7 +826,7 @@ export const LESSON_BANK={
       O("word_order","Metti le parole in ordine e scrivi la frase: just / has / the bus / left","The bus has just left",[],"Just tra have e participio.")
     ],
     check:[
-      O("form","Scrivi solo la parola mancante: Have you finished ___? (già, in domanda)","yet",[],"Yet a fine domanda."),
+      O("form","Scrivi solo la parola mancante: Have you finished ___? (già, in domanda)","yet",["already"],"Yet chiede se qualcosa di atteso è avvenuto; already può esprimere sorpresa perché è avvenuto prima del previsto. La consegna consente entrambe le letture."),
       O("form","Scrivi solo la parola mancante: She has ___ left; you've missed her. (appena)","just",[],"Just = appena."),
       C("meaning","Scegli che cosa significa: I've been to Paris.",["ci sono stato e sono tornato","sono a Parigi adesso","andrò a Parigi"],"ci sono stato e sono tornato","Been to: esperienza, ritorno."),
       C("tense_choice","Scegli la forma corretta: It's ten o'clock and he ___ in bed.",["is still","is yet","has already being"],"is still","Still: continuità."),
@@ -880,7 +880,7 @@ export const LESSON_BANK={
       C("use","In un rapporto prudente scrivi che l'ipotesi è probabile, non certa. Scegli la frase corretta.",["It is quite likely that the door was forced.","It is very certainly that the door was forced.","It is likely quite that the door was forced."],"It is quite likely that the door was forced.","Quite likely: probabilità moderata."),
       C("use","Nel parlato informale dici che il film era abbastanza bello. Scegli la frase più naturale.",["It was pretty good.","It was good pretty.","It was a pretty good of."],"It was pretty good.","Pretty = abbastanza (informale)."),
       O("word_order","Metti le parole in ordine e scrivi la frase: rather / was / cold / it","It was rather cold",[],"Rather + aggettivo."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: an / quite / interesting / it was / idea","It was quite an interesting idea",["It was a quite interesting idea"],"Quite an + aggettivo + nome.")
+      O("word_order","Metti le parole in ordine e scrivi la frase: an / quite / interesting / it was / idea","It was quite an interesting idea",[],"Quite an + aggettivo + nome.")
     ],
     check:[
       O("form","Scrivi solo la parola mancante: The meeting was ___ useful. (abbastanza, neutro)","fairly",["quite"],"Fairly/quite = abbastanza."),
@@ -1035,7 +1035,7 @@ export const LESSON_BANK={
       C("meaning","Scegli che cosa significa: He might have missed the train.",["forse ha perso il treno","ha certamente perso il treno","non poteva perdere il treno"],"forse ha perso il treno","Might have: possibilità passata."),
       C("tense_choice","Ne sei quasi certo. Scegli la forma corretta: The keys ___ be in the car.",["must","might not","can't to"],"must","Certezza: must."),
       C("tense_choice","Scegli la forma corretta: She ___ have seen us; she didn't say hello.",["can't","must","mustn't"],"can't","Impossibilità nel passato: can't have."),
-      C("use","Nel rapporto deduci, con prudenza, come è entrato il ladro. Scegli la frase più adatta.",["The intruder must have entered through the window.","The intruder must entered through the window.","The intruder must to have entered through the window."],"The intruder must have entered through the window.","Must have + participio."),
+      C("use","Gli indizi ti rendono quasi certo che il ladro sia entrato dalla finestra. Esprimi questa deduzione sul passato. Scegli la frase più adatta.",["The intruder must have entered through the window.","The intruder must entered through the window.","The intruder must to have entered through the window."],"The intruder must have entered through the window.","Must have + participio esprime una deduzione forte sul passato, non una semplice possibilità. Per una possibilità meno certa si possono usare may/might/could have."),
       C("use","Escludi un'ipotesi con sicurezza. Scegli la frase corretta.",["It can't have been the guard; he was off duty.","It mustn't have been the guard; he was off duty.","It can't been the guard; he was off duty."],"It can't have been the guard; he was off duty.","Can't have: impossibile nel passato."),
       O("word_order","Metti le parole in ordine e scrivi la frase: have / she / forgotten / must","She must have forgotten",[],"Must have + participio."),
       O("word_order","Metti le parole in ordine e scrivi la frase: be / that / can't / true","That can't be true",[],"Can't + be.")
@@ -1095,7 +1095,7 @@ export const LESSON_BANK={
   },
   wish:{
     train:[
-      O("form","Scrivi solo la parola mancante: I wish I ___ taller. (be, forma formale)","were",["was"],"Wish + past per il presente."),
+      O("form","Scrivi solo la parola mancante: I wish I ___ taller. (be, desiderio irreale presente)","were",["was"],"Wish + passato esprime un desiderio irreale nel presente. Were è la forma tradizionale, soprattutto formale; was è comune in contesti meno formali."),
       O("form","Scrivi solo le parole mancanti: I wish I ___ to the party yesterday. (go)","had gone",[],"Wish + past perfect per il passato."),
       C("meaning","Scegli che cosa significa: I wish I knew the answer.",["non so la risposta e mi dispiace","sapevo la risposta","saprò la risposta"],"non so la risposta e mi dispiace","Wish + past: desiderio irreale presente."),
       C("meaning","Scegli che cosa significa: If only I hadn't said that.",["mi pento di averlo detto","non l'ho detto","lo dirò"],"mi pento di averlo detto","If only + past perfect: rimpianto."),
@@ -1126,35 +1126,35 @@ export const LESSON_BANK={
       C("use","Nel rapporto l'autore del furto è sconosciuto. Scegli la frase più adatta.",["Two laptops were stolen from the office.","Someone they stole two laptops from the office.","Two laptops stole from the office."],"Two laptops were stolen from the office.","Passivo quando l'agente è sconosciuto."),
       C("use","Comunichi che la riunione è stata annullata. Scegli la frase corretta.",["The meeting has been cancelled.","The meeting has cancelled.","The meeting has been cancel."],"The meeting has been cancelled.","Passivo con present perfect."),
       O("word_order","Metti le parole in ordine e scrivi la frase: was / by the police / the car / found","The car was found by the police",[],"Passivo con agente."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: are / every night / the doors / locked","The doors are locked every night",[],"Passivo presente.")
+      O("word_order","Metti le parole in ordine e scrivi la frase: are / every night / the doors / locked","The doors are locked every night",["Every night the doors are locked"],"Passivo presente.")
     ],
     check:[
       O("form","Scrivi solo le parole mancanti, al passivo presente: Coffee ___ in Brazil. (grow)","is grown",[],"Passivo: is + participio."),
       O("form","Scrivi solo le parole mancanti, al passivo con present perfect: The parcel ___ . (deliver)","has been delivered",[],"Passivo perfect."),
       C("meaning","Scegli che cosa significa: The suspect was being questioned.",["l'interrogatorio era in corso","è stato interrogato ieri, poi è finito","interrogherà qualcuno"],"l'interrogatorio era in corso","Passivo past continuous."),
-      C("tense_choice","Scegli la forma corretta: The windows ___ yesterday.",["were cleaned","cleaned","were clean"],"were cleaned","Passivo passato."),
+      C("tense_choice","Descrivi l’azione svolta dagli addetti alle pulizie ieri, non lo stato delle finestre. Scegli la forma corretta: The windows ___ yesterday.",["were cleaned","cleaned","were clean"],"were cleaned","Passivo passato."),
       C("use","Avvisi che il pagamento deve essere effettuato entro lunedì. Scegli la frase corretta.",["Payment must be made by Monday.","Payment must make by Monday.","Payment must been made by Monday."],"Payment must be made by Monday.","Modale + be + participio."),
       O("word_order","Metti le parole in ordine e scrivi la frase: will / tomorrow / the results / be announced","The results will be announced tomorrow",["Tomorrow the results will be announced"],"Passivo futuro.")
     ]
   },
   reported:{
     train:[
-      O("form","Scrivi solo la parola mancante: She said, 'I am busy.' → She said that she ___ busy.","was",[],"Backshift: am → was."),
+      O("form","Scrivi solo la parola mancante: She said, 'I am busy.' → She said that she ___ busy. (Applica l’arretramento dei tempi (backshift))","was",[],"Backshift: am → was. In questo esercizio si richiede il backshift; nel discorso reale può essere omesso se la situazione è ancora attuale."),
       O("form","Scrivi solo la parola mancante: He ___ me that the office was closed. (say/tell)","told",[],"Tell + persona; say senza persona."),
       C("meaning","Scegli che cosa significa: He said he would call.",["ha detto che avrebbe chiamato","ha detto che chiamava","chiamerà sicuramente adesso"],"ha detto che avrebbe chiamato","Will → would."),
       C("tense_choice","Scegli la forma corretta: She ___ that she was tired.",["said","told","said me"],"said","Say senza oggetto di persona."),
-      C("tense_choice","Scegli la forma corretta: 'I have finished.' → He said he ___ finished.",["had","has","have"],"had","Present perfect → past perfect."),
+      C("tense_choice","Applica l’arretramento dei tempi (backshift). Scegli la forma corretta: 'I have finished.' → He said he ___ finished.",["had","has","have"],"had","Present perfect → past perfect. In questo esercizio si richiede il backshift; nel discorso reale può essere omesso se la situazione è ancora attuale."),
       C("use","Riferisci al responsabile che cosa ha detto il testimone. Scegli la frase corretta.",["The witness said that he had seen a blue car.","The witness said me that he has seen a blue car.","The witness told that he had seen a blue car."],"The witness said that he had seen a blue car.","Say that + backshift."),
       C("use","Riferisci un ordine. Scegli la frase corretta.",["The officer told us to wait outside.","The officer told us wait outside.","The officer said us to wait outside."],"The officer told us to wait outside.","Tell + persona + to."),
-      O("use","Riscrivi la frase in discorso indiretto, iniziando con She said: 'I will send it tomorrow.'","She said she would send it the next day",["She said that she would send it the next day","She said she would send it the following day","She said that she would send it the following day"],"Will → would, tomorrow → the next day."),
+      O("use","Riscrivi la frase in discorso indiretto, iniziando con She said: 'I will send it tomorrow.' (Riferisci le parole alcuni giorni dopo, applicando il backshift)","She said she would send it the next day",["She said that she would send it the next day","She said she would send it the following day","She said that she would send it the following day"],"Will → would, tomorrow → the next day."),
       O("word_order","Metti le parole in ordine e scrivi la frase: told / he / he / me / was leaving","He told me he was leaving",[],"Tell + persona + frase."),
       O("word_order","Metti le parole in ordine e scrivi la frase: not / asked / us / to smoke / she","She asked us not to smoke",[],"Ask + persona + not to.")
     ],
     check:[
-      O("form","Scrivi solo la parola mancante: 'I can drive.' → He said he ___ drive.","could",[],"Can → could."),
+      O("form","Scrivi solo la parola mancante: 'I can drive.' → He said he ___ drive. (Applica l’arretramento dei tempi (backshift))","could",[],"Can → could. In questo esercizio si richiede il backshift; nel discorso reale può essere omesso se la situazione è ancora attuale."),
       O("form","Scrivi solo la parola mancante: She ___ us to be quiet. (say/tell)","told",[],"Tell + persona + to."),
       C("meaning","Scegli che cosa significa: They said they had been to Rome.",["hanno detto che erano stati a Roma","hanno detto che andranno a Roma","sono a Roma adesso"],"hanno detto che erano stati a Roma","Past perfect nel discorso indiretto."),
-      C("tense_choice","Scegli la forma corretta: 'We are leaving.' → They said they ___ leaving.",["were","are","had"],"were","Are → were."),
+      C("tense_choice","Applica l’arretramento dei tempi (backshift). Scegli la forma corretta: 'We are leaving.' → They said they ___ leaving.",["were","are","had"],"were","Are → were. In questo esercizio si richiede il backshift; nel discorso reale può essere omesso se la situazione è ancora attuale."),
       C("use","Riferisci una richiesta del direttore. Scegli la frase corretta.",["The director asked me to check the figures.","The director asked me check the figures.","The director said me to check the figures."],"The director asked me to check the figures.","Ask + persona + to."),
       O("word_order","Metti le parole in ordine e scrivi la frase: said / she / that / was / she / ready","She said that she was ready",[],"Say that + frase.")
     ]
@@ -1185,8 +1185,8 @@ export const LESSON_BANK={
     train:[
       O("form","Scrivi solo la parola mancante: The man ___ called you is my brother. (relativo per persona)","who",["that"],"Persona soggetto: who o that."),
       O("form","Scrivi solo la parola mancante: This is the town ___ I grew up. (luogo)","where",[],"Luogo: where."),
-      C("meaning","Scegli che cosa significa: My sister, who lives in Turin, is a nurse.",["ho una sorella e vive a Torino (informazione aggiunta)","ho più sorelle: parlo di quella di Torino","mia sorella non vive a Torino"],"ho una sorella e vive a Torino (informazione aggiunta)","Relativa tra virgole: informazione in più."),
-      C("meaning","Scegli che cosa significa: My sister who lives in Turin is a nurse.",["ho più sorelle: parlo di quella di Torino","ho una sola sorella","mia sorella si trasferisce a Torino"],"ho più sorelle: parlo di quella di Torino","Senza virgole: identifica quale."),
+      C("meaning","Scegli che cosa significa: My sister, who lives in Turin, is a nurse.",["il fatto che viva a Torino è un’informazione aggiunta","ho più sorelle: parlo di quella di Torino","mia sorella non vive a Torino"],"il fatto che viva a Torino è un’informazione aggiunta","Le virgole presentano la relativa come informazione aggiuntiva su una persona già identificata. La frase non dimostra da sola quante sorelle abbia chi parla."),
+      C("meaning","Scegli che cosa significa: My sister who lives in Turin is a nurse.",["specifico quale sorella intendo: quella che vive a Torino","ho una sola sorella","mia sorella si trasferisce a Torino"],"specifico quale sorella intendo: quella che vive a Torino","La relativa senza virgole serve a identificare la persona. Spesso distingue fra più persone, ma non fornisce da sola un censimento della famiglia."),
       C("tense_choice","Scegli la forma corretta: Rome, ___ is the capital, is very old.",["which","that","what"],"which","Relativa con virgole: which, non that."),
       C("tense_choice","Scegli la forma corretta: That's the colleague ___ car was stolen.",["whose","who's","which"],"whose","Possesso: whose."),
       C("use","Nel rapporto identifichi il veicolo. Scegli la frase corretta.",["The van that was parked outside belongs to a delivery company.","The van who was parked outside belongs to a delivery company.","The van what was parked outside belongs to a delivery company."],"The van that was parked outside belongs to a delivery company.","Cosa: that/which."),
@@ -1214,32 +1214,32 @@ export const LESSON_BANK={
       C("use","Nel rapporto spieghi lo scopo del controllo. Scegli la frase corretta.",["The gate was checked so that no one could enter.","The gate was checked so no one can entered.","The gate was checked for that no one could enter."],"The gate was checked so that no one could enter.","So that + could."),
       C("use","Colleghi due fatti in contrasto in modo formale. Scegli la frase corretta.",["Although the evidence was limited, the conclusion was clear.","Although the evidence was limited, but the conclusion was clear.","Despite the evidence was limited, the conclusion was clear."],"Although the evidence was limited, the conclusion was clear.","Although senza but."),
       O("word_order","Metti le parole in ordine e scrivi la frase: as soon as / I'll / I hear / tell you","I'll tell you as soon as I hear",["As soon as I hear I'll tell you"],"As soon as + present."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: because / was / the road / closed / we were late","We were late because the road was closed",[],"Effetto + because + causa.")
+      O("word_order","Metti le parole in ordine e scrivi la frase: because / was / the road / closed / we were late","We were late because the road was closed",["Because the road was closed we were late"],"Effetto + because + causa.")
     ],
     check:[
-      O("form","Scrivi solo la parola mancante: ___ she was tired, she kept working. (sebbene)","Although",["Though","Even though"],"Contrasto: although."),
-      O("form","Scrivi solo la parola mancante: We waited until the rain ___. (stop, passato)","stopped",["had stopped"],"Until + passato."),
+      O("form","Scrivi solo ciò che manca: ___ she was tired, she kept working. (sebbene)","Although",["Though","Even though"],"Contrasto: although."),
+      O("form","Scrivi solo ciò che manca: We waited until the rain ___. (stop, passato)","stopped",["had stopped"],"Until + passato."),
       C("meaning","Scegli che cosa esprime while in: While I agree, I have some doubts.",["un contrasto","una durata","una causa"],"un contrasto","While = mentre/sebbene (contrasto)."),
-      C("tense_choice","Scegli la forma corretta: She took a taxi ___ she was late.",["because","although","despite"],"because","Causa: because."),
+      C("tense_choice","Indica il motivo per cui ha preso il taxi. Scegli la forma corretta: She took a taxi ___ she was late.",["because","although","despite"],"because","Causa: because."),
       C("use","Spieghi perché hai scritto la mail. Scegli la frase corretta.",["I'm writing to ask for information about the course.","I'm writing for asking information about the course.","I'm writing so asking for information about the course."],"I'm writing to ask for information about the course.","Scopo: to + verbo."),
       O("word_order","Metti le parole in ordine e scrivi la frase: despite / we / the cost / chose it","We chose it despite the cost",["Despite the cost we chose it"],"Despite + nome.")
     ]
   },
   linkers:{
     train:[
-      O("form","Scrivi solo la parola mancante: The plan is cheap. ___, it is very effective. (inoltre)","Moreover",["Furthermore","In addition"],"Aggiunta formale: moreover."),
+      O("form","Scrivi solo ciò che manca: The plan is cheap. ___, it is very effective. (inoltre)","Moreover",["Furthermore","In addition"],"Aggiunta formale: moreover."),
       O("form","Scrivi solo la parola mancante: The test was hard. ___, most students passed. (tuttavia)","However",["Nevertheless"],"Contrasto: however."),
       C("meaning","Scegli che cosa esprime therefore in: The road was closed; therefore, we used another route.",["una conseguenza","un esempio","un contrasto"],"una conseguenza","Therefore = quindi."),
       C("meaning","Scegli che cosa esprime for instance.",["un esempio","una conclusione","un contrasto"],"un esempio","For instance = per esempio."),
       C("form","Scegli la punteggiatura corretta.",["The costs are high; however, the benefits are clear.","The costs are high, however the benefits are clear.","The costs are high however, the benefits are clear."],"The costs are high; however, the benefits are clear.","However tra due frasi: punto e virgola prima, virgola dopo."),
-      C("tense_choice","Scegli il connettivo corretto: ___, I would recommend the second option.",["In conclusion","For example","Moreover than"],"In conclusion","Conclusione: in conclusion."),
-      C("use","Nel testo argomentativo aggiungi un secondo argomento. Scegli la frase più adatta.",["Furthermore, the new system saves time.","But furthermore, the new system saves time.","Furthermore the new system, saves time."],"Furthermore, the new system saves time.","Furthermore + virgola."),
+      C("tense_choice","È l’ultima frase del testo: introduci una sintesi conclusiva, non un esempio. Scegli il connettivo corretto: ___, I would recommend the second option.",["In conclusion","For example","Moreover than"],"In conclusion","Conclusione: in conclusion."),
+      C("use","Hai già elencato un vantaggio. Aggiungine un altro, senza introdurre né un contrasto né una conclusione. Scegli la frase più adatta.",["Furthermore, the new system saves time.","However, the new system saves time.","In conclusion, the new system saves time."],"Furthermore, the new system saves time.","Furthermore aggiunge un argomento; however introduce un contrasto; in conclusion segnala una conclusione."),
       C("use","Introduci un'obiezione in modo formale. Scegli la frase più adatta.",["On the other hand, the cost is considerable.","In the other hand, the cost is considerable.","On the other side hand, the cost is considerable."],"On the other hand, the cost is considerable.","On the other hand."),
       O("word_order","Metti le parole in ordine e scrivi la frase: as a result / was cancelled / the flight","As a result the flight was cancelled",["The flight was cancelled as a result"],"As a result = di conseguenza."),
       O("word_order","Metti le parole in ordine e scrivi la frase: in addition / offers / free parking / the hotel","In addition the hotel offers free parking",["The hotel offers free parking in addition"],"In addition = inoltre.")
     ],
     check:[
-      O("form","Scrivi solo la parola mancante: Prices rose. ___, sales fell. (di conseguenza)","Consequently",["Therefore","As a result"],"Conseguenza."),
+      O("form","Scrivi solo ciò che manca: Prices rose. ___, sales fell. (di conseguenza)","Consequently",["Therefore","As a result"],"Conseguenza."),
       O("form","Scrivi solo le parole mancanti: Some options are expensive, ___ the first one. (per esempio)","for example",["for instance","such as"],"Esempio."),
       C("meaning","Scegli che cosa esprime nevertheless.",["un contrasto","una conseguenza","un'aggiunta"],"un contrasto","Nevertheless = tuttavia."),
       C("tense_choice","Scegli il connettivo corretto: The room was small. ___, it was comfortable.",["Nevertheless","Therefore","For example"],"Nevertheless","Contrasto."),
@@ -1280,7 +1280,7 @@ export const LESSON_BANK={
       O("word_order","Metti le parole in ordine e scrivi la frase: is getting / the traffic / worse and worse","The traffic is getting worse and worse",[],"Comparativo ripetuto.")
     ],
     check:[
-      O("form","Scrivi solo la parola mancante: The test was ___ harder than I expected. (molto)","much",["far","a lot"],"Much + comparativo."),
+      O("form","Scrivi solo ciò che manca: The test was ___ harder than I expected. (molto)","much",["far","a lot"],"Much + comparativo."),
       O("form","Scrivi solo la parola mancante: The earlier we leave, the ___ traffic we'll find. (little)","less",[],"Little → less."),
       C("meaning","Scegli che cosa significa: She's twice as experienced as me.",["ha il doppio della mia esperienza","ha la metà della mia esperienza","ha la stessa esperienza"],"ha il doppio della mia esperienza","Twice as ... as."),
       C("tense_choice","Scegli la forma corretta: He drives ___ than his brother.",["more carefully","more careful","carefullier"],"more carefully","Comparativo dell'avverbio."),
@@ -1295,7 +1295,7 @@ export const LESSON_BANK={
       C("tense_choice","Scegli la forma corretta: Each student must bring ___ own laptop.",["their","his or their","them"],"their","Their singolare per una persona generica."),
       C("use","Nelle istruzioni ti rivolgi a chiunque. Scegli la frase più adatta.",["If anyone has questions, they can contact the desk.","If anyone has questions, he can contact the desk.","If anyone has questions, it can contact the desk."],"If anyone has questions, they can contact the desk.","They per una persona non specificata."),
       C("use","Dici che i due reparti non comunicano. Scegli la frase corretta.",["The two departments rarely talk to each other.","The two departments rarely talk to themselves each.","The two departments rarely talk each other."],"The two departments rarely talk to each other.","Talk to each other."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: enjoy / yourselves / at the party","Enjoy yourselves at the party",[],"Yourselves: plurale."),
+      O("word_order","Metti le parole in ordine e scrivi la frase: enjoy / yourselves / at the party","Enjoy yourselves at the party",["At the party enjoy yourselves"],"Yourselves: plurale."),
       O("word_order","Metti le parole in ordine e scrivi la frase: each other / have known / for years / we","We have known each other for years",[],"Each other dopo il verbo.")
     ],
     check:[
@@ -1338,7 +1338,7 @@ export const LESSON_BANK={
     ],
     check:[
       O("form","Scrivi solo le parole mancanti: He is known ___ several languages. (speak)","to speak",[],"Is known to + infinito."),
-      O("form","Scrivi solo le parole mancanti, al passivo: Nobody likes ___ . (criticise)","being criticised",["being criticized"],"Gerundio passivo."),
+      O("form","Scrivi solo le parole mancanti, al passivo: Nobody likes ___ . (criticise)","being criticised",["being criticized","to be criticised","to be criticized"],"Like ammette sia -ing sia to + infinito. Qui sono valide being criticised e to be criticised, entrambe passive; sono accettate anche le grafie americane con -z-."),
       C("meaning","Scegli che cosa significa: The ship is thought to have sunk.",["si pensa che la nave sia affondata","la nave sta affondando","la nave affonderà"],"si pensa che la nave sia affondata","Infinito perfect."),
       C("tense_choice","Scegli la forma corretta: The minister is expected ___ tomorrow.",["to arrive","to have arrived","arriving yesterday"],"to arrive","Azione futura: infinito semplice."),
       C("use","Riferisci in modo impersonale un fatto in corso. Scegli la frase corretta.",["The talks are said to be going well.","The talks are said going well.","The talks are said to going well."],"The talks are said to be going well.","Infinito continuous."),
@@ -1418,7 +1418,7 @@ export const LESSON_BANK={
       C("meaning","Scegli che cosa significa: Choose whichever date suits you.",["scegli la data che ti va meglio","scegli una data qualsiasi tranne una","scegli quando vuoi venire"],"scegli la data che ti va meglio","Whichever."),
       C("tense_choice","Scegli la forma corretta: ___ late it is, call me when you arrive.",["However","Whatever","Whenever"],"However","However + aggettivo."),
       C("use","Rassicuri un collega. Scegli la frase corretta.",["Whatever you need, just ask.","Whoever you need, just ask it.","However you need, just ask."],"Whatever you need, just ask.","Whatever."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: visit / whenever / you can / us","Visit us whenever you can",[],"Whenever.")
+      O("word_order","Metti le parole in ordine e scrivi la frase: visit / whenever / you can / us","Visit us whenever you can",["Whenever you can visit us"],"Whenever.")
     ]
   },
   ellipsis:{
@@ -1444,9 +1444,9 @@ export const LESSON_BANK={
     train:[
       C("meaning","Scegli che cosa significa: Could you lend me your pen?",["mi presti la tua penna?","posso prestarti la mia penna?","mi hai preso la penna?"],"mi presti la tua penna?","Lend = dare in prestito."),
       C("meaning","Scegli che cosa significa: The price has risen.",["il prezzo è salito","qualcuno ha alzato il prezzo apposta","il prezzo è sceso"],"il prezzo è salito","Rise: intransitivo, sale da solo."),
-      C("tense_choice","Scegli la forma corretta: Can I ___ your charger for an hour?",["borrow","lend","rent"],"borrow","Borrow = prendere in prestito."),
+      C("tense_choice","Chiedi un prestito gratuito e prometti di restituire il caricatore. Scegli la forma corretta: Can I ___ your charger for an hour?",["borrow","lend","rent"],"borrow","Borrow = prendere in prestito."),
       C("use","Al telefono chiedi a un collega di portarti un documento in ufficio. Scegli la frase corretta.",["Could you bring the file to my office?","Could you take the file to my office here?","Could you carry me the file to my office?"],"Could you bring the file to my office?","Bring = verso chi parla."),
-      C("use","Ricordi una regola a qualcuno. Scegli la frase corretta.",["Please remind me to call the client.","Please remember me to call the client.","Please remind to me to call the client."],"Please remind me to call the client.","Remind + persona + to."),
+      C("use","Chiedi a qualcuno di ricordarti di chiamare il cliente. Scegli la frase corretta.",["Please remind me to call the client.","Please remember me to call the client.","Please remind to me to call the client."],"Please remind me to call the client.","Remind + persona + to."),
       O("word_order","Metti le parole in ordine e scrivi la frase: lie down / for a while / I need to","I need to lie down for a while",[],"Lie = sdraiarsi."),
       O("word_order","Metti le parole in ordine e scrivi la frase: raised / the officer / his hand","The officer raised his hand",[],"Raise: transitivo.")
     ],
@@ -1504,7 +1504,7 @@ export const LESSON_BANK={
       C("tense_choice","Scegli la forma corretta: While we ___ , the phone rang.",["were eating","ate","had eaten"],"were eating","Azione in corso interrotta: past continuous."),
       C("use","Nel rapporto racconti la sequenza dei fatti. Scegli la frase corretta.",["The patrol arrived after the suspect had left.","The patrol had arrived after the suspect left before.","The patrol arrives after the suspect had left."],"The patrol arrived after the suspect had left.","Past simple + past perfect."),
       C("use","Racconti che cosa stavi facendo durante il blackout. Scegli la frase corretta.",["I was writing a report when the lights went out.","I wrote a report when the lights were going out.","I had been write a report when the lights went out."],"I was writing a report when the lights went out.","Continuous + simple."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: had been waiting / for an hour / she / when he arrived","She had been waiting for an hour when he arrived",[],"Past perfect continuous."),
+      O("word_order","Metti le parole in ordine e scrivi la frase: had been waiting / for an hour / she / when he arrived","She had been waiting for an hour when he arrived",["When he arrived she had been waiting for an hour"],"Past perfect continuous."),
       O("word_order","Metti le parole in ordine e scrivi la frase: used to / we / in Naples / live","We used to live in Naples",[],"Used to + verbo.")
     ],
     check:[
@@ -1513,7 +1513,7 @@ export const LESSON_BANK={
       C("meaning","Scegli che cosa significa: I'm used to working late.",["sono abituato a lavorare fino a tardi","lavoravo fino a tardi","lavorerò fino a tardi"],"sono abituato a lavorare fino a tardi","Be used to + -ing."),
       C("tense_choice","Scegli la forma corretta: She was tired because she ___ all day.",["had been working","has been working","works"],"had been working","Causa passata con durata."),
       C("use","Racconti un viaggio con una data precisa. Scegli la frase corretta.",["I visited Rome last year.","I have visited Rome last year.","I had visit Rome last year."],"I visited Rome last year.","Tempo finito (last year): past simple."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: was / she / when / the call came / sleeping","She was sleeping when the call came",[],"Continuous + simple.")
+      O("word_order","Metti le parole in ordine e scrivi la frase: was / she / when / the call came / sleeping","She was sleeping when the call came",["When the call came she was sleeping"],"Continuous + simple.")
     ]
   },
   "reporting-passive":{
@@ -1557,7 +1557,7 @@ export const LESSON_BANK={
       C("meaning","Scegli che cosa significa: Feeling tired, I went to bed.",["poiché ero stanco, sono andato a letto","ero stanco dopo essere andato a letto","non ero stanco"],"poiché ero stanco, sono andato a letto","Participio causale."),
       C("tense_choice","Scegli la forma corretta: Passengers ___ for Rome should go to gate 4.",["travelling","travelled","having travel"],"travelling","Valore attivo: -ing."),
       C("use","Descrivi un documento allegato in modo formale. Scegli la frase corretta.",["Please find the contract signed by both parties.","Please find the contract signing by both parties.","Please find the contract was signed by both parties."],"Please find the contract signed by both parties.","Participio passato."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: not / what to say / knowing / she stayed silent","Not knowing what to say she stayed silent",[],"Not + -ing.")
+      O("word_order","Metti le parole in ordine e scrivi la frase: not / what to say / knowing / she stayed silent","Not knowing what to say she stayed silent",["She stayed silent not knowing what to say"],"Not + -ing.")
     ]
   },
   inversion:{
@@ -1614,11 +1614,11 @@ export const LESSON_BANK={
       C("tense_choice","Scegli il nome corretto: We need your ___ before we start.",["approval","approve","approving of"],"approval","Approve → approval."),
       C("use","Rendi più formale per un rapporto: We analysed the data and found that... Scegli la frase più adatta.",["Analysis of the data revealed that...","Analyse of the data revealed that...","The analysing of data it revealed that..."],"Analysis of the data revealed that...","Nominalizzazione: stile formale."),
       C("use","Nel rapporto spieghi la causa del ritardo con un nome. Scegli la frase più adatta.",["The delay was due to the late arrival of the equipment.","The delay was due to the equipment arrived late of.","The delay was due to the late arrive of the equipment."],"The delay was due to the late arrival of the equipment.","Arrive → arrival."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: of the building / the evacuation / quickly / was completed","The evacuation of the building was completed quickly",[],"Nome + of."),
+      O("word_order","Metti le parole in ordine e scrivi la frase: of the building / the evacuation / quickly / was completed","The evacuation of the building was completed quickly",["The evacuation of the building was quickly completed"],"Nome + of."),
       O("word_order","Metti le parole in ordine e scrivi la frase: led to / the decision / protests","The decision led to protests",[],"Decide → decision.")
     ],
     check:[
-      O("form","Scrivi solo la parola mancante: The ___ of the bridge will take two years. (trasforma build in un nome, -ing)","building",["construction"],"Build → building."),
+      O("form","Scrivi solo la parola mancante: The ___ of the bridge will take two years. (trasforma build in un nome, -ing)","building",[],"Build → building."),
       O("form","Scrivi solo la parola mancante: We appreciate your ___. (trasforma assist in un nome)","assistance",[],"Assist → assistance."),
       C("meaning","Scegli che cosa significa: The removal of the barriers took an hour.",["la rimozione delle barriere ha richiesto un'ora","le barriere hanno rimosso un'ora","rimuovere le barriere è vietato"],"la rimozione delle barriere ha richiesto un'ora","Remove → removal."),
       C("tense_choice","Scegli il nome corretto: The ___ of the meeting is to agree a budget.",["purpose","purposing","propose"],"purpose","Purpose = scopo."),
@@ -1687,7 +1687,7 @@ export const LESSON_BANK={
       O("form","Scrivi solo la parola mancante: I asked two colleagues, but ___ of them knew. (nessuno dei due)","neither",[],"Neither of them."),
       O("form","Scrivi solo la parola mancante: These shoes are too small. I need bigger ___.","ones",[],"Ones per il plurale."),
       C("meaning","Scegli a che cosa si riferisce it in: The plan was approved, but it was never applied.",["il piano","l'approvazione","il progetto futuro"],"il piano","Riferimento pronominale."),
-      C("tense_choice","Scegli il connettivo corretto: The test is short. ___, it is quite difficult.",["Nonetheless","Therefore","Moreover"],"Nonetheless","Contrasto."),
+      C("tense_choice","Segnala un contrasto con l’aspettativa che un test breve sia facile. Scegli il connettivo corretto: The test is short. ___, it is quite difficult.",["Nonetheless","Therefore","Moreover"],"Nonetheless","Contrasto."),
       C("use","Riprendi un'idea all'inizio della frase. Scegli la frase più adatta.",["These changes will take time.","This changes will take time.","These change will take time."],"These changes will take time.","These + plurale."),
       O("word_order","Metti le parole in ordine e scrivi la frase: the former / cheaper / is","The former is cheaper",[],"The former.")
     ]
@@ -1762,7 +1762,7 @@ export const LESSON_BANK={
       C("tense_choice","Scegli la forma corretta: I ___ you're right about the timetable.",["suppose","am supposing","supposing"],"suppose","Suppose è di stato."),
       C("use","Racconti la trama di un film in modo vivace. Scegli la frase più adatta.",["The detective enters the room and finds a letter.","The detective entered the room and is finding a letter.","The detective is enter the room and finds a letter."],"The detective enters the room and finds a letter.","Present simple nelle narrazioni e trame."),
       C("use","Ti lamenti di un collega che arriva sempre tardi. Scegli la frase più adatta.",["He's constantly arriving late for meetings.","He constantly is arrive late for meetings.","He's constantly arrived late for meetings."],"He's constantly arriving late for meetings.","Constantly + continuous."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: being / you're / unusually quiet / today","You're being unusually quiet today",[],"Be + being: comportamento temporaneo."),
+      O("word_order","Metti le parole in ordine e scrivi la frase: being / you're / unusually quiet / today","You're being unusually quiet today",["Today you’re being unusually quiet"],"Be + being: comportamento temporaneo."),
       O("word_order","Metti le parole in ordine e scrivi la frase: I / apologise / for the delay","I apologise for the delay",[],"Verbo performativo al present simple.")
     ],
     check:[
@@ -1777,7 +1777,7 @@ export const LESSON_BANK={
   "advanced-past":{
     train:[
       C("meaning","Scegli che cosa significa: I was hoping you could help me.",["è una richiesta cortese di aiuto","speravo ma ora ho smesso","ho aiutato qualcuno"],"è una richiesta cortese di aiuto","Past continuous per cortesia."),
-      C("meaning","Scegli che cosa significa: We had hoped to finish by noon.",["speravamo di finire a mezzogiorno, ma non è successo","abbiamo finito a mezzogiorno","finiremo a mezzogiorno"],"speravamo di finire a mezzogiorno, ma non è successo","Past perfect: speranza non realizzata."),
+      C("meaning","Scegli che cosa significa: We had hoped to finish by noon.",["avevamo sperato di finire entro mezzogiorno","abbiamo finito a mezzogiorno","finiremo a mezzogiorno"],"avevamo sperato di finire entro mezzogiorno","Had hoped colloca la speranza prima di un momento passato. Spesso suggerisce una speranza delusa, ma senza altro contesto non dimostra che il lavoro non sia stato finito."),
       C("tense_choice","Scegli la forma corretta: She talks as if she ___ the boss.",["were","is being","would be"],"were","As if + past: irreale."),
       C("use","Chiedi un favore con molta cortesia. Scegli la frase più adatta.",["I was wondering whether you could check this.","I wondered whether you can check this yesterday.","I was wonder whether you could check this."],"I was wondering whether you could check this.","I was wondering."),
       C("use","Nel rapporto spieghi perché il collega era sporco di fango. Scegli la frase corretta.",["He was covered in mud because he had been searching the field.","He was covered in mud because he has been searching the field.","He was covered in mud because he searched the field since hours."],"He was covered in mud because he had been searching the field.","Past perfect continuous: causa visibile."),
@@ -1800,7 +1800,7 @@ export const LESSON_BANK={
       C("tense_choice","Scegli la forma corretta: When we were kids, we ___ play in the street for hours.",["would","will","should"],"would","Would: abitudine passata."),
       C("use","Rimproveri un collega per non averti avvisato. Scegli la frase corretta.",["You should have told me about the change.","You should told me about the change.","You should have tell me about the change."],"You should have told me about the change.","Should have + participio: rimprovero."),
       C("use","Esprimi un'opinione con tatto in una riunione. Scegli la frase più adatta.",["I would suggest that we wait a week.","I will suggest that we wait a week yesterday.","I would suggesting that we wait a week."],"I would suggest that we wait a week.","Would attenua."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: wouldn't / the car / this morning / start","The car wouldn't start this morning",[],"Wouldn't = rifiuto passato."),
+      O("word_order","Metti le parole in ordine e scrivi la frase: wouldn't / the car / this morning / start","The car wouldn't start this morning",["This morning the car wouldn't start"],"Wouldn't = rifiuto passato."),
       O("word_order","Metti le parole in ordine e scrivi la frase: should / you / any problems / have / call me","Should you have any problems call me",["Call me should you have any problems"],"Should + soggetto: condizionale formale.")
     ],
     check:[
@@ -1847,12 +1847,12 @@ export const LESSON_BANK={
       C("meaning","Scegli che cosa significa: God save the King.",["è un augurio formale","racconta un fatto passato","è una domanda"],"è un augurio formale","Congiuntivo in espressioni fisse."),
       C("tense_choice","Scegli la forma corretta (stile formale): We ask that passengers ___ their seatbelts fastened.",["keep","keeps","kept"],"keep","Ask that + forma base."),
       C("use","Raccomandi formalmente di non usare l'ascensore. Scegli la frase più adatta.",["It is recommended that the lift not be used.","It is recommended that the lift is not use.","It is recommended the lift not to be use."],"It is recommended that the lift not be used.","Not + be + participio."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: were / I / richer / would travel more / I","Were I richer I would travel more",[],"Inversione con were.")
+      O("word_order","Metti le parole in ordine e scrivi la frase: were / I / richer / would travel more / I","Were I richer I would travel more",["I would travel more were I richer"],"Inversione con were.")
     ]
   },
   "advanced-perfect":{
     train:[
-      C("meaning","Scegli che cosa significa: I've been reading your report.",["l'ho letto in parte, ci ho lavorato","l'ho letto tutto e finito","lo leggerò"],"l'ho letto in parte, ci ho lavorato","Continuous: attività, non necessariamente finita."),
+      C("meaning","Scegli che cosa significa: I've been reading your report.",["ho dedicato tempo alla lettura, senza precisare se ho finito","la lettura è sicuramente completa","inizierò a leggere in futuro"],"ho dedicato tempo alla lettura, senza precisare se ho finito","Il continuous mette in evidenza l’attività recente. Da solo non afferma né esclude che il rapporto sia stato letto fino alla fine."),
       C("meaning","Scegli che cosa significa: I've read your report.",["l'ho letto tutto","ci sto lavorando","non l'ho ancora letto"],"l'ho letto tutto","Simple: risultato completo."),
       C("tense_choice","Scegli la forma corretta: This is the third time she ___ late this week.",["has been","is","was being"],"has been","This is the first/second time + present perfect."),
       C("use","Comunichi un risultato parziale. Scegli la frase corretta.",["We have interviewed twelve witnesses so far.","We have been interviewed twelve witnesses so far.","We interviewed twelve witnesses so far since."],"We have interviewed twelve witnesses so far.","So far + present perfect simple con un numero."),
@@ -1864,7 +1864,7 @@ export const LESSON_BANK={
       O("form","Scrivi solo le parole mancanti al present perfect continuous: She ___ English for three years. (study)","has been studying",[],"Durata fino ad ora."),
       O("form","Scrivi solo le parole mancanti al present perfect: It's the second time I ___ this film. (see)","have seen",[],"It's the second time + present perfect."),
       C("meaning","Scegli che cosa significa: By then he'll have been working here for a decade.",["a quel punto lavorerà qui da dieci anni","ha lavorato qui dieci anni fa","inizierà a lavorare tra dieci anni"],"a quel punto lavorerà qui da dieci anni","Future perfect continuous."),
-      C("tense_choice","Scegli la forma corretta: I ___ three emails this morning (ed è ancora mattina).",["have written","have been writing","wrote yesterday"],"have written","Periodo non concluso, numero: simple."),
+      C("tense_choice","Tutte e tre le email sono già complete e inviate: indica il risultato. Scegli la forma corretta: I ___ three emails this morning (ed è ancora mattina).",["have written","have been writing","wrote yesterday"],"have written","Periodo non concluso, numero: simple."),
       C("use","Dici che aspetterai finché il collega non avrà finito. Scegli la frase corretta.",["I'll wait until you have finished.","I'll wait until you will have finished.","I'll wait until you finished tomorrow."],"I'll wait until you have finished.","Until + present perfect."),
       O("word_order","Metti le parole in ordine e scrivi la frase: has been / it / raining / all morning","It has been raining all morning",[],"Present perfect continuous.")
     ]
@@ -1893,10 +1893,10 @@ export const LESSON_BANK={
       C("meaning","Scegli che cosa significa: Strange though it may seem, it's true.",["per quanto possa sembrare strano, è vero","sembra strano quindi non è vero","è strano e falso"],"per quanto possa sembrare strano, è vero","Aggettivo + though."),
       C("meaning","Scegli che cosa mette in evidenza: That I can't accept.",["la cosa che non posso accettare","chi non accetta","il tempo dell'accettazione"],"la cosa che non posso accettare","Fronting: l'oggetto va all'inizio."),
       C("tense_choice","Scegli la forma corretta: Down the hill ___ .",["rolled the ball","the ball rolled it","did roll the ball"],"rolled the ball","Inversione dopo luogo/direzione."),
-      C("use","Descrivi una scena in modo letterario. Scegli la frase corretta.",["Into the room walked a tall man.","Into the room a tall man did walk.","Into the room walked he."],"Into the room walked a tall man.","Inversione con soggetto nome, non pronome."),
+      C("use","Usa l’inversione completa: il verbo deve precedere il soggetto nominale. Descrivi una scena in modo letterario. Scegli la frase corretta.",["Into the room walked a tall man.","Into the room a tall man did walk.","Into the room walked he."],"Into the room walked a tall man.","Inversione con soggetto nome, non pronome."),
       C("use","Annunci l'arrivo dell'autobus. Scegli la frase corretta.",["Here comes the bus.","Here the bus comes it.","Here does come the bus."],"Here comes the bus.","Here + verbo + nome."),
       O("word_order","Metti le parole in ordine e scrivi la frase: there / she / goes","There she goes",[],"Con pronome: there + pronome + verbo."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: try as / we might / we couldn't open it","Try as we might we couldn't open it",[],"Try as we might = per quanto provassimo.")
+      O("word_order","Metti le parole in ordine e scrivi la frase: try as / we might / we couldn't open it","Try as we might we couldn't open it",["We couldn’t open it try as we might"],"Try as we might = per quanto provassimo.")
     ],
     check:[
       O("form","Scrivi solo il verbo mancante al past simple: On the table ___ a letter. (lie)","lay",[],"Inversione dopo luogo: lie → lay."),
@@ -1904,7 +1904,7 @@ export const LESSON_BANK={
       C("meaning","Scegli che cosa significa: Here they are.",["eccoli","ci sono qui da tempo","sono andati via"],"eccoli","Here + pronome + verbo."),
       C("tense_choice","Scegli la forma corretta: Out ___ .",["ran the children","the children did run","ran they"],"ran the children","Inversione con soggetto nome."),
       C("use","Sottolinei la stanchezza in modo letterario. Scegli la frase corretta.",["Exhausted as he was, he kept walking.","As exhausted he was, he kept walking.","Exhausted as was he, he kept walking."],"Exhausted as he was, he kept walking.","Aggettivo + as + soggetto + verbo."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: on the corner / a small café / stood","On the corner stood a small café",[],"Inversione dopo luogo.")
+      O("word_order","Metti le parole in ordine e scrivi la frase: on the corner / a small café / stood","On the corner stood a small café",["A small café stood on the corner"],"Inversione dopo luogo.")
     ]
   },
   "advanced-prepositions":{
@@ -1930,7 +1930,7 @@ export const LESSON_BANK={
     train:[
       C("meaning","Scegli quale frase indica il numero totale.",["The number of applicants is rising.","A number of applicants are rising.","A number of applicants is rising."],"The number of applicants is rising.","The number of + singolare."),
       C("meaning","Scegli che cosa significa: A number of officers were present.",["erano presenti diversi agenti","il numero di agenti era preciso","nessun agente era presente"],"erano presenti diversi agenti","A number of = diversi, plurale."),
-      C("tense_choice","Scegli la forma corretta: Neither the manager nor the staff ___ aware of the problem.",["were","was","be"],"were","Neither ... nor: concorda con il più vicino."),
+      C("tense_choice","Scegli la forma corretta: Neither the manager nor the staff members ___ aware of the problem.",["were","was","be"],"were","Con neither ... nor si usa qui la concordanza con il soggetto più vicino, staff members, esplicitamente plurale. Staff da solo può invece avere concordanza singolare o plurale."),
       C("use","Nel rapporto parli della squadra come gruppo di persone. Scegli la frase corretta.",["The police have arrested two men.","The police has arrested two men.","The police is arresting two men yesterday."],"The police have arrested two men.","Police è sempre plurale."),
       C("use","Descrivi l'attrezzatura in magazzino. Scegli la frase corretta.",["The equipment is stored in the basement.","The equipments are stored in the basement.","The equipment are stored in the basement."],"The equipment is stored in the basement.","Equipment non numerabile."),
       O("word_order","Metti le parole in ordine e scrivi la frase: is / every one of / the rooms / occupied","Every one of the rooms is occupied",[],"Every one of + singolare."),
@@ -1961,7 +1961,7 @@ export const LESSON_BANK={
       C("meaning","Scegli che cosa significa: She said she would have finished by Friday.",["ha detto che avrebbe finito entro venerdì","ha finito venerdì scorso","finisce ogni venerdì"],"ha detto che avrebbe finito entro venerdì","Future perfect nel passato."),
       C("tense_choice","Scegli la forma corretta: When you ___ the form, give it to reception.",["have completed","will have completed","completed tomorrow"],"have completed","Present perfect dopo when per il futuro."),
       C("use","Indichi una durata fino a un momento futuro. Scegli la frase corretta.",["By 2030 she will have been teaching for twenty years.","By 2030 she will be teach for twenty years.","By 2030 she has been teaching for twenty years."],"By 2030 she will have been teaching for twenty years.","Future perfect continuous."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: be meeting / will / the director / we / at ten","We will be meeting the director at ten",[],"Future continuous.")
+      O("word_order","Metti le parole in ordine e scrivi la frase: be meeting / will / the director / we / at ten","We will be meeting the director at ten",["At ten we will be meeting the director"],"Future continuous.")
     ]
   },
   "present-simple":{
@@ -1970,17 +1970,17 @@ export const LESSON_BANK={
       C("tense_choice","Scegli la forma corretta: How often ___ you check your email?",["do","are","does"],"do","Domanda di frequenza: do + soggetto."),
       C("use","Ti presenti in un'email di lavoro. Scegli la frase corretta.",["I work in the logistics office and I deal with transport.","I am work in the logistics office and I dealing with transport.","I works in the logistics office and I deals with transport."],"I work in the logistics office and I deal with transport.","Routine e lavoro: present simple."),
       C("use","Descrivi l'orario dell'ufficio a un visitatore. Scegli la frase corretta.",["The office opens at eight and closes at four.","The office is opening at eight and is closing at four every day.","The office open at eight and close at four."],"The office opens at eight and closes at four.","Orari fissi: present simple."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: usually / she / by train / travels","She usually travels by train",[],"Avverbio di frequenza prima del verbo."),
+      O("word_order","Metti le parole in ordine e scrivi la frase: usually / she / by train / travels","She usually travels by train",["Usually she travels by train"],"Avverbio di frequenza prima del verbo."),
       O("word_order","Metti le parole in ordine e scrivi la domanda: does / where / your sister / live","Where does your sister live",[],"Wh- + does + soggetto + verbo base.")
     ]
   },
   "present-continuous":{
     train:[
       C("tense_choice","Scegli la forma corretta: Look! The bus ___.",["is coming","comes","come"],"is coming","Azione in corso adesso."),
-      C("tense_choice","Scegli la forma corretta: This week I ___ from home.",["am working","work every week","worked"],"am working","Situazione temporanea."),
+      C("tense_choice","È un’attività temporanea in corso questa settimana. Scegli la forma corretta: This week I ___ from home.",["am working","work every week","worked"],"am working","Situazione temporanea."),
       C("use","Al telefono spieghi che cosa stai facendo. Scegli la frase corretta.",["I'm driving, so I'll call you back later.","I drive, so I'll call you back later.","I'm drive, so I'll call you back later."],"I'm driving, so I'll call you back later.","In corso mentre parli."),
       C("use","Descrivi un cambiamento in corso. Scegli la frase corretta.",["Prices are rising quickly this year.","Prices rise quickly this year now.","Prices are rise quickly this year."],"Prices are rising quickly this year.","Tendenza in corso."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: are / at the moment / we / waiting","We are waiting at the moment",[],"Be + -ing."),
+      O("word_order","Metti le parole in ordine e scrivi la frase: are / at the moment / we / waiting","We are waiting at the moment",["At the moment we are waiting"],"Be + -ing."),
       O("word_order","Metti le parole in ordine e scrivi la domanda: you / what / doing / are","What are you doing",[],"Wh- + be + soggetto + -ing.")
     ]
   },
@@ -1996,11 +1996,11 @@ export const LESSON_BANK={
   },
   "past-continuous":{
     train:[
-      C("tense_choice","Scegli la forma corretta: I ___ dinner when you called.",["was having","had","have had"],"was having","Azione in corso interrotta."),
-      C("tense_choice","Scegli la forma corretta: While she was reading, the lights ___ out.",["went","were going","go"],"went","Azione breve che interrompe: past simple."),
+      C("tense_choice","La cena era già in corso al momento della telefonata: descrivi lo sfondo. Scegli la forma corretta: I ___ dinner when you called.",["was having","had","have had"],"was having","Azione in corso interrotta."),
+      C("tense_choice","Lo spegnimento delle luci è un singolo evento concluso durante la lettura. Scegli la forma corretta: While she was reading, the lights ___ out.",["went","were going","go"],"went","Azione breve che interrompe: past simple."),
       C("use","Il testimone descrive la scena. Scegli la frase corretta.",["Two men were standing near the car when the alarm went off.","Two men stood near the car when the alarm was going off suddenly.","Two men were stand near the car when the alarm went off."],"Two men were standing near the car when the alarm went off.","Sfondo continuous, evento simple."),
       C("use","Ti scusi con un collega: non hai sentito il campanello. Scegli la frase corretta.",["Sorry, I was having a shower.","Sorry, I had a shower since.","Sorry, I was have a shower."],"Sorry, I was having a shower.","In corso in quel momento."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: was raining / it / when we left","It was raining when we left",[],"Sfondo + evento."),
+      O("word_order","Metti le parole in ordine e scrivi la frase: was raining / it / when we left","It was raining when we left",["When we left it was raining"],"Sfondo + evento."),
       O("word_order","Metti le parole in ordine e scrivi la domanda: you / at ten / were / what / doing","What were you doing at ten",[],"Wh- + was/were + soggetto + -ing.")
     ]
   },
@@ -2040,7 +2040,7 @@ export const LESSON_BANK={
       C("tense_choice","Scegli la forma corretta: Your eyes are red. ___ you been crying?",["Have","Are","Did"],"Have","Effetto visibile di un'attività recente."),
       C("use","Spieghi da quanto tempo studi inglese. Scegli la frase corretta.",["I've been studying English for two years.","I'm studying English since two years.","I study English for two years."],"I've been studying English for two years.","Durata fino ad ora: present perfect continuous."),
       C("use","Spieghi perché la strada è bagnata. Scegli la frase corretta.",["It's been raining all night.","It's raining all night since.","It rained all night now."],"It's been raining all night.","Attività recente con effetto."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: have been / we / since nine / working","We have been working since nine",[],"Since + punto di inizio."),
+      O("word_order","Metti le parole in ordine e scrivi la frase: have been / we / since nine / working","We have been working since nine",["Since nine we have been working"],"Since + punto di inizio."),
       O("word_order","Metti le parole in ordine e scrivi la domanda: long / how / she / has / been / living here","How long has she been living here",[],"How long + has + been + -ing.")
     ]
   },
@@ -2070,7 +2070,7 @@ export const LESSON_BANK={
       C("tense_choice","Scegli la forma corretta: I think it ___ rain tomorrow.",["will","is","does"],"will","Previsione basata su opinione: will."),
       C("use","Ti offri di aiutare un collega con le borse. Scegli la frase corretta.",["I'll carry that for you.","I carry that for you tomorrow.","I'm carrying that for you every day."],"I'll carry that for you.","Offerta spontanea: will."),
       C("use","Prometti di mandare un documento. Scegli la frase corretta.",["I'll send you the file tonight, I promise.","I send you the file tonight, I promise.","I'll sending you the file tonight, I promise."],"I'll send you the file tonight, I promise.","Promessa: will."),
-      O("word_order","Metti le parole in ordine e scrivi la frase: won't / probably / she / come","She probably won't come",[],"Probably prima di won't."),
+      O("word_order","Metti le parole in ordine e scrivi la frase: won't / probably / she / come","She probably won't come",["Probably she won’t come"],"Probably prima di won't."),
       O("word_order","Metti le parole in ordine e scrivi la domanda: you / will / help me","Will you help me",[],"Will + soggetto + verbo base.")
     ]
   },

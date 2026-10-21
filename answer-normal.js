@@ -3,6 +3,14 @@ export function normal(value) {
   return String(value??"").normalize("NFKC").toLowerCase().replace(/[‘’]/g,"'").replace(/\bwon't\b/g,"will not").replace(/\bshan't\b/g,"shall not").replace(/\bcan't\b/g,"cannot").replace(/\bcan\s+not\b(?!\s+(?:only|just)\b)/g,"cannot").replace(/\b([a-z]+)n't\b/g,"$1 not").replace(/\bi'm\b/g,"i am").replace(/\b(i|you|we|they|could|should|would|might|must)'ve\b/g,"$1 have").replace(/\b(i|you|we|they|he|she|it)'ll\b/g,"$1 will").replace(/\b(you|we|they)'re\b/g,"$1 are").trim().replace(/[.,!?;:]+$/g,"").replace(/\s+/g," ").trim();
 }
 export function correct(item,answer) {
+  // Nel riordino la virgola che separa un complemento o una subordinata iniziale
+  // non deve trasformare una variante già approvata in un errore. Non estendere
+  // questa tolleranza alle relative: lì le virgole possono cambiare il senso.
+  if(!item.options?.length&&/metti le parole in ordine/i.test(String(item.stem??item.question??""))){
+    const withoutCommas=v=>String(v??"").replace(/,/g," ");
+    const plain={...item,stem:"",question:"",answer:withoutCommas(item.answer),accept:(item.accept||[]).map(withoutCommas)};
+    return correct(plain,withoutCommas(answer));
+  }
   if(item.case_sensitive){const exact=v=>String(v??"").normalize("NFKC").replace(/[‘’]/g,"'").replace(/\s+/g," ").trim().replace(/[.!?]+$/,"");return [item.answer,...(item.accept||[])].some(v=>exact(v)===exact(answer));}
   const variants=value=>{const text=String(value??"").replace(/[‘’]/g,"'");return [text,text.replace(/\b(he|she|it|that|there)'s\b/gi,"$1 is"),text.replace(/\b(he|she|it|that|there)'s\b/gi,"$1 has"),text.replace(/\b(i|you|we|they|he|she|it)'d\b/gi,"$1 had"),text.replace(/\b(i|you|we|they|he|she|it)'d\b/gi,"$1 would")].map(normal);};
   const candidates=variants(answer);
