@@ -227,3 +227,18 @@ test("revisione: la decisione usa il livello con cui il ciclo è stato giocato",
   const result=closeCycle(state,done,stamp());
   assert.equal(result.level,2);assert.equal(result.decision,"up");assert.equal(result.to,3);
 });
+
+test("1.16.1: le prove recenti alzano il livello di partenza e un livello fissato ma mai deciso", () => {
+  const state=freshState();state.settings.starting_level="A1";
+  assert.equal(initialLevel(state,"present-simple").level,1);
+  const items=Array.from({length:6},(_,i)=>({id:"ps-"+i,stem:"Practice stem "+i,answer:"works",accept:["works"],options:[],why:"x",skill:"form",origin:"local"}));
+  state.sessions.push({id:"old",lesson_id:"present-simple",items,answers:{},assisted:false,completed_at:stamp(),source:"local",created_at:stamp()});
+  for(const it of items)state.attempts.push({id:"a-"+it.id,session_id:"old",item_id:it.id,lesson_id:"present-simple",stem:it.stem,answer:"works",correct:true,assisted:false,source:"local",date:stamp(),skill:"form"});
+  assert.deepEqual(initialLevel(state,"present-simple"),{level:2,autonomous:false,source:"practice"});
+  state.lesson_levels={"present-simple":saved(1)};
+  assert.equal(levelState(state,"present-simple").level,2,"un livello mai deciso da un ciclo sale con le prove");
+  state.lesson_levels["present-simple"].history=[{at:stamp(),from:2,to:1,decision:"down",n:9,correct:3}];
+  assert.equal(levelState(state,"present-simple").level,1,"una decisione del percorso non viene scavalcata");
+  const cycle=planCycle(state,{force:"present-simple"});
+  assert.match(cycleReason(cycle),/L'hai scelta tu/);
+});

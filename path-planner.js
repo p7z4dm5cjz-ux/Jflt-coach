@@ -3,7 +3,7 @@
 import {LESSONS} from "./catalog.js";
 import {placementProfile} from "./placement.js";
 import {recommendation} from "./engine.js";
-import {lessonMeta,PATH_GROUPS} from "./learning-path.js";
+import {lessonMeta,PATH_GROUPS,learningReason} from "./learning-path.js";
 import {practiceWindow,lessonEvidence} from "./grammar-checks.js";
 import {lessonRules,LEVELS} from "./item-tags.js";
 import {levelState,ruleStats,minLevelFor,MAX_LEVEL,cycleDecision,applyDecision,secondaryCheck} from "./path-levels.js";
@@ -79,6 +79,21 @@ export function chooseRule(state,lessonId,level,used=new Map()){
   return {rule:pick.id,level:Math.max(level,minLevelFor(pick.id))};
 }
 
+// Perché questa lezione è la principale: pretest e prove recenti, in parole semplici.
+export function mainReason(state,lessonId,{forced=false,continued=false}={}){
+  const lesson=byId.get(lessonId);if(!lesson)return "";
+  if(forced)return "L'hai scelta tu dalla pagina della lezione.";
+  const parts=[];
+  if(continued)parts.push("Continua dal ciclo precedente.");
+  const profile=placementProfile(state.placement),reason=learningReason(state,lesson);
+  if(profile?.lessonStatus?.[lessonId]==="review"&&!reason.startsWith("Nel pretest")){
+    const rows=profile.rows.filter(r=>profile.adaptive?r.item.lessons[0]===lessonId:r.item.lessons.includes(lessonId)),wrong=rows.filter(r=>!r.correct).length,rank=profile.priorityIds.indexOf(lessonId);
+    if(wrong)parts.push("Nel pretest: "+wrong+" su "+rows.length+" sbagliate"+(rank>=0?", priorità n. "+(rank+1):"")+".");
+  }
+  parts.push(reason);
+  return parts.join(" ");
+}
+
 // Un ciclo: lezione principale (o recupero), intrecciate, ripassi e i 15 slot nei 3 blocchi.
 export function planCycle(state,{previous=null,exclude=[],force=null,timestamp=Date.now()}={}){
   let main=null,recovery_for=null;
@@ -90,8 +105,10 @@ export function planCycle(state,{previous=null,exclude=[],force=null,timestamp=D
   }
   // «Esercita questa lezione»: la lezione scelta dallo studente, anche se già autonoma (il recupero ha la precedenza).
   if(!main&&force&&byId.has(force)&&hasRules(force))main=force;
+  const forcedMain=!!main&&main===force&&!recovery_for;
   main??=chooseMain(state,{exclude,continueWith:previous?.main});
   if(!main)return null;
+  const why=recovery_for?"":mainReason(state,main,{forced:forcedMain,continued:!forcedMain&&main===previous?.main});
   const ls=levelState(state,main),mainLevel=Math.min(ls.level,MAX_LEVEL);
   const mixed=partners(state,main,2),review=reviewLessons(state,[main,...mixed,recovery_for].filter(Boolean),3,timestamp);
   const used=new Map(),blocks=[];
@@ -114,7 +131,7 @@ export function planCycle(state,{previous=null,exclude=[],force=null,timestamp=D
     }
     blocks.push(slots);
   });
-  return {main,level:mainLevel,recovery_for,roles:{intertwined:mixed,review},blocks};
+  return {main,level:mainLevel,recovery_for,why,roles:{intertwined:mixed,review},blocks};
 }
 
 export function newPath(length=DEFAULT_LENGTH,timestamp=new Date().toISOString(),id="path-"+crypto.randomUUID()){
@@ -128,7 +145,7 @@ export function cycleReason(cycle){
   const title=id=>byId.get(id)?.title||id;
   const parts=[];
   if(cycle.recovery_for)parts.push("Recupero di «"+title(cycle.main)+"», prerequisito di «"+title(cycle.recovery_for)+"»: lì gli errori erano troppi.");
-  else parts.push("«"+title(cycle.main)+"» al livello "+cycle.level+" ("+LEVELS[cycle.level].toLowerCase()+").");
+  else parts.push("«"+title(cycle.main)+"» al livello "+cycle.level+" ("+LEVELS[cycle.level].toLowerCase()+")."+(cycle.why?" "+cycle.why:""));
   if(cycle.roles.intertwined.length)parts.push("Intrecciata con "+cycle.roles.intertwined.map(id=>"«"+title(id)+"»").join(" e ")+".");
   if(cycle.roles.review.length)parts.push("Ripasso: "+cycle.roles.review.map(id=>"«"+title(id)+"»").join(", ")+".");
   return parts.join(" ");
@@ -160,7 +177,7 @@ export function validatePaths(state){
   for(const p of paths){
     if(!p||typeof p.id!=="string"||!PATH_LENGTHS[p.length]||!date(p.created_at)||p.completed_at!==null&&!date(p.completed_at)||p.forced_lesson!==undefined&&!lesson(p.forced_lesson)||!Array.isArray(p.cycles)||p.cycles.length>pathCycles(p))throw new Error("Percorso adattivo non valido.");
     for(const [i,c] of p.cycles.entries()){
-      const bad=!c||c.n!==i+1||!lesson(c.main)||!Number.isInteger(c.level)||c.level<1||c.level>MAX_LEVEL||c.recovery_for!==null&&!lesson(c.recovery_for)
+      const bad=!c||c.n!==i+1||!lesson(c.main)||c.why!==undefined&&(typeof c.why!=="string"||c.why.length>800)||!Number.isInteger(c.level)||c.level<1||c.level>MAX_LEVEL||c.recovery_for!==null&&!lesson(c.recovery_for)
         ||!c.roles||!Array.isArray(c.roles.intertwined)||c.roles.intertwined.length>2||!Array.isArray(c.roles.review)||c.roles.review.length>3||[...c.roles.intertwined,...c.roles.review].some(id=>!lesson(id))
         ||!Array.isArray(c.blocks)||c.blocks.length!==BLOCK_LAYOUT.length||c.blocks.some(b=>!Array.isArray(b)||b.length>BLOCK_SIZE||!b.every(okSlot))
         ||!Array.isArray(c.block_ids)||c.block_ids.length>BLOCK_LAYOUT.length||c.block_ids.some(id=>sessions.get(id)?.path_id!==p.id)

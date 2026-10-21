@@ -14,17 +14,22 @@ const MORPHOLOGY=new Set(["form","neg","q"]);
 export const minLevelFor=ruleId=>MORPHOLOGY.has(String(ruleId).split(".")[1])?2:1;
 
 export function initialLevel(state,lessonId){
-  if(practiceWindow(state,lessonId).independent)return {level:MAX_LEVEL,autonomous:true,source:"independent"};
+  const w=practiceWindow(state,lessonId);
+  if(w.independent)return {level:MAX_LEVEL,autonomous:true,source:"independent"};
   const status=placementProfile(state.placement)?.lessonStatus?.[lessonId];
-  if(status==="review")return {level:1,autonomous:false,source:"pretest"};
-  if(status==="skip")return {level:3,autonomous:false,source:"pretest"};
-  if(status==="confirm")return {level:2,autonomous:false,source:"pretest"};
   const start=startingLevel(state)?.id;
-  return {level:["A1","A2"].includes(start)?1:2,autonomous:false,source:"default"};
+  const base=status==="review"?1:status==="skip"?3:status==="confirm"?2:["A1","A2"].includes(start)?1:2;
+  // Le prove più recenti prevalgono sul pretest: 5 corrette sulle ultime 6 verificate, senza aiuti,
+  // dimostrano già la produzione con aiuto (livello 2).
+  if(w.can_advance&&base<2)return {level:2,autonomous:false,source:"practice"};
+  return {level:base,autonomous:false,source:status?"pretest":"default"};
 }
 export function levelState(state,lessonId){
   const saved=state.lesson_levels?.[lessonId];
-  return saved?{...saved}:{...initialLevel(state,lessonId),changed_at:null,pending_transfer:false,history:[]};
+  if(!saved)return {...initialLevel(state,lessonId),changed_at:null,pending_transfer:false,history:[]};
+  // Un livello salvato ma mai deciso da un ciclo (solo fissato all'avvio) sale se gli esercizi già fatti lo dimostrano.
+  if(!saved.history?.length&&!saved.autonomous&&!saved.pending_transfer){const start=initialLevel(state,lessonId);if(start.source==="practice"&&start.level>saved.level)return {...saved,level:start.level};}
+  return {...saved};
 }
 
 // Risposte del percorso valide per i livelli: esercizi con regola e livello, verificati

@@ -102,6 +102,9 @@ test('livello 4: il testo resta visibile se il primo spazio è escluso, e ogni s
   const set=repo.get().sessions.at(-1);
   assert.equal(set.items.filter(i=>i.group).length,3);assert.ok(set.items[0].doubt);
   assert.ok(document.querySelector('.path-passage')?.textContent.includes('(2) ___'),'il testo deve restare visibile');
+  const legends=[...document.querySelectorAll('legend')].map(l=>l.textContent);
+  assert.ok(legends.some(t=>/livello 4 · intrecciare/i.test(t)),legends.join('|'));
+  assert.ok(legends.filter(t=>/livello [34]/.test(t)).every(t=>!/Present perfect|Forma|Domanda|Contrasto|Quando/.test(t)),'dal livello 3 nessun nome di regola: '+legends.join('|'));
   const ids=set.items.filter(i=>i.group).map(i=>i.context_id);
   assert.equal(new Set(ids).size,3);assert.ok(ids.every(id=>id.startsWith('path:')));
   doubtFirstGap=false;

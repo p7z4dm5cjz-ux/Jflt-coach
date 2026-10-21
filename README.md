@@ -1,3 +1,10 @@
+# Versione 1.16.1: livello di partenza e motivi più chiari nel percorso
+
+- **Livello di partenza dalle prove recenti:** se nelle ultime 6 risposte verificate ne hai almeno 5 corrette senza aiuti, la lezione parte almeno dal livello 2 anche quando il pretest la segnava da ripassare. Vale anche per un livello già fissato all'avvio di un ciclo ma mai deciso da un ciclo concluso; una decisione del percorso non viene scavalcata.
+- **Perché questa lezione:** la riga del ciclo spiega la scelta (pretest con errori e posto tra le priorità, sessione riuscita ma prove ancora da diversificare, continuazione del ciclo precedente, scelta dalla pagina della lezione).
+- **Niente suggerimenti involontari:** dal livello 3 l'intestazione dell'esercizio non mostra più il nome della regola, che anticipava la risposta; resta il ruolo e il livello.
+- **«Termina qui» chiede conferma** prima di chiudere il percorso.
+
 # Versione 1.16.0: percorso adattivo a cicli di 15 domande (fase 3 del tutor)
 
 - **Percorso con il tutor da Oggi:** 30, 45 o 60 minuti = 2, 3 o 4 cicli. Ogni ciclo ha 15 domande in tre blocchi da 5: lezione principale 4/3/2, lezioni intrecciate 0/1/2, un ripasso per blocco. L'app sceglie lezione, regole e livello (`path-planner.js`); Groq scrive solo gli esercizi richiesti.

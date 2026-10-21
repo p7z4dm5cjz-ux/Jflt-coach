@@ -110,9 +110,10 @@ export function pathUI(api){
       set.source==="local"&&!set.completed_at&&!Object.values(set.answers).some(v=>v.trim())&&getToken()&&button("Riprova con il tutor",()=>retryBlock(set.id),"secondary"));
   }
   // Etichetta sopra ogni esercizio: ruolo, regola e livello.
+  // Dal livello 3 la regola si deduce dal contesto: il nome della regola anticiperebbe la risposta.
   function itemLabel(item){
-    const rule=item.rules?.[0]&&ruleInfo(item.rules[0]);
-    return [item.path_role&&ROLE_LABELS[item.path_role],rule?.name,item.level&&"livello "+item.level].filter(Boolean).join(" · ");
+    const rule=item.level<=2&&item.rules?.[0]&&ruleInfo(item.rules[0]);
+    return [item.path_role&&ROLE_LABELS[item.path_role],rule?.name,item.level&&"livello "+item.level+(item.level>=3?" · "+LEVELS[item.level].toLowerCase():"")].filter(Boolean).join(" · ");
   }
   function passage(set,item){
     const text=set.passages?.find(x=>x.group===item.group)?.text;
@@ -143,7 +144,7 @@ export function pathUI(api){
       }),
       step.kind==="done"||path.completed_at?h("div",{class:"actions"},button("Nuovo percorso · "+DEFAULT_LENGTH+" minuti",()=>start(DEFAULT_LENGTH)),link("Torna a Oggi","home","secondary"))
         :h("div",{class:"actions"},button(step.kind==="plan"?"Inizia il ciclo "+step.n:step.kind==="close"?"Vedi il risultato del ciclo":"Continua il blocco",()=>advance(path.id)),
-          button("Termina qui",async()=>{await change(x=>{x.paths.find(y=>y.id===path.id).completed_at=now();});await refresh();},"quiet"))];
+          button("Termina qui",async()=>{if(!window.confirm("Terminare il percorso? I cicli fatti restano salvati; per continuare dovrai aprirne uno nuovo."))return;await change(x=>{x.paths.find(y=>y.id===path.id).completed_at=now();});await refresh();},"quiet"))];
   }
   return {start,advance,retryBlock,homeCard,lessonCard,practiceHeader,itemLabel,passage,continueButton,page};
 }
