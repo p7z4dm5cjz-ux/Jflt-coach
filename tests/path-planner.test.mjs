@@ -51,9 +51,12 @@ test("al livello 1 nessuna regola di sola forma", () => {
   assert.ok(cycle.blocks.flat().filter(s=>s.lesson_id==="present-simple").every(s=>s.level===1&&!/\.(form|neg|q)$/.test(s.rule)));
 });
 
-test("composizione: principale 4/3/2, intrecciate 0/1/2, un ripasso per blocco", () => {
+test("prima 15 sulla lezione; al livello 4 principale 4/3/2, intrecciate 0/1/2, un ripasso", () => {
   const state=freshState();
   state.lesson_levels={"present-simple":saved(3),"present-continuous":saved(2),"past-simple":saved(2),"questions":saved(4,{autonomous:true})};
+  const focused=planCycle(state,{previous:{main:"present-continuous"}});
+  assert.ok(focused.blocks.flat().every(s=>s.lesson_id==="present-continuous"));
+  state.lesson_levels["present-continuous"].level=4;
   const cycle=planCycle(state,{previous:{main:"present-continuous"}});
   assert.equal(cycle.main,"present-continuous");
   assert.ok(cycle.roles.intertwined.length>=1);
@@ -64,7 +67,7 @@ test("composizione: principale 4/3/2, intrecciate 0/1/2, un ripasso per blocco",
     assert.equal(count("review"),1);
   });
   // Le secondarie non superano il livello di contesto.
-  assert.ok(cycle.blocks.flat().filter(s=>s.role!=="main").every(s=>s.level<=3));
+  assert.ok(cycle.blocks.flat().filter(s=>s.role!=="main"&&!s.group).every(s=>s.level<=3));
   assert.ok(partners(state,"present-continuous").includes("present-simple"));
   assert.equal(mixable(freshState(),"present-simple"),false);
 });
@@ -88,7 +91,8 @@ test("studente sicuro: sale 2→3→4, poi attende il trasferimento e cambia lez
   }
   assert.deepEqual(levels,[3,4,4]);
   assert.equal(levelState(state,first).pending_transfer,true);
-  assert.notEqual(cycle.main,first);
+  assert.equal(cycle.main,first);
+  assert.equal(cycle.phase,"transfer");
 });
 
 test("studente in difficoltà: scende a 1, poi recupero sul prerequisito e ritorno", () => {
@@ -137,7 +141,7 @@ test("frasi già viste e risposte con aiuto non contano", () => {
 
 test("intrecciata o ripasso: 2 errori su 3 fanno scendere e tolgono l'autonomia", () => {
   const state=freshState();
-  state.lesson_levels={"present-continuous":saved(2),"present-simple":saved(4,{autonomous:true})};
+  state.lesson_levels={"present-continuous":saved(4),"present-simple":saved(4,{autonomous:true})};
   const cycle=planCycle(state,{previous:{main:"present-continuous"}});
   assert.ok(cycle.roles.intertwined.includes("present-simple"));
   const done=answerCycle(state,cycle,slot=>slot.lesson_id!=="present-simple",{prefix:"sec"});
@@ -158,11 +162,12 @@ test("simulazione di 20 cicli: invarianti del piano e dei livelli", () => {
     assert.ok(cycle,"ciclo "+n);
     mains.add(cycle.main);
     assert.equal(cycle.blocks.flat().length,15);
-    assert.ok(!levelState(state,cycle.main).autonomous&&!levelState(state,cycle.main).pending_transfer);
+    assert.ok(!levelState(state,cycle.main).autonomous);
+    assert.equal(levelState(state,cycle.main).pending_transfer,cycle.phase==="transfer");
     for(const slots of cycle.blocks){
       const groups=new Set(slots.filter(s=>s.group).map(s=>s.group));
       assert.ok(groups.size<=1);
-      if(groups.size)assert.equal(slots.filter(s=>s.group).length,3);
+      if(groups.size)assert.equal(slots.filter(s=>s.group).length,cycle.phase==="transfer"?5:3);
       assert.ok(slots.every(s=>s.level>=1&&s.level<=4&&s.rule.startsWith(s.lesson_id+".")));
     }
     const done=answerCycle(state,cycle,slot=>rand()<ability(slot.lesson_id)+0.25-slot.level*0.08,{prefix:"sim"+n});
@@ -196,7 +201,7 @@ test("tre cicli fermi allo stesso livello: pausa e lezione successiva, poi ritor
   const next=planCycle(state,{previous});
   assert.notEqual(next.main,"present-simple");
   // La lezione in pausa resta nel percorso come intrecciata o ripasso.
-  assert.ok([...next.roles.intertwined,...next.roles.review].includes("present-simple"));
+  assert.ok(mixable(state,"present-simple"));
   let cycle=next;
   for(let n=0;n<6&&!levelState(state,next.main).pending_transfer;n++){
     const done=answerCycle(state,cycle,always(true),{prefix:"other"+n});

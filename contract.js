@@ -36,7 +36,10 @@ export function validatePathInput(d){
   if(!str(d.path_id,100)||!Number.isInteger(d.cycle)||d.cycle<1||d.cycle>8||!Number.isInteger(d.page)||d.page<0||d.page>2||!str(d.main_lesson,100)||!Number.isInteger(d.main_level)||d.main_level<1||d.main_level>4)throw new Error("Blocco del percorso non valido.");
   if(!arr(d.slots,5)||d.slots.length!==5||!d.slots.every(okSlot))throw new Error("Servono 5 esercizi con lezione, regola e livello.");
   const groups=d.slots.filter(s=>s.group);
-  if(groups.length&&(groups.length!==3||new Set(groups.map(s=>s.group)).size!==1||groups.some(s=>s.level!==4)))throw new Error("Il testo del livello 4 richiede 3 spazi dello stesso gruppo.");
+  if(d.phase!==undefined&&!["focused","mixed","transfer"].includes(d.phase))throw new Error("Fase del percorso non valida.");
+  if(groups.length&&(groups.length!==(d.phase==="transfer"?5:3)||new Set(groups.map(s=>s.group)).size!==1||groups.some(s=>s.level!==4)))throw new Error("Numero o livello degli spazi del testo non valido.");
+  if(d.phase==="transfer"&&groups.length!==5)throw new Error("La verifica richiede un testo con cinque spazi.");
+  if(d.avoid_passages!==undefined&&(!arr(d.avoid_passages,6)||d.avoid_passages.some(x=>!str(x,900))))throw new Error("Testi già visti non validi.");
   if(d.avoid!==undefined&&(!arr(d.avoid,40)||d.avoid.some(x=>!str(x,PATH_STEM_MAX))))throw new Error("Elenco delle frasi già viste non valido.");
   if(d.weak_rules!==undefined&&(!arr(d.weak_rules,8)||d.weak_rules.some(r=>!object(r)||!str(r.rule,120)||!Number.isInteger(r.n)||!Number.isInteger(r.correct)||r.n<1||r.correct<0||r.correct>r.n)))throw new Error("Regole deboli non valide.");
   return d;
@@ -82,6 +85,7 @@ export function validateReply(task,p,data=null) {
     for(const [n,x] of p.passages.entries()){needObject(x,"passages["+n+"]");needString(x.text,"passages["+n+"].text",900);if(x.group!==group)bad("passages["+n+"].group","gruppo del testo non richiesto");}
     if(group&&p.passages.length!==1)bad("passages","serve un testo per gli spazi del livello 4");
     if(!group&&p.passages.length)bad("passages","il testo è previsto solo con gli spazi del livello 4");
+    if(group){const marks=[...p.passages[0].text.matchAll(/\((\d+)\) ___/g)].map(m=>Number(m[1]));const expected=slots.filter(s=>s.group).length;if(marks.length>expected||new Set(marks).size!==marks.length||marks.length===expected&&marks.some((k,n)=>k!==n+1))bad("passages[0].text","gli spazi sono duplicati o fuori ordine");}
     let gap=0;
     for(const [n,i] of p.items.entries()){
       const path="items["+n+"]",slot=slots[n];
@@ -194,7 +198,7 @@ export const REPLY_SCHEMAS={
   translate:replyObject({translations:replyList(replyText(6000),"Una traduzione italiana per ogni paragrafo ricevuto, nello stesso ordine.")}),
   clarify:replyObject({expression:replyText(120),meaning_it:replyText(300),explanation:replyText(),example:replyText(500)}),
   path_block:replyObject({
-    passages:replyList(replyObject({group:replyText(4),text:replyText(900)}),"Un testo inglese di 50–110 parole solo se ci sono slot con group, altrimenti []. Contiene gli spazi (1) ___ (2) ___ (3) ___."),
+    passages:replyList(replyObject({group:replyText(4),text:replyText(900)}),"Un testo inglese di 50–110 parole solo se ci sono slot con group, altrimenti []. Uno spazio numerato per ogni slot con group: tre nell'allenamento, cinque nella fase transfer."),
     items:replyList(replyObject({
       n:{type:"integer",description:"Numero dello slot, da 1 a 5, nell'ordine."},
       kind:{type:"string",enum:["choice","completion","transformation","error_correction"]},

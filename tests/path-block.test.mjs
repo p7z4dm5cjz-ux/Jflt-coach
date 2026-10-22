@@ -26,8 +26,8 @@ test("richiesta del blocco: 5 slot con regola della propria lezione, 3 spazi sol
   assert.throws(broken(d=>d.slots.pop()),/5 esercizi/);
   assert.throws(broken(d=>d.slots[0].rule="past-simple.use"),/5 esercizi/);
   assert.throws(broken(d=>d.slots[4].level=5),/5 esercizi/);
-  assert.throws(broken(d=>d.slots[2].group=null),/3 spazi/);
-  assert.throws(broken(d=>d.slots[0].level=3),/3 spazi/);
+  assert.throws(broken(d=>d.slots[2].group=null),/spazi del testo/);
+  assert.throws(broken(d=>d.slots[0].level=3),/spazi del testo/);
   assert.throws(broken(d=>d.avoid=["x".repeat(300)]),/già viste/);
 });
 

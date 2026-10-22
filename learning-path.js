@@ -27,6 +27,10 @@ export function lessonProgress(state,id,timestamp=Date.now()){
  return {read:!!state.lesson_reads?.some(r=>r.lesson_id===id)||!!state.lesson_studies?.some(r=>r.lesson_id===id),practised:state.attempts.some(a=>a.lesson_id===id),independent,delayed:ev.delayed,due:ev.due_now,evidence:ev};
 }
 export function learningReason(state,lesson,timestamp=Date.now()){
+ const path=state.lesson_levels?.[lesson.id];
+ if(path?.confirmed_at&&path.autonomous)return "Uso in testi nuovi confermato anche a distanza. Continua con il ripasso.";
+ if(path?.pending_transfer)return path.transfer_due?"Prima prova su testo riuscita: la conferma a distanza sarà disponibile dal "+new Date(path.transfer_due).toLocaleString("it-IT")+".":"Sei pronto per la verifica in testi nuovi nel percorso con il tutor.";
+ if(path)return "Percorso adattivo: livello "+path.level+". Il prossimo blocco riprende le regole più difficili; l'autonomia si conferma con testi nuovi e una prova a distanza.";
  const ev=lessonEvidence(state,lesson.id,timestamp),profile=placementProfile(state.placement),progress=lessonProgress(state,lesson.id,timestamp);
  if(ev.errors)return "Nell'ultima verifica breve sono emersi errori su questa struttura.";
  if(ev.due_now)return "È il momento di controllare se ricordi la struttura a distanza di giorni.";

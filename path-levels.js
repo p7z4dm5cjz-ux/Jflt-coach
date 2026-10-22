@@ -52,6 +52,17 @@ export function ruleStats(state,lessonId,{last=40}={}){
   return out;
 }
 
+// Gli aiuti guidano il recupero ma non possono diventare prove di padronanza.
+export function diagnosticStats(state,lessonId){
+  const sessions=new Map(state.sessions.map(s=>[s.id,s])),out={};
+  for(const a of state.attempts.filter(a=>a.lesson_id===lessonId).slice(-30)){
+    const s=sessions.get(a.session_id),i=s?.items.find(i=>i.id===a.item_id);
+    if(!s?.completed_at||!i||a.disputed||!reliableItem(i,a.source)||i.doubt)continue;
+    for(const rule of i.rules||[]){const r=out[rule]??={n:0,correct:0};r.n++;if(a.correct&&!a.assisted&&!s.assisted&&!s.hinted_items?.includes(i.id))r.correct++;}
+  }
+  return out;
+}
+
 // Decisione a fine ciclo sulla lezione principale.
 export function cycleDecision(state,lessonId,level=null){
   const ls=levelState(state,lessonId);
@@ -60,7 +71,49 @@ export function cycleDecision(state,lessonId,level=null){
   const n=rows.length,correct=rows.filter(r=>r.correct).length,accuracy=n?correct/n:0;
   let decision="insufficient";
   if(n>=MIN_ANSWERS)decision=accuracy>=UP?"up":accuracy>=DOWN?"stay":"down";
-  return {lesson_id:lessonId,level:ls.level,n,correct,accuracy,decision,transfer:decision==="up"&&ls.level>=MAX_LEVEL};
+  const rules={};
+  for(const row of rows)for(const rule of row.rules){const r=rules[rule]??={n:0,correct:0};r.n++;if(row.correct)r.correct++;}
+  const weak_rules=Object.entries(rules).filter(([,r])=>r.n-r.correct>=2&&r.correct/r.n<DOWN).map(([id])=>id);
+  if(decision==="up"&&weak_rules.length)decision="stay";
+  return {lesson_id:lessonId,level:ls.level,n,correct,accuracy,decision,weak_rules,transfer:decision==="up"&&ls.level>=MAX_LEVEL};
+}
+
+export const TRANSFER_DELAY=24*60*60*1000;
+export function transferDue(state,id,timestamp=Date.now()){
+  const l=levelState(state,id);
+  return l.pending_transfer&&(!l.transfer_due||Date.parse(l.transfer_due)<=timestamp);
+}
+// Tre testi nuovi, tutti gli spazi controllati. La seconda prova è a distanza di almeno un giorno.
+export function closeTransfer(state,cycle,timestamp){
+  const ls=levelState(state,cycle.main),ids=new Set(cycle.block_ids);
+  const all=[...new Set(cycle.blocks.flat().map(s=>s.lesson_id))].flatMap(id=>pathAnswers(state,id)).filter(r=>ids.has(r.session_id)&&r.level===4);
+  const main=pathAnswers(state,cycle.main).filter(r=>ids.has(r.session_id)&&r.level===4);
+  const n=main.length,correct=main.filter(r=>r.correct).length,accuracy=n?correct/n:0;
+  const expected=cycle.blocks.flat().filter(s=>s.lesson_id===cycle.main).length;
+  const complete=all.length===15&&n===expected&&(!ls.transfer_due||all.every(r=>Date.parse(r.date)>=Date.parse(ls.transfer_due)));
+  const pass=complete&&accuracy>=UP&&all.filter(r=>r.correct).length/all.length>=UP;
+  const due=transferDue(state,cycle.main,Date.parse(timestamp));
+  let decision="insufficient",confirmed=false;
+  if(complete&&due){
+    decision=pass?"up":accuracy>=UP?"stay":"down";
+    if(pass){
+      confirmed=!!ls.transfer_passed_at;
+      if(confirmed){ls.autonomous=true;ls.pending_transfer=false;ls.confirmed_at=timestamp;delete ls.transfer_due;}
+      else {ls.transfer_passed_at=timestamp;ls.transfer_due=new Date(Date.parse(timestamp)+TRANSFER_DELAY).toISOString();}
+    }else if(decision==="down"){
+      ls.level=3;ls.autonomous=false;ls.pending_transfer=false;ls.changed_at=timestamp;
+      delete ls.transfer_passed_at;delete ls.transfer_due;delete ls.confirmed_at;
+    }
+  }
+  ls.history=[...ls.history,{at:timestamp,from:4,to:ls.level,decision:"transfer-"+decision,n,correct}].slice(-20);
+  if(ls.history.slice(-3).length===3&&ls.history.slice(-3).every(h=>h.decision==="transfer-insufficient")){ls.parked=true;ls.parked_at=timestamp;}
+  state.lesson_levels??={};state.lesson_levels[cycle.main]=ls;
+  const secondary=[];
+  for(const id of new Set([...cycle.roles.intertwined,...cycle.roles.review])){
+    const level=secondaryCheck(state,id,cycle.block_ids,timestamp);
+    if(level!==null)secondary.push({lesson_id:id,level});
+  }
+  return {lesson_id:cycle.main,level:4,n,correct,accuracy,decision,to:ls.level,secondary,closed_at:timestamp,transfer_test:true,confirmed,awaiting_delay:pass&&!confirmed&&due,transfer_due:ls.transfer_due||null};
 }
 
 // Applica la decisione allo stato (dentro repo.change). Restituisce il nuovo livello.
@@ -69,7 +122,7 @@ export function applyDecision(state,result,timestamp=new Date().toISOString()){
   let to=from;
   if(result.decision==="up"&&from<MAX_LEVEL)to=from+1;
   if(result.decision==="down")to=Math.max(1,from-1);
-  if(result.decision==="down")ls.autonomous=false;
+  if(result.decision==="down"){ls.autonomous=false;delete ls.transfer_passed_at;delete ls.transfer_due;delete ls.confirmed_at;}
   ls.pending_transfer=result.transfer?true:result.decision==="down"?false:!!ls.pending_transfer;
   // Anche al livello 1 una discesa riapre la finestra: le risposte sbagliate restano alle spalle.
   if(to!==from||result.decision==="down"){ls.level=to;ls.changed_at=timestamp;}
@@ -97,6 +150,7 @@ export function secondaryCheck(state,lessonId,sessionIds,timestamp=new Date().to
   if(wrong<2)return null;
   const from=ls.level;
   ls.level=Math.max(1,from-1);ls.autonomous=false;ls.pending_transfer=false;ls.changed_at=timestamp;
+  delete ls.transfer_passed_at;delete ls.transfer_due;delete ls.confirmed_at;
   ls.history=[...(ls.history||[]),{at:timestamp,from,to:ls.level,decision:"secondary-down",n:rows.length,correct:rows.length-wrong}].slice(-20);
   const {source,...saved}=ls;
   state.lesson_levels??={};state.lesson_levels[lessonId]=saved;
@@ -115,6 +169,7 @@ export function validateLessonLevels(levels,lessonIds){
   if(levels===undefined)return;
   if(!levels||typeof levels!=="object"||Array.isArray(levels))throw new Error("Livelli delle lezioni non validi.");
   for(const [id,l] of Object.entries(levels)){
+    for(const key of ["transfer_due","transfer_passed_at","confirmed_at"])if(l?.[key]!==undefined&&(typeof l[key]!=="string"||!Number.isFinite(Date.parse(l[key]))))throw new Error("Data del trasferimento non valida.");
     if(!lessonIds.includes(id)||!l||typeof l!=="object"||!Number.isInteger(l.level)||l.level<1||l.level>MAX_LEVEL||typeof l.autonomous!=="boolean"||typeof l.pending_transfer!=="boolean"||l.changed_at!==null&&typeof l.changed_at!=="string"||l.parked!==undefined&&l.parked!==true||l.parked_at!==undefined&&typeof l.parked_at!=="string"||!Array.isArray(l.history)||l.history.length>20)throw new Error("Livello della lezione "+id+" non valido.");
   }
 }

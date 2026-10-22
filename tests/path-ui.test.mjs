@@ -19,7 +19,7 @@ const tutor=async(settings,path,task,data)=>{
     if(s.level===1)return {n:s.n,kind:'choice',stem:'Scegli la forma corretta: She ___ here.'+tag,options:['works','work','working'],answer:'works',accept:['works'],why:'Terza persona.',group:'',check:'confirmed'};
     return {n:s.n,kind:'completion',stem:'Scrivi solo la parola mancante: He ___ every day. (work)'+tag,options:[],answer:'works',accept:['works'],why:'Abitudine.',group:'',check:'confirmed'};
   });
-  return {passages:group?[{group,text:'Every morning she (1) ___ early, he (2) ___ late and they (3) ___ hard. Cycle '+data.cycle+' block '+data.page+'.'}]:[],items};
+  return {passages:group?[{group,text:'Every morning she (1) ___ early, he (2) ___ late and they (3) ___ hard.'+(gap===5?' Then (4) ___ and (5) ___.':'')+' Path '+data.path_id+' cycle '+data.cycle+' block '+data.page+'.'}]:[],items};
 };
 const app=await mountApp(repo,document.getElementById('view'),tutor);
 async function until(f){for(let i=0;i<400;i++){if(f())return;await new Promise(r=>setTimeout(r,5));}throw Error('timeout '+document.getElementById('notice').textContent);}
@@ -120,6 +120,27 @@ test('percorso concluso: «Nuovo percorso» parte con un solo clic',async()=>{
   click('Nuovo percorso · 45 minuti');
   await until(()=>repo.get().paths.length===before+1&&document.querySelectorAll('.exercise').length>=3);
   assert.equal(repo.get().paths.at(-1).length,45);
+});
+
+test('trasferimento completo dalla UI: cinque spazi, nessuna regola anticipata, prima prova e backup',async()=>{
+  await repo.change(s=>{s.lesson_levels['past-simple']={level:4,autonomous:false,pending_transfer:true,changed_at:null,history:[]};});
+  await app.goto('lesson/past-simple');
+  await until(()=>buttons().some(b=>b.textContent==='Esercita questa lezione · 30 min'));
+  click('Esercita questa lezione · 30 min');
+  await until(()=>repo.get().paths.at(-1).cycles[0]?.phase==='transfer'&&document.querySelectorAll('.exercise').length===5);
+  for(let page=0;page<3;page++){
+    await until(()=>document.querySelectorAll('.exercise').length===5&&[...document.querySelectorAll('legend')].every(l=>l.textContent.includes('Scegli dal contesto')));
+    assert.match(document.querySelector('.path-passage').textContent,/\(5\) ___/);
+    assert.ok([...document.querySelectorAll('legend')].every(l=>l.textContent.includes('Scegli dal contesto')));
+    await answerBlock();
+    if(page<2){click('Prossimo blocco del percorso');await until(()=>repo.get().paths.at(-1).cycles[0].block_ids.length===page+2&&document.querySelectorAll('.exercise').length===5);}
+  }
+  click('Chiudi il ciclo e vedi il risultato');
+  await until(()=>view().includes('Prima prova su testo superata'));
+  assert.equal(repo.get().lesson_levels['past-simple'].autonomous,false);
+  assert.ok(repo.get().lesson_levels['past-simple'].transfer_due);
+  const restored=parseBackup(await repo.backup());
+  assert.ok(restored.lesson_levels['past-simple'].transfer_due);
 });
 
 test('Ricomincia da zero: prima il backup, poi la conferma; restano Worker, tema e codice del tutor',async()=>{

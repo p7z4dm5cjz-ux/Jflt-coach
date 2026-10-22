@@ -1,10 +1,11 @@
 // Percorso adattivo: stato della sessione, richiesta del blocco a Groq e blocco di riserva locale.
 import {normal} from "./answer-normal.js";
 import {lessonItems} from "./practice-bank.js";
-import {ruleStats} from "./path-levels.js";
+import {diagnosticStats} from "./path-levels.js";
 import {pathCycles,BLOCK_LAYOUT} from "./path-planner.js";
 import {PATH_STEM_MAX} from "./contract.js";
 import {stemKey} from "./item-tags.js";
+import {advancedPathItems} from "./advanced-path-bank.js";
 
 export const PATH_BLOCKS=BLOCK_LAYOUT.length;
 export const activePath=state=>(state.paths||[]).findLast(p=>!p.completed_at)||null;
@@ -27,9 +28,10 @@ export function pathBlockRequest(state,path,cycle,page){
   const slots=cycle.blocks[page].map((s,i)=>({n:i+1,lesson_id:s.lesson_id,rule:s.rule,level:s.level,role:s.role,group:s.group||null}));
   const lessons=new Set(slots.map(s=>s.lesson_id));
   const avoid=[...new Set(state.sessions.filter(s=>lessons.has(s.lesson_id)||s.items.some(i=>lessons.has(i.focus_lesson))).flatMap(s=>s.items).filter(i=>!i.group).map(i=>i.stem).filter(stem=>stem&&stem.length<=PATH_STEM_MAX))].slice(-30);
-  const stats=ruleStats(state,cycle.main);
+  const stats=diagnosticStats(state,cycle.main);
   const weak=Object.entries(stats).filter(([,s])=>s.n>=2&&s.correct/s.n<0.7).sort((a,b)=>a[1].correct/a[1].n-b[1].correct/b[1].n).slice(0,8).map(([rule,s])=>({rule,n:s.n,correct:s.correct}));
-  return {path_id:path.id,cycle:cycle.n,page,main_lesson:cycle.main,main_level:cycle.level,slots,...(avoid.length?{avoid}:{}),...(weak.length?{weak_rules:weak}:{})};
+  const avoid_passages=state.sessions.flatMap(s=>s.passages||[]).map(p=>p.text).slice(-6);
+  return {path_id:path.id,cycle:cycle.n,page,main_lesson:cycle.main,main_level:cycle.level,phase:cycle.phase||"mixed",slots,...(avoid.length?{avoid}:{}),...(avoid_passages.length?{avoid_passages}:{}),...(weak.length?{weak_rules:weak}:{})};
 }
 
 // Competenza per il profilo esistente: riconoscere = significato, contesto = scelta del tempo.
@@ -40,7 +42,8 @@ export const pathSkill=(kind,level)=>level>=3?"tense_choice":kind==="choice"?"me
 export function pathItemsFromReply(result,slots){
   return result.items.map((item,i)=>{
     const slot=slots[i],{n,group,...rest}=item,text=group?result.passages.find(p=>p.group===group)?.text:null;
-    return {...rest,...(text?{context_id:"path:"+stemKey(text)+":"+stemKey(item.stem)}:{}),rules:item.rules||[slot.rule],level:item.level||slot.level,focus_lesson:slot.lesson_id,path_role:slot.role,origin:"groq",skill:pathSkill(item.kind,slot.level),...(group?{group}:{})};
+    const gap=group?result.items.slice(0,i+1).filter(x=>x.group===group).length:null;
+    return {...rest,...(text?{passage:text,context_id:"path:"+stemKey(text)+":"+gap}:{}),rules:item.rules||[slot.rule],level:item.level||slot.level,focus_lesson:slot.lesson_id,path_role:slot.role,origin:"groq",skill:pathSkill(item.kind,slot.level),...(group?{group}:{})};
   });
 }
 
@@ -52,7 +55,7 @@ export function fallbackItems(state,slots,timestamp=Date.now()){return fallbackB
 export function fallbackBlock(state,slots,timestamp=Date.now()){
   const seen=seenStems(state),used=new Set(),out=[];let exact=0;
   const lastSeen=new Map();for(const a of state.attempts){const k=normal(a.stem||"");lastSeen.set(k,Math.max(lastSeen.get(k)||0,Date.parse(a.date)||0));}
-  const offline=lesson=>{const all=[];const keys=new Set();for(let v=0;v<4;v++)for(const item of lessonItems(lesson,v)){const k=normal(item.stem);if(!keys.has(k)){keys.add(k);all.push(item);}}return all;};
+  const offline=lesson=>{const all=[...advancedPathItems(lesson)];const keys=new Set(all.map(i=>normal(i.stem)));for(let v=0;v<4;v++)for(const item of lessonItems(lesson,v)){const k=normal(item.stem);if(!keys.has(k)){keys.add(k);all.push(item);}}return all;};
   const cache=new Map(),pool=lesson=>{if(!cache.has(lesson))cache.set(lesson,offline(lesson));return cache.get(lesson);};
   const personal=state.sessions.flatMap(s=>s.items).filter(i=>i.origin==="groq"&&["confirmed","extended"].includes(i.check)&&!i.doubt&&!i.group&&Array.isArray(i.rules));
   const fresh=item=>!used.has(normal(item.stem));

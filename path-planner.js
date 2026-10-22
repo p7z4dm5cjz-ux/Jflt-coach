@@ -6,12 +6,14 @@ import {recommendation} from "./engine.js";
 import {lessonMeta,PATH_GROUPS,learningReason} from "./learning-path.js";
 import {practiceWindow,lessonEvidence} from "./grammar-checks.js";
 import {lessonRules,LEVELS} from "./item-tags.js";
-import {levelState,ruleStats,minLevelFor,MAX_LEVEL,cycleDecision,applyDecision,secondaryCheck} from "./path-levels.js";
+import {levelState,diagnosticStats,minLevelFor,MAX_LEVEL,cycleDecision,applyDecision,secondaryCheck,transferDue,closeTransfer} from "./path-levels.js";
 export const isResting=(state,id)=>!!state.lesson_levels?.[id]?.parked;
 
 export const PATH_LENGTHS={30:2,45:3,60:4},DEFAULT_LENGTH=45,BLOCK_SIZE=5,PASSAGE_GAPS=3;
 // Composizione decisa: la lezione principale pesa sempre meno blocco dopo blocco, le intrecciate crescono.
 export const BLOCK_LAYOUT=[{main:4,intertwined:0,review:1},{main:3,intertwined:1,review:1},{main:2,intertwined:2,review:1}];
+export const FOCUSED_LAYOUT=Array.from({length:3},()=>({main:5,intertwined:0,review:0}));
+const TRANSFER_LAYOUT=Array.from({length:3},()=>({main:3,intertwined:1,review:1}));
 export const ROLE_LABELS={main:"Lezione del ciclo",recovery:"Recupero",intertwined:"Intrecciata",review:"Ripasso"};
 
 const byId=new Map(LESSONS.map(l=>[l.id,l]));
@@ -34,7 +36,9 @@ export function mixable(state,id){
   return status==="confirm"||status==="skip"||w.independent||w.goodSession;
 }
 
-export function chooseMain(state,{exclude=[],continueWith=null}={}){
+export function chooseMain(state,{exclude=[],continueWith=null,timestamp=Date.now()}={}){
+  const due=LESSONS.find(l=>!exclude.includes(l.id)&&!isResting(state,l.id)&&transferDue(state,l.id,timestamp));
+  if(due)return due.id;
   const ok=id=>!exclude.includes(id)&&isOpen(state,id)&&!isResting(state,id);
   if(continueWith&&ok(continueWith))return continueWith;
   const ranked=recommendation(state).map(l=>l.id),all=LESSONS.map(l=>l.id);
@@ -69,7 +73,7 @@ export function reviewLessons(state,exclude=[],n=3,timestamp=Date.now()){
 
 // Regola per uno slot: la meno riuscita fra quelle adatte al livello, senza ripetere troppo la stessa.
 export function chooseRule(state,lessonId,level,used=new Map()){
-  const stats=ruleStats(state,lessonId),rules=lessonRules(lessonId);
+  const stats=diagnosticStats(state,lessonId),rules=lessonRules(lessonId);
   const fit=rules.filter(r=>minLevelFor(r.id)<=level);
   const pool=fit.length?fit:rules;
   const acc=r=>{const s=stats[r.id];return s&&s.n?s.correct/s.n:0.5;};
@@ -106,13 +110,15 @@ export function planCycle(state,{previous=null,exclude=[],force=null,timestamp=D
   // «Esercita questa lezione»: la lezione scelta dallo studente, anche se già autonoma (il recupero ha la precedenza).
   if(!main&&force&&byId.has(force)&&hasRules(force))main=force;
   const forcedMain=!!main&&main===force&&!recovery_for;
-  main??=chooseMain(state,{exclude,continueWith:previous?.main});
+  main??=chooseMain(state,{exclude,continueWith:previous?.main,timestamp});
   if(!main)return null;
   const why=recovery_for?"":mainReason(state,main,{forced:forcedMain,continued:!forcedMain&&main===previous?.main});
   const ls=levelState(state,main),mainLevel=Math.min(ls.level,MAX_LEVEL);
-  const mixed=partners(state,main,2),review=reviewLessons(state,[main,...mixed,recovery_for].filter(Boolean),3,timestamp);
+  const phase=transferDue(state,main,timestamp)?"transfer":mainLevel>=4?"mixed":"focused";
+  const mixed=phase==="focused"?[]:partners(state,main,2),review=phase==="focused"?[]:reviewLessons(state,[main,...mixed,recovery_for].filter(Boolean),3,timestamp);
+  const layoutForCycle=phase==="focused"?FOCUSED_LAYOUT:phase==="transfer"?TRANSFER_LAYOUT:BLOCK_LAYOUT;
   const used=new Map(),blocks=[];
-  BLOCK_LAYOUT.forEach((layout,b)=>{
+  layoutForCycle.forEach((layout,b)=>{
     const slots=[];
     const mainSlots=Array.from({length:layout.main},()=>({role:recovery_for?"recovery":"main",lesson_id:main}));
     // Le intrecciate si alternano; senza intrecciate disponibili lo slot torna alla principale.
@@ -120,7 +126,7 @@ export function planCycle(state,{previous=null,exclude=[],force=null,timestamp=D
     const reviewSlots=Array.from({length:layout.review},()=>review.length?{role:"review",lesson_id:review[b%review.length]}:{role:recovery_for?"recovery":"main",lesson_id:main});
     const ordered=[...mainSlots,...mixSlots,...reviewSlots];
     // Livello 4: in ogni blocco un breve testo con 3 spazi, prima dagli slot principali poi dalle intrecciate.
-    const passage=mainLevel>=4?ordered.filter(s=>s.role!=="review").slice(0,PASSAGE_GAPS):[];
+    const passage=phase==="transfer"?ordered:mainLevel>=4?ordered.filter(s=>s.role!=="review").slice(0,PASSAGE_GAPS):[];
     for(const slot of ordered){
       let level;
       if(slot.lesson_id===main)level=passage.includes(slot)?4:Math.min(mainLevel,3);
@@ -131,7 +137,23 @@ export function planCycle(state,{previous=null,exclude=[],force=null,timestamp=D
     }
     blocks.push(slots);
   });
-  return {main,level:mainLevel,recovery_for,why,roles:{intertwined:mixed,review},blocks};
+  return {main,level:mainLevel,phase,recovery_for,why,roles:{intertwined:mixed,review},blocks};
+}
+
+// Si ricalcolano soltanto le regole del blocco non ancora creato: gli errori del blocco appena
+// concluso hanno priorità, conservando almeno due regole diverse e lo stesso livello di prova.
+export function adaptBlock(state,cycle,page){
+  if(page===0||cycle.phase==="transfer")return cycle.blocks[page];
+  const stats=diagnosticStats(state,cycle.main),weak=Object.entries(stats).filter(([,r])=>r.n-r.correct>=2&&r.correct/r.n<0.7).sort((a,b)=>a[1].correct/a[1].n-b[1].correct/b[1].n);
+  const used=new Map(),slots=cycle.blocks[page].map(s=>({...s}));
+  let recovery=0;
+  for(const slot of slots){
+    if(slot.lesson_id!==cycle.main)continue;
+    const target=weak.find(([id])=>minLevelFor(id)<=slot.level);
+    if(target&&recovery<2){slot.rule=target[0];recovery++;used.set(slot.rule,(used.get(slot.rule)||0)+1);}
+    else {const choice=chooseRule(state,slot.lesson_id,slot.level,used);if(choice)slot.rule=choice.rule;}
+  }
+  return slots;
 }
 
 export function newPath(length=DEFAULT_LENGTH,timestamp=new Date().toISOString(),id="path-"+crypto.randomUUID()){
@@ -144,16 +166,19 @@ export const pathCycles=path=>PATH_LENGTHS[path.length]||PATH_LENGTHS[DEFAULT_LE
 export function cycleReason(cycle){
   const title=id=>byId.get(id)?.title||id;
   const parts=[];
+  if(cycle.phase==="transfer")return "Verifica su tre testi nuovi: completa solo gli spazi usando il contesto. La conferma dell'autonomia richiede una seconda prova dopo almeno 24 ore.";
   if(cycle.recovery_for)parts.push("Recupero di «"+title(cycle.main)+"», prerequisito di «"+title(cycle.recovery_for)+"»: lì gli errori erano troppi.");
   else parts.push("«"+title(cycle.main)+"» al livello "+cycle.level+" ("+LEVELS[cycle.level].toLowerCase()+")."+(cycle.why?" "+cycle.why:""));
   if(cycle.roles.intertwined.length)parts.push("Intrecciata con "+cycle.roles.intertwined.map(id=>"«"+title(id)+"»").join(" e ")+".");
   if(cycle.roles.review.length)parts.push("Ripasso: "+cycle.roles.review.map(id=>"«"+title(id)+"»").join(", ")+".");
+  if(cycle.phase==="focused")parts.push("15 domande su questa lezione; il blocco successivo riprende le regole più difficili per te.");
   return parts.join(" ");
 }
 
 // Chiusura del ciclo (dentro repo.change): decide sulla principale e controlla le secondarie.
 // cycle.block_ids: le tre sessioni da 5 del ciclo, tutte concluse.
 export function closeCycle(state,cycle,timestamp=new Date().toISOString()){
+  if(cycle.phase==="transfer")return closeTransfer(state,cycle,timestamp);
   const result=cycleDecision(state,cycle.main,cycle.level);
   const to=applyDecision(state,result,timestamp);
   const parked=state.lesson_levels?.[cycle.main]?.parked_at===timestamp;
@@ -178,6 +203,7 @@ export function validatePaths(state){
     if(!p||typeof p.id!=="string"||!PATH_LENGTHS[p.length]||!date(p.created_at)||p.completed_at!==null&&!date(p.completed_at)||p.forced_lesson!==undefined&&!lesson(p.forced_lesson)||!Array.isArray(p.cycles)||p.cycles.length>pathCycles(p))throw new Error("Percorso adattivo non valido.");
     for(const [i,c] of p.cycles.entries()){
       const bad=!c||c.n!==i+1||!lesson(c.main)||c.why!==undefined&&(typeof c.why!=="string"||c.why.length>800)||!Number.isInteger(c.level)||c.level<1||c.level>MAX_LEVEL||c.recovery_for!==null&&!lesson(c.recovery_for)
+        ||c.phase!==undefined&&!["focused","mixed","transfer"].includes(c.phase)
         ||!c.roles||!Array.isArray(c.roles.intertwined)||c.roles.intertwined.length>2||!Array.isArray(c.roles.review)||c.roles.review.length>3||[...c.roles.intertwined,...c.roles.review].some(id=>!lesson(id))
         ||!Array.isArray(c.blocks)||c.blocks.length!==BLOCK_LAYOUT.length||c.blocks.some(b=>!Array.isArray(b)||b.length>BLOCK_SIZE||!b.every(okSlot))
         ||!Array.isArray(c.block_ids)||c.block_ids.length>BLOCK_LAYOUT.length||c.block_ids.some(id=>sessions.get(id)?.path_id!==p.id)

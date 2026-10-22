@@ -3,7 +3,7 @@ import {LESSONS} from "./catalog.js";
 import {now} from "./engine.js";
 import {LEVELS,ruleInfo} from "./item-tags.js";
 import {levelState,freezeLevel} from "./path-levels.js";
-import {planCycle,closeCycle,newPath,pathCycles,cycleReason,isOpen,isResting,chooseMain,ROLE_LABELS,PATH_LENGTHS,DEFAULT_LENGTH} from "./path-planner.js";
+import {planCycle,adaptBlock,closeCycle,newPath,pathCycles,cycleReason,isOpen,isResting,chooseMain,ROLE_LABELS,PATH_LENGTHS,DEFAULT_LENGTH} from "./path-planner.js";
 import {activePath,pathStep,pathBlockRequest,pathItemsFromReply,fallbackBlock,cycleSummary,PATH_BLOCKS} from "./path-flow.js";
 import {getToken} from "./tutor.js";
 
@@ -47,6 +47,7 @@ export function pathUI(api){
   function lastCycle(state){return (state.paths||[]).flatMap(x=>x.cycles).filter(c=>c.result).sort((a,b)=>Date.parse(a.result.closed_at)-Date.parse(b.result.closed_at)).at(-1)||null;}
 
   async function createBlock(pathId,page){
+    await change(s=>{const c=s.paths.find(x=>x.id===pathId).cycles.at(-1);c.blocks[page]=adaptBlock(s,c,page);});
     const state=getState(),path=state.paths.find(x=>x.id===pathId),cycle=path.cycles.at(-1);
     const data=pathBlockRequest(state,path,cycle,page);
     let items=null,passages=[],source="groq",note=null;
@@ -75,7 +76,8 @@ export function pathUI(api){
     const first=chooseMain(s,{continueWith:lastCycle(s)?.main});
     return h("section",{class:"card current-priority path-card"},h("h2",{},"Percorso con il tutor"),
       first&&p("Si parte da «"+title(first)+"» al livello "+levelState(s,first).level+" ("+LEVELS[levelState(s,first).level].toLowerCase()+")."),
-      p("Cicli da 15 domande in tre blocchi da 5. L'app sceglie lezione, regole e livello; dopo ogni ciclo decide se salire, restare o ripassare. Il tutor prepara frasi nuove e testi dal livello 4."),
+      p("Prima 15 domande sulla lezione, in tre blocchi da 5 adattati ai tuoi errori. Quando sei pronto, confronti le strutture e le usi in testi nuovi. Una verifica a distanza conferma ciò che hai imparato."),
+      ...Object.entries(s.lesson_levels||{}).filter(([,l])=>l.pending_transfer&&l.transfer_due&&Date.parse(l.transfer_due)>Date.now()).map(([id,l])=>p("«"+title(id)+"»: prima prova superata. Conferma disponibile dal "+new Date(l.transfer_due).toLocaleString("it-IT")+".","small muted")),
       h("div",{class:"actions"},Object.keys(PATH_LENGTHS).map(Number).map(m=>button(m+" minuti · "+PATH_LENGTHS[m]+" cicli",()=>start(m),m===DEFAULT_LENGTH?"":"secondary"))),
       p("Senza connessione il percorso usa la banca locale. Puoi fermarti e riprendere quando vuoi.","small muted"));
   }
@@ -83,9 +85,9 @@ export function pathUI(api){
   // Scheda nella lezione: livello attuale e «Esercita questa lezione».
   function lessonCard(lessonId,extra=null){
     const s=getState(),ls=levelState(s,lessonId);
-    const status=ls.pending_transfer?"Livello 4 superato: in attesa della prova di trasferimento.":ls.autonomous?"Già autonoma: puoi ripassarla nel percorso.":"Livello "+ls.level+" · "+LEVELS[ls.level];
+    const status=ls.pending_transfer?(ls.transfer_due?"Prima prova su testo superata. Conferma a distanza dal "+new Date(ls.transfer_due).toLocaleString("it-IT")+".":"Livello 4 superato: il prossimo ciclo verifica l'uso in testi nuovi."):ls.autonomous?"Autonomia confermata: puoi ripassarla nel percorso.":"Livello "+ls.level+" · "+LEVELS[ls.level];
     return card(h("h2",{},"Percorso adattivo con il tutor"),p(status),
-      p("Un ciclo da 15 domande parte da questa lezione e la intreccia con quelle collegate. Poi il percorso continua da solo."),
+      p("15 domande su questa lezione, poi confronti e testi quando sei pronto. Scrivi solo le parole richieste, non tutta la frase."),
       h("div",{class:"actions"},Object.keys(PATH_LENGTHS).map(Number).map(m=>button("Esercita questa lezione · "+m+" min",()=>start(m,lessonId),m===DEFAULT_LENGTH?"":"secondary"))),extra);
   }
 
@@ -104,16 +106,19 @@ export function pathUI(api){
   function practiceHeader(set){
     const s=getState(),path=s.paths?.find(x=>x.id===set.path_id),cycle=path?.cycles.find(c=>c.n===set.path_block.cycle);
     if(!cycle)return null;
+    const prev=s.sessions.find(x=>x.id===cycle.block_ids[set.path_block.page-1]);
+    const recover=cycle.phase!=="transfer"&&prev?.completed_at?s.attempts.filter(a=>a.session_id===prev.id&&!a.correct&&!a.disputed).slice(0,2).map(a=>prev.items.find(i=>i.id===a.item_id)).filter(Boolean):[];
     return card(p("Percorso · ciclo "+cycle.n+" di "+pathCycles(path)+" · blocco "+(set.path_block.page+1)+" di "+PATH_BLOCKS,"eyebrow"),
-      h("h2",{},"Perché questo blocco"),p(cycleReason(cycle)),
+      h("h2",{},"Perché questo blocco"),p(cycle.phase==="mixed"&&!set.completed_at?"Usa il contesto per scegliere tra le strutture studiate. Le regole di ogni domanda compaiono dopo la correzione.":cycleReason(cycle)),
+      set.path_block.page===0&&cycle.level<=2&&h("section",{class:"course-focus"},h("h3",{},"Prima di iniziare"),p(LESSONS.find(l=>l.id===cycle.main)?.when||""),p(LESSONS.find(l=>l.id===cycle.main)?.forms||"","formula"),p("Leggi la regola, poi rispondi solo alla parte richiesta. Dopo cinque risposte ricevi la correzione e il blocco successivo.")),
+      recover.length>0&&h("section",{class:"course-focus"},h("h3",{},"Prima di riprovare"),recover.map(i=>p(i.why)),p("Nel nuovo blocco ritrovi queste difficoltà in frasi diverse.","small muted")),
       set.fallback_note&&p(set.fallback_note,"small warning"),
       set.source==="local"&&!set.completed_at&&!Object.values(set.answers).some(v=>v.trim())&&getToken()&&button("Riprova con il tutor",()=>retryBlock(set.id),"secondary"));
   }
   // Etichetta sopra ogni esercizio: ruolo, regola e livello.
-  // Dal livello 3 la regola si deduce dal contesto: il nome della regola anticiperebbe la risposta.
-  function itemLabel(item){
-    const rule=item.level<=2&&item.rules?.[0]&&ruleInfo(item.rules[0]);
-    return [item.path_role&&ROLE_LABELS[item.path_role],rule?.name,item.level&&"livello "+item.level+(item.level>=3?" · "+LEVELS[item.level].toLowerCase():"")].filter(Boolean).join(" · ");
+  function itemLabel(item,reveal=false){
+    const rule=item.rules?.[0]&&ruleInfo(item.rules[0]);
+    return [item.path_role&&ROLE_LABELS[item.path_role],item.level>=3&&!reveal?"Scegli dal contesto":rule?.name,item.level&&"livello "+item.level+(item.level>=3?" · "+LEVELS[item.level].toLowerCase():"")].filter(Boolean).join(" · ");
   }
   function passage(set,item){
     const text=set.passages?.find(x=>x.group===item.group)?.text;
@@ -133,9 +138,11 @@ export function pathUI(api){
       path.cycles.slice().reverse().map(c=>{
         const summary=cycleSummary(s,c),r=c.result;
         return card(h("h2",{},"Ciclo "+c.n+" · "+title(c.main)),p(cycleReason(c),"small muted"),
-          r?[p(decisionText[r.decision]+": livello "+r.level+(r.to!==r.level?" → "+r.to:"")+" ("+LEVELS[r.to]+")",r.decision==="up"?"good":r.decision==="down"?"warning":""),
+          r?[p(r.transfer_test?(r.confirmed?"Autonomia confermata a distanza":r.awaiting_delay?"Prima prova su testo superata":r.decision==="down"?"Riprendiamo la scelta dal contesto":"La prova va ripetuta con nuovi testi verificati"):decisionText[r.decision]+": livello "+r.level+(r.to!==r.level?" → "+r.to:"")+" ("+LEVELS[r.to]+")",r.decision==="up"?"good":r.decision==="down"?"warning":""),
             p(r.n?r.correct+" corrette su "+r.n+" risposte valide al livello "+r.level+" ("+Math.round(r.accuracy*100)+"%). Per salire serve almeno l'80% su almeno 9 risposte nuove, senza aiuti.":"Nessuna risposta valida a questo livello: frasi già viste, aiuti o esercizi non verificati non contano."),
-            r.transfer&&p("Livello 4 superato: la lezione attende la prova di trasferimento e lascia il posto alla successiva.","good"),
+            r.transfer&&p("Livello 4 superato: il prossimo ciclo verifica l'uso in testi nuovi.","good"),
+            r.awaiting_delay&&p("La conferma sarà disponibile dal "+new Date(r.transfer_due).toLocaleString("it-IT")+". Nel frattempo il percorso continua con altre lezioni."),
+            r.weak_rules?.length>0&&p("Prima di salire riprendiamo: "+r.weak_rules.map(id=>ruleInfo(id)?.name||id).join(", ")+".","warning"),
             r.parked&&p("Tre cicli fermi allo stesso livello: la lezione va in pausa e torna più avanti, intanto resta tra ripassi e intrecciate.","small muted"),
             r.secondary?.length>0&&p("Da riprendere: "+r.secondary.map(x=>title(x.lesson_id)+" (livello "+x.level+")").join(", ")+".","warning")]
            :p(c.block_ids.length+" blocchi su "+PATH_BLOCKS+" preparati."),

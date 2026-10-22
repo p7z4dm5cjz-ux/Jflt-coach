@@ -14,7 +14,7 @@ export function practiceEvidence(state,lessonId){
   if(lessonId&&a.lesson_id!==lessonId||a.disputed||a.source==='legacy')continue;
   const set=sessions.get(a.session_id),index=set?.items.findIndex(i=>i.id===a.item_id)??-1,item=index>=0?set.items[index]:null;
   if(!reliableItem(item,a.source)||item?.personal_review)continue;
-  const stem=item?.stem||a.stem,key=a.lesson_id+'|'+normal(stem);
+  const stem=item?.stem||a.stem,key=a.lesson_id+'|'+normal(item?.context_id||a.context_id||stem);
   if(!stem||seen.has(key))continue;seen.add(key);
   const page=set?.training?Math.floor(index/6):0;
   const completed=!!set&&(set.training?set.training.checked.includes(page):!!set.completed_at);

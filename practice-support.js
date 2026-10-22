@@ -4,7 +4,8 @@ export function assistedItem(set,item){return !!set.assisted||!!set.hinted_items
 export function hintSteps(item,lesson={}){
  const choice=!!item.options?.length;
  const focus=choice?'Prima di scegliere, descrivi il significato della frase: quando avviene il fatto, è concluso o in corso, è un’intenzione o un obbligo? Confronta tutte le alternative.':/_{2,}/.test(item.stem)?'Leggi ciò che è già scritto prima e dopo lo spazio. Individua il soggetto e il momento dell’azione; non ripetere le parole già presenti.':'Individua ciò che la consegna chiede di cambiare. Tieni fissi il significato e gli elementi che non devi modificare.';
- const steps=[{title:'1. Cerca l’indizio',text:focus},{title:'2. Richiama la regola',text:exerciseHint(item,lesson)}];
+ const context=item.passage?'Leggi il testo intero, anche le frasi dopo lo spazio. Metti in ordine gli eventi e distingui ciò che vale ancora adesso da ciò che è concluso.':focus;
+ const steps=[{title:'1. Cerca l’indizio',text:context},{title:'2. Richiama la regola',text:exerciseHint(item,lesson)}];
  const example=(lesson.examples||[]).find(x=>typeof x==='string'&&!item.stem.includes(x)&&normal(x)!==normal(item.answer));
  if(example)steps.push({title:'3. Confronta un esempio diverso',text:example+' — Individua soggetto, forma verbale e riferimento temporale. Applica il ragionamento alla tua frase, senza copiare questo esempio.'});
  return steps;

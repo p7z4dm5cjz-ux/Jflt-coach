@@ -92,7 +92,8 @@ export function practiceWindow(state,id,timestamp=Date.now()){
  const rate=list=>list.length?list.filter(a=>a.correct).length/list.length:null;
  // «Da confermare» solo a sessione conclusa: un blocco riuscito in una sessione a metà non basta.
  const lastSession=(state.sessions||[]).find(x=>x.id===latest.at(-1)?.session_id);
- const goodSession=progress.can_advance&&!!lastSession?.completed_at,independent=progress.ready,last=Math.max(0,...latest.map(a=>Date.parse(a.date)||0));
+ const path=state.lesson_levels?.[id];
+ const goodSession=path?path.history.some(h=>h.decision==="up"||h.decision==="transfer-up"):progress.can_advance&&!!lastSession?.completed_at,independent=path?path.autonomous:progress.ready,last=Math.max(0,...latest.map(a=>Date.parse(a.date)||0));
  const due=(independent||goodSession)&&last>0&&timestamp-last>=3*86400000;
  return {all,window,latest,accuracy:rate(window),latestRate:rate(latest),errors:progress.errors+progress.pending_errors,independent,goodSession,due,can_advance:progress.can_advance,missing:progress.missing};
 }
@@ -104,7 +105,8 @@ export function lessonEvidence(state,id,timestamp=Date.now()){
  const intervals=[1,3,7,14,30],due=last?Date.parse(last.completed_at)+(passed?intervals[Math.min(streak-1,4)]:1)*86400000:null;
  const lastFailure=checks.findLastIndex(c=>checkResults(c).some(i=>i.lesson_id===id&&!i.correct));
  const fresh=checks.slice(lastFailure+1).filter(c=>{const r=checkResults(c).filter(i=>i.lesson_id===id);return r.every(i=>i.correct)&&r.filter(i=>!i.repeated&&!i.practice_bank).length>=2;});
- const delayed=fresh.length>=2&&Date.parse(fresh.at(-1).completed_at)-Date.parse(fresh[0].completed_at)>=86400000;
+ const path=state.lesson_levels?.[id];
+ const delayed=path?!!path.autonomous&&!!path.confirmed_at:fresh.length>=2&&Date.parse(fresh.at(-1).completed_at)-Date.parse(fresh[0].completed_at)>=86400000;
  return {last,passed,errors:results.filter(r=>!r.correct).length,due,due_now:due!==null&&due<=timestamp,delayed,streak};
 }
 export function reassessmentDue(state,timestamp=Date.now()){

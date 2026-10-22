@@ -1,15 +1,26 @@
-# Versione 1.16.2: ricomincia da zero
+# Versione 1.17.0: dalla lezione alla conferma a distanza
+
+- **15 domande sulla lezione prima degli intrecci.** Ai livelli 1–3 ogni ciclo contiene tre blocchi da cinque sulla principale. Il livello iniziale continua a derivare da pretest e prove precedenti. Al livello 4 iniziano confronti e brevi testi con le strutture già studiate.
+- **Recupero tra i blocchi.** Gli errori e gli aiuti usati aggiornano la selezione delle regole prima di creare il blocco successivo; due domande riprendono la difficoltà ricorrente, conservando altre regole. L'interfaccia mostra una breve spiegazione degli errori precedenti. L'80% complessivo non basta per salire se una regola ha almeno due errori e meno del 60% di riuscita. Soglie pratiche, non una certificazione CEFR/JFLT.
+- **Verifica in testi nuovi.** Dopo il livello 4: tre testi con cinque spazi ciascuno, risposte brevi. Occorrono tutti i 15 spazi valutabili senza aiuti, almeno l'80% sulla principale e sul totale. La prima prova apre un'attesa di almeno 24 ore; un secondo ciclo su testi nuovi conferma l'autonomia. Prima dell'attesa gli esercizi non possono confermare; ripetizioni, dubbi e controlli mancanti sono esclusi. Una prova fallita riporta alla scelta dal contesto. Si tratta di uso grammaticale in testi, non della certificazione della scrittura libera: il percorso Scrittura resta distinto.
+- **Etichette dopo la risposta.** Dal livello 3 il nome della regola è nascosto fino alla correzione. I suggerimenti restano progressivi e il loro uso esclude quella risposta dalle prove autonome. Nei primi livelli compare la spiegazione prima del primo blocco.
+- **Banca personale.** Gli esercizi AI confermati vengono recuperati per la loro lezione effettiva anche nei cicli misti; i testi degli spazi restano associati alle domande nel ripasso offline. Le domande sbagliate o risolte con aiuto hanno precedenza. Nessuna ripetizione conta come nuova padronanza.
+- **Riserva locale ampliata:** 30 contesti originali di livello 3, dieci ciascuno per Past Simple, Present Perfect Simple e Past Continuous. Non copre offline tutti i livelli avanzati delle 117 lezioni; i nuovi testi del trasferimento richiedono il tutor. Dopo tre prove di trasferimento prive di evidenze sufficienti, la lezione va in pausa.
+- **Compatibilità:** sessioni e backup precedenti conservati; la fase nuova è opzionale nei vecchi cicli. App e Worker devono entrambi appartenere alla release 1.17. Il prompt `groq-adaptive-v17` invia cinque slot per chiamata, le regole deboli e le frasi/testi da evitare; il controllo alla cieca resta obbligatorio per avanzare.
+- **Verifica della release:** 320 test superati, configurazione e cache sincronizzate, preparazione Worker riuscita. Chromium: otto pagine a larghezza mobile e desktop, chiaro/scuro e avvio senza service worker. Provati il ciclo completo nell'interfaccia con tutor simulato, backup, conferma a distanza, ripetizioni e aiuti. Gli errori delle lezioni intrecciate fanno recuperare quelle lezioni, senza abbassare la principale se risolta correttamente. Nessuna chiamata reale a Groq con l'account dell'utente; Chromium a larghezza iPhone non equivale a Safari iOS. Non si certifica la correttezza linguistica di tutte le future risposte AI.
+
+## Storico 1.16.2: ricomincia da zero
 
 - In Impostazioni, «Ricomincia da zero»: prima scarica il backup, poi chiede una conferma esplicita e cancella da questo dispositivo pretest, esercizi, percorsi, livelli, scritti, letture e lessico. Restano il codice del tutor, l'indirizzo del Worker, il tema e i minuti del piano. Un backup si può reimportare per tornare indietro.
 
-# Versione 1.16.1: livello di partenza e motivi più chiari nel percorso
+## Storico 1.16.1: livello di partenza e motivi più chiari nel percorso
 
 - **Livello di partenza dalle prove recenti:** se nelle ultime 6 risposte verificate ne hai almeno 5 corrette senza aiuti, la lezione parte almeno dal livello 2 anche quando il pretest la segnava da ripassare. Vale anche per un livello già fissato all'avvio di un ciclo ma mai deciso da un ciclo concluso; una decisione del percorso non viene scavalcata.
 - **Perché questa lezione:** la riga del ciclo spiega la scelta (pretest con errori e posto tra le priorità, sessione riuscita ma prove ancora da diversificare, continuazione del ciclo precedente, scelta dalla pagina della lezione).
 - **Niente suggerimenti involontari:** dal livello 3 l'intestazione dell'esercizio non mostra più il nome della regola, che anticipava la risposta; resta il ruolo e il livello.
 - **«Termina qui» chiede conferma** prima di chiudere il percorso.
 
-# Versione 1.16.0: percorso adattivo a cicli di 15 domande (fase 3 del tutor)
+## Storico 1.16.0: percorso adattivo a cicli di 15 domande (fase 3 del tutor)
 
 - **Percorso con il tutor da Oggi:** 30, 45 o 60 minuti = 2, 3 o 4 cicli. Ogni ciclo ha 15 domande in tre blocchi da 5: lezione principale 4/3/2, lezioni intrecciate 0/1/2, un ripasso per blocco. L'app sceglie lezione, regole e livello (`path-planner.js`); Groq scrive solo gli esercizi richiesti.
 - **Livelli per lezione** (`path-levels.js`): 1 riconoscere, 2 produrre con aiuto, 3 distinguere dal contesto, 4 intrecciare (un breve testo con tre spazi in ogni blocco). Partenza: pretest «da ripassare» → 1, «da confermare» → 2, «già sicura» → 3, livello iniziale A1–A2 → 1, altrimenti 2; una lezione già autonoma resta autonoma.

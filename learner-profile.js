@@ -33,10 +33,11 @@ export function learnerProfile(state,lessonId){
 // cross-checked AI items qualify; this is not a human certification.
 export function personalPractice(state,lessonId,count=6){
  const bank=new Map();
- for(const s of state.sessions||[])if(s.lesson_id===lessonId)for(const i of s.items){
+ for(const s of state.sessions||[])for(const i of s.items){
+  if((i.focus_lesson||s.lesson_id)!==lessonId||i.group&&!i.passage)continue;
   if(i.origin!=='groq'||i.doubt||!['confirmed','extended'].includes(i.check))continue;
-  const key=normal(i.stem);if(!bank.has(key))bank.set(key,i);
+  const key=normal(i.context_id||i.stem);if(!bank.has(key))bank.set(key,i);
  }
- const items=[...bank.values()].map(item=>{const attempts=(state.attempts||[]).filter(a=>!a.disputed&&normal(a.stem||'')===normal(item.stem));const last=attempts.at(-1);return {item,last,priority:!last?1:!last.correct||last.assisted?2:0};});
+ const items=[...bank.values()].map(item=>{const attempts=(state.attempts||[]).filter(a=>!a.disputed&&normal(a.context_id||a.stem||'')===normal(item.context_id||item.stem));const last=attempts.at(-1);return {item,last,priority:!last?1:!last.correct||last.assisted?2:0};});
  return items.sort((a,b)=>b.priority-a.priority||String(a.last?.date||'').localeCompare(String(b.last?.date||''))).slice(0,count).map(({item})=>({...item,skill:skillOf(item),personal_review:true}));
 }
