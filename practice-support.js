@@ -1,14 +1,38 @@
 import {exerciseHint} from './exercise-hints.js';
-import {normal} from './answer-normal.js';
+import {normal,gapSentences} from './answer-normal.js';
+import {ruleInfo,tagFor} from './item-tags.js';
+import {lessonItems} from './practice-bank.js';
 export function assistedItem(set,item){return !!set.assisted||!!set.hinted_items?.includes(item.id);}
+// Tre aiuti in ordine, uno per tocco: 1) la regola e come usare l'indizio della frase, 2) un esempio
+// svolto sulla stessa regola, 3) la soluzione con la spiegazione. Ogni aiuto rende la risposta guidata.
 export function hintSteps(item,lesson={}){
- const choice=!!item.options?.length;
- const focus=choice?'Prima di scegliere, descrivi il significato della frase: quando avviene il fatto, è concluso o in corso, è un’intenzione o un obbligo? Confronta tutte le alternative.':/_{2,}/.test(item.stem)?'Leggi ciò che è già scritto prima e dopo lo spazio. Individua il soggetto e il momento dell’azione; non ripetere le parole già presenti.':'Individua ciò che la consegna chiede di cambiare. Tieni fissi il significato e gli elementi che non devi modificare.';
- const context=item.passage?'Leggi il testo intero, anche le frasi dopo lo spazio. Metti in ordine gli eventi e distingui ciò che vale ancora adesso da ciò che è concluso.':focus;
- const steps=[{title:'1. Cerca l’indizio',text:context},{title:'2. Richiama la regola',text:exerciseHint(item,lesson)}];
- const example=(lesson.examples||[]).find(x=>typeof x==='string'&&!item.stem.includes(x)&&normal(x)!==normal(item.answer));
- if(example)steps.push({title:'3. Confronta un esempio diverso',text:example+' — Individua soggetto, forma verbale e riferimento temporale. Applica il ragionamento alla tua frase, senza copiare questo esempio.'});
+ const choice=!!item.options?.length,gap=/_{2,}/.test(item.stem||'');
+ const tag=item.rules?.length?{rules:item.rules}:lesson.id?tagFor(lesson.id,item):null,rule=tag?ruleInfo(tag.rules[0]):null;
+ const how=item.passage?'Leggi tutto il testo, anche dopo lo spazio: il contesto indica quale schema serve.':choice?'Nella frase cerca le parole che decidono il significato (tempo, condizione, intenzione) e scegli l’alternativa che rispetta lo schema; le altre lo violano.':gap?'Le parole già scritte prima e dopo lo spazio sono l’indizio: ti dicono quale schema serve. Scrivi solo la parte che manca, senza ripetere ciò che c’è già.':'Applica lo schema alla frase richiesta.';
+ // Gli errori tipici che contengono la soluzione di questo esercizio non si mostrano: la anticiperebbero.
+ const keys=[item.answer,...(item.accept||[])].map(normal).filter(Boolean);
+ const wrong=(rule?.pitfall||'').split(/;\s*/).map(x=>x.replace(/[.\s]+$/,'')).filter(x=>x&&!keys.some(k=>normal(x).includes(k)));
+ const ruleText=rule?rule.name+': '+rule.test+(wrong.length?' Forme sbagliate da evitare: '+wrong.map(x=>'«'+x+'»').join(', ')+'.':''):exerciseHint(item,lesson);
+ const steps=[{title:'1. La regola',label:'la regola',text:ruleText+' '+how}];
+ steps.push({title:'2. Un esempio',label:'un esempio',text:workedExample(item,lesson,tag)});
+ steps.push({title:'3. La soluzione',label:'la soluzione',text:'Risposta: '+item.answer+(item.accept?.length>1?' (accettate anche: '+item.accept.filter(v=>normal(v)!==normal(item.answer)).slice(0,3).join(', ')+')':'')+'. '+(item.why||'')});
  return steps;
+}
+// Esempio svolto: un altro esercizio della banca con la stessa regola, già completato; altrimenti
+// un esempio della scheda della lezione.
+function workedExample(item,lesson,tag){
+ const key=normal(item.stem||''),answer=normal(item.answer||''),keys=[item.answer,...(item.accept||[])].map(normal).filter(Boolean);
+ if(lesson.id&&tag){
+  const pool=lessonItems(lesson.id).filter(x=>x.rules?.includes(tag.rules[0])&&normal(x.stem)!==key&&normal(x.answer)!==answer);
+  const shows=text=>!keys.some(k=>k.split(' ').length>1&&normal(text).includes(k));
+  const gapItems=pool.map(x=>({x,filled:gapSentences(x)[0]})).filter(y=>y.filled&&shows(y.filled+' '+y.x.why));
+  const pick=(list)=>list[[...key].reduce((n,c)=>n+c.charCodeAt(0),0)%list.length];
+  if(gapItems.length){const {x,filled}=pick(gapItems);return filled+' — '+x.why;}
+  const choices=pool.filter(x=>x.options?.length&&shows(x.stem+' '+x.answer+' '+x.why));
+  if(choices.length){const x=pick(choices),sentence=x.stem.slice(x.stem.lastIndexOf(': ')+2);return (/_{2,}/.test(sentence)?sentence.replace(/_{2,}/,x.answer):sentence+' → '+x.answer)+' — '+x.why;}
+ }
+ const example=(lesson.examples||[]).find(x=>typeof x==='string'&&!String(item.stem).includes(x)&&normal(x)!==answer&&!keys.some(k=>k.split(' ').length>1&&normal(x).includes(k)));
+ return example?example+' — Guarda come è costruita la forma e applica lo stesso schema alla tua frase.':'Rileggi la scheda della lezione: la sezione «Quando usarla» mostra lo schema con esempi.';
 }
 export function answerFeedback(item,value){
  const typed=normal(value),reference=normal(item.answer);

@@ -284,11 +284,12 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
         const steps=hintSteps(item,LESSONS.find(x=>x.id===item.focus_lesson)||l),hintId=item.id+"-reasoning-hint";
         let level=set.hint_levels?.[item.id]||(set.hinted_items?.includes(item.id)?1:0);
         const hintBox=h("div",{id:hintId,class:"exercise-hint",hidden:!level,role:"status"});
-        const paint=()=>{hintBox.replaceChildren(...steps.slice(0,level).map(step=>h("section",{},h("strong",{},step.title),p(step.text))),p(set.assisted?"Questa sessione era già guidata e mantiene la valutazione con aiuti.":"Questa risposta sarà registrata con aiuto. Le altre restano autonome.","small muted"));};paint();
-        const hintButton=button(level?"Mostra il prossimo aiuto":"Mostra un suggerimento",async()=>{
+        const paint=()=>{hintBox.replaceChildren(...steps.slice(0,level).map(step=>h("section",{},h("strong",{},step.title),p(step.text))),p(set.assisted?"Questa sessione era già guidata e mantiene la valutazione con aiuti.":level>=steps.length?"Hai visto la soluzione: scrivila con parole tue per fissarla. La risposta conta come guidata.":"Questa risposta sarà registrata con aiuto. Le altre restano autonome.","small muted"));};paint();
+        const nextLabel=()=>"Mostra "+(steps[level]?.label||"il prossimo aiuto");
+        const hintButton=button(nextLabel(),async()=>{
           level=Math.min(level+1,steps.length);
           await change(s=>{const current=s.sessions.find(x=>x.id===id);current.hinted_items??=[];if(!current.hinted_items.includes(item.id))current.hinted_items.push(item.id);current.hint_levels??={};current.hint_levels[item.id]=level;});
-          hintBox.hidden=false;paint();hintButton.textContent=level===steps.length?"Tutti gli aiuti mostrati":"Mostra il prossimo aiuto";hintButton.setAttribute("aria-expanded","true");hintButton.hidden=level>=steps.length;
+          hintBox.hidden=false;paint();hintButton.textContent=level===steps.length?"Tutti gli aiuti mostrati":nextLabel();hintButton.setAttribute("aria-expanded","true");hintButton.hidden=level>=steps.length;
         },"quiet");
         hintButton.setAttribute("aria-controls",hintId);hintButton.setAttribute("aria-expanded",String(!!level));
         hintButton.setAttribute("aria-label","Suggerimento per la domanda "+(flow.start+i+1));

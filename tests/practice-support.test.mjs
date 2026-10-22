@@ -8,7 +8,11 @@ test('Contrasts vary the target and explain plausible alternatives across all co
 });
 test('Hints affect only requested answers; old globally guided sessions stay guided',()=>{
  const set={assisted:false,hinted_items:['a']};assert.equal(assistedItem(set,{id:'a'}),true);assert.equal(assistedItem(set,{id:'b'}),false);assert.equal(assistedItem({assisted:true},{id:'b'}),true);
- const steps=hintSteps({stem:'She ___ going to phone.',answer:'is'},{examples:['They are going to leave.']});assert.equal(steps.length,3);assert.match(steps[2].text,/They are going/);
+ const steps=hintSteps({stem:'She ___ going to phone.',answer:'is'},{examples:['They are going to leave.']});assert.equal(steps.length,3);assert.match(steps[1].text,/They are going/);assert.match(steps[2].text,/^Risposta: is\./);
+ const third={stem:'Scrivi solo le parole mancanti: If they had asked, we ___ them. (help)',answer:'would have helped',accept:['would have helped'],why:'Terzo tipo.'};
+ const real=hintSteps(third,{id:'conditionals-unreal',examples:[]});
+ assert.match(real[0].text,/Terzo condizionale: If \+ had \+ participio, would have \+ participio/);assert.doesNotMatch(real[0].text+real[1].text,/would have helped/);
+ assert.match(real[1].text,/would have/);assert.match(real[2].text,/Risposta: would have helped/);
 });
 test('Feedback addresses observable errors and admits unrecognised variants',()=>{
  assert.match(answerFeedback({answer:'did not receive'},'did not received'),/forma base/);

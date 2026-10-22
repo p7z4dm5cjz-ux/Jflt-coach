@@ -19,9 +19,10 @@ test('Hints are local to the question, visible inline, persistent and preserve t
  const blocks=document.querySelectorAll('.exercise');const button=blocks[0].querySelector('button');button.click();await settle();
  assert.equal(document.getElementById('going'),input);assert.equal(input.value,'my draft');
  assert.equal(blocks[0].querySelector('.exercise-hint').hidden,false);assert.equal(blocks[1].querySelector('.exercise-hint').hidden,true);
- assert.match(blocks[0].querySelector('.exercise-hint').textContent,/Individua il soggetto/);assert.doesNotMatch(blocks[0].querySelector('.exercise-hint').textContent,/SOLUTION_ONLY/);
+ assert.match(blocks[0].querySelector('.exercise-hint').textContent,/La regola[\s\S]*Non ripetere going to/);assert.doesNotMatch(blocks[0].querySelector('.exercise-hint').textContent,/SOLUTION_ONLY/);
  assert.equal(button.getAttribute('aria-expanded'),'true');assert.equal(repo.get().sessions[0].assisted,false);assert.deepEqual(repo.get().sessions[0].hinted_items,['going']);assert.equal(calls,0);
- button.click();await settle();assert.match(blocks[0].querySelector('.exercise-hint').textContent,/Non ripetere going to/);assert.equal(repo.get().sessions[0].assisted,false);
+ assert.equal(button.textContent,'Mostra un esempio');button.click();await settle();assert.match(blocks[0].querySelector('.exercise-hint').textContent,/Un esempio/);assert.doesNotMatch(blocks[0].querySelector('.exercise-hint').textContent,/SOLUTION_ONLY/);
+ assert.equal(button.textContent,'Mostra la soluzione');button.click();await settle();assert.match(blocks[0].querySelector('.exercise-hint').textContent,/Risposta: is\. SOLUTION_ONLY/);assert.equal(repo.get().sessions[0].assisted,false);
  await app.render();assert.equal(document.querySelector('.exercise-hint').hidden,false);assert.equal(document.getElementById('going').value,'my draft');
  const backup=parseBackup(await repo.backup());assert.deepEqual(backup.sessions[0].hinted_items,['going']);backup.sessions[0].hint_levels.going=99;assert.throws(()=>parseBackup(JSON.stringify({format:"jflt-coach-backup/v2",state:backup})),/suggerimenti/);
 });

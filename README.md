@@ -1,3 +1,10 @@
+# Versione 1.17.2: suggerimenti in tre passi (regola, esempio, soluzione)
+
+- Il pulsante sotto ogni esercizio mostra un aiuto per volta e dice quale arriva: «Mostra la regola», «Mostra un esempio», «Mostra la soluzione».
+- **1. La regola:** il nome e lo schema della regola esercitata (dalle regole della lezione), le forme sbagliate da evitare e come usare l'indizio della frase (le parole prima e dopo lo spazio, o le parole che decidono il significato). Le forme sbagliate che contengono la soluzione non vengono mostrate.
+- **2. Un esempio:** un altro esercizio della banca sulla stessa regola, già completato, con la sua spiegazione; se non c'è, un esempio della scheda della lezione. Mai la soluzione dell'esercizio in corso.
+- **3. La soluzione:** risposta, varianti accettate e spiegazione. Come prima, una risposta per cui hai chiesto aiuto conta come guidata.
+
 # Versione 1.17.1: esercizi di significato più chiari
 
 - Riscritti i due esercizi di significato sui condizionali irreali («If I were rich…», «If she had left earlier…»): opzioni complete e parallele e una spiegazione che traduce la frase e chiarisce che were, qui, non indica il passato.
