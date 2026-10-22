@@ -1,3 +1,8 @@
+# Versione 1.17.1: esercizi di significato più chiari
+
+- Riscritti i due esercizi di significato sui condizionali irreali («If I were rich…», «If she had left earlier…»): opzioni complete e parallele e una spiegazione che traduce la frase e chiarisce che were, qui, non indica il passato.
+- L'intestazione degli esercizi fuori dal percorso indica il tipo giusto: Significato, Scelta della forma, Uso in una situazione, Ordine delle parole o Uso della forma. Prima gli esercizi di significato della banca comparivano come «Uso della forma».
+
 # Versione 1.17.0: dalla lezione alla conferma a distanza
 
 - **15 domande sulla lezione prima degli intrecci.** Ai livelli 1–3 ogni ciclo contiene tre blocchi da cinque sulla principale. Il livello iniziale continua a derivare da pretest e prove precedenti. Al livello 4 iniziano confronti e brevi testi con le strutture già studiate.
