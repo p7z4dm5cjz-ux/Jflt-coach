@@ -1,4 +1,12 @@
-# Versione 1.17.2: suggerimenti in tre passi (regola, esempio, soluzione)
+# Versione 1.18.0: un corso ordinato con prerequisiti
+
+- Il percorso automatico mantiene un ordine stabile all'interno delle priorità: ripassi in scadenza, recuperi, nuove lezioni, basi già sicure. La sequenza parte dal livello scelto; le dipendenze non verificate vengono inserite prima della lezione che le richiede. Non riproduce l'indice integrale di un singolo manuale.
+- Prima di una nuova lezione automatica, si controllano i prerequisiti. Un livello dichiarato non li rende acquisiti. Sono sufficienti per proseguire un pretest sicuro, prove recenti che consentono l'avanzamento o un livello salvato almeno 3; questa idoneità non certifica l'autonomia. Un recupero insufficiente continua prima del ritorno all'argomento più difficile.
+- La scheda «Il tuo percorso» e la motivazione del ciclo mostrano perché viene proposta la lezione e quale tappa è prevista dopo. Il pretest consente di verificare e saltare le basi già note. Le lezioni aperte manualmente restano libere e i cicli già iniziati possono proseguire.
+- Conservati i suggerimenti in tre passi e le correzioni sui condizionali della 1.17.2, i cicli da 15, i backup e la conferma a distanza. Nessuna nuova richiesta a Groq per ordinare il corso.
+- Verifiche: 324 test superati, ordine completo delle 117 lezioni, dipendenze senza cicli, avvio B2 e motivazione nella UI, salvataggio e backup. Chiamate Groq simulate; nessuna prova autenticata con l'account personale.
+
+## Storico 1.17.2: suggerimenti in tre passi (regola, esempio, soluzione)
 
 - Il pulsante sotto ogni esercizio mostra un aiuto per volta e dice quale arriva: «Mostra la regola», «Mostra un esempio», «Mostra la soluzione».
 - **1. La regola:** il nome e lo schema della regola esercitata (dalle regole della lezione), le forme sbagliate da evitare e come usare l'indizio della frase (le parole prima e dopo lo spazio, o le parole che decidono il significato). Le forme sbagliate che contengono la soluzione non vengono mostrate.

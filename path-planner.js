@@ -3,7 +3,7 @@
 import {LESSONS} from "./catalog.js";
 import {placementProfile} from "./placement.js";
 import {recommendation} from "./engine.js";
-import {lessonMeta,PATH_GROUPS,learningReason} from "./learning-path.js";
+import {lessonMeta,PATH_GROUPS,learningReason,prerequisiteReady} from "./learning-path.js";
 import {practiceWindow,lessonEvidence} from "./grammar-checks.js";
 import {lessonRules,LEVELS} from "./item-tags.js";
 import {levelState,diagnosticStats,minLevelFor,MAX_LEVEL,cycleDecision,applyDecision,secondaryCheck,transferDue,closeTransfer} from "./path-levels.js";
@@ -39,10 +39,11 @@ export function mixable(state,id){
 export function chooseMain(state,{exclude=[],continueWith=null,timestamp=Date.now()}={}){
   const due=LESSONS.find(l=>!exclude.includes(l.id)&&!isResting(state,l.id)&&transferDue(state,l.id,timestamp));
   if(due)return due.id;
-  const ok=id=>!exclude.includes(id)&&isOpen(state,id)&&!isResting(state,id);
-  if(continueWith&&ok(continueWith))return continueWith;
+  const ready=id=>lessonMeta(byId.get(id)).prerequisites.every(pre=>prerequisiteReady(state,pre));
+  const ok=id=>!exclude.includes(id)&&isOpen(state,id)&&!isResting(state,id)&&ready(id);
+  if(continueWith&&!exclude.includes(continueWith)&&isOpen(state,continueWith)&&!isResting(state,continueWith))return continueWith;
   const ranked=recommendation(state).map(l=>l.id),all=LESSONS.map(l=>l.id);
-  return ranked.find(ok)||all.find(ok)||[...ranked,...all].find(id=>!exclude.includes(id)&&isOpen(state,id))||null;
+  return ranked.find(ok)||all.find(ok)||null;
 }
 
 // Recupero: un prerequisito non ancora autonomo, dal livello più basso.
@@ -95,6 +96,10 @@ export function mainReason(state,lessonId,{forced=false,continued=false}={}){
     if(wrong)parts.push("Nel pretest: "+wrong+" su "+rows.length+" sbagliate"+(rank>=0?", priorità n. "+(rank+1):"")+".");
   }
   parts.push(reason);
+  const course=recommendation(state),at=course.findIndex(l=>l.id===lessonId),entry=course[at];
+  if(entry?.course_reason)parts.push(entry.course_reason);
+  const next=course.slice(at+1).find(l=>isOpen(state,l.id)&&!isResting(state,l.id));
+  if(next)parts.push("Prossima tappa prevista: «"+next.title+"». Recuperi e ripassi possono precederla.");
   return parts.join(" ");
 }
 
@@ -102,7 +107,10 @@ export function mainReason(state,lessonId,{forced=false,continued=false}={}){
 export function planCycle(state,{previous=null,exclude=[],force=null,timestamp=Date.now()}={}){
   let main=null,recovery_for=null;
   const prevResult=previous?.result;
-  if(previous?.recovery_for&&isOpen(state,previous.recovery_for))main=previous.recovery_for;
+  if(previous?.recovery_for&&isOpen(state,previous.recovery_for)){
+    if(prerequisiteReady(state,previous.main))main=previous.recovery_for;
+    else {main=previous.main;recovery_for=previous.recovery_for;}
+  }
   else if(prevResult&&prevResult.decision==="down"&&prevResult.level===1&&!previous.recovery_for){
     const r=recoveryFor(state,previous.main);
     if(r){main=r;recovery_for=previous.main;}

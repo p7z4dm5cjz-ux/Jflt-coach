@@ -61,7 +61,7 @@ test("Due prove dedicate hanno frasi diverse; un errore successivo riapre la ver
 });
 test("Errori della verifica e scadenze aggiornano le priorità; le risposte contestate non pesano",()=>{
  const s=freshState(),c=complete(s,newCheck(s,[],"passive",stamp));c.answers[c.item_ids[0]]="wrong";
- assert.equal(recommendation(s)[0].id,"passive");const before=recommendation(s).find(l=>l.id==="past-simple").score;
+ const order=recommendation(s).map(l=>l.id);assert.ok(order.indexOf("past-simple")<order.indexOf("passive"));assert.ok(order.indexOf("present-perfect-simple")<order.indexOf("passive"));assert.equal(recommendation(s).find(l=>l.id==="passive").course_recovery,true);const before=recommendation(s).find(l=>l.id==="past-simple").score;
  s.attempts.push({lesson_id:"past-simple",correct:false,disputed:true,assisted:false,source:"groq"});assert.equal(recommendation(s).find(l=>l.id==="past-simple").score,before);
  c.answers[c.item_ids[0]]=checkItems(c)[0].answer;assert.equal(lessonEvidence(s,"passive",stamp+day).due_now,true);
  const ranked=checkPriorities(s,recommendation(s),stamp+day);assert.equal(ranked[0],"passive");

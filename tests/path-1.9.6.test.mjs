@@ -14,15 +14,15 @@ test("1.9.6: la frase intera giusta vale quanto le sole parole mancanti",()=>{
   assert.equal(correct({kind:"error_correction",stem:"Correggi l'errore e riscrivi tutta la frase: She work here.",answer:"She works here.",accept:[]},"She work here."),false);
 });
 
-test("1.9.6: dopo il pretest le due aree più deboli si alternano nelle prime tappe",()=>{
+test("Dopo il pretest tempi e negazioni restano prioritari ma le basi precedono le negazioni",()=>{
   const wrong=new Set(["N01","N02","N03","N04","N05","N06","N07","T01","T02","T03","T04","T05","T06"]);
   const s=freshState(),t=new Date().toISOString();
   s.placement={version:1,bank_version:BANK_VERSION,seed:"x",answers:QUESTIONS.map(q=>({id:q.id,value:wrong.has(q.id)?"":q.answer,confidence:"sure"})),position:44,started_at:t,submitted_at:t};
   const tenseLessons=new Set(QUESTIONS.filter(q=>q.area==="tenses").flatMap(q=>q.lessons));
-  const top=recommendation(s).slice(0,4).map(l=>l.id);
-  assert.equal(top[0],"negatives");
-  assert.ok(tenseLessons.has(top[1]),"la seconda tappa deve essere un tempo verbale: "+top.join(", "));
-  assert.ok(top.filter(id=>tenseLessons.has(id)).length>=2);
+  const top=recommendation(s).map(l=>l.id);
+  assert.ok(top.indexOf("present-simple")<top.indexOf("negatives"));
+  assert.ok(top.indexOf("past-simple")<top.indexOf("negatives"));
+  assert.ok(top.slice(0,4).filter(id=>tenseLessons.has(id)).length>=2);
   assert.equal(placementProfile(s.placement).priorityIds.length,new Set(placementProfile(s.placement).priorityIds).size);
 });
 

@@ -8,12 +8,14 @@ const dom=new JSDOM(await readFile(new URL('../index.html',import.meta.url),'utf
 for(const k of ['window','document','location','Node','navigator','sessionStorage','localStorage'])Object.defineProperty(globalThis,k,{value:k==='window'?dom.window:dom.window[k],configurable:true});
 window.scrollTo=()=>{};
 const {mountApp}=await import('../app.js');
-test('Choose B2, open matching lesson, retain selection in home, settings and backup',async()=>{
+test('Choose B2, explain the unchecked prerequisite, retain selection in home, settings and backup',async()=>{
  const repo=await openRepository(new IDBFactory()),app=await mountApp(repo,document.getElementById('view'));
  const select=document.getElementById('starting-level');assert.ok(select);select.value='B2';
  [...document.querySelectorAll('button')].find(b=>b.textContent==='Parti dal livello scelto').click();
- for(let i=0;i<100&&location.hash!=='#/lesson/conditionals-unreal';i++)await new Promise(r=>setTimeout(r,10));
- assert.equal(location.hash,'#/lesson/conditionals-unreal');assert.equal(repo.get().settings.starting_level,'B2');
+ for(let i=0;i<100&&location.hash!=='#/lesson/present-simple';i++)await new Promise(r=>setTimeout(r,10));
+ assert.equal(location.hash,'#/lesson/present-simple');assert.equal(repo.get().settings.starting_level,'B2');
+ assert.match(document.getElementById('view').textContent,/Prima di.*Condizionali/i);
+ assert.match(document.getElementById('view').textContent,/Prossima tappa prevista/);
  location.hash='#/home';await app.render();assert.match(document.getElementById('view').textContent,/Livello iniziale: B2/);
  location.hash='#/settings';await app.render();assert.equal(document.getElementById('starting-level').value,'B2');
  assert.equal(parseBackup(await repo.backup()).settings.starting_level,'B2');

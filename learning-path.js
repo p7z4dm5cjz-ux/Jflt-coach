@@ -1,5 +1,6 @@
 import {LESSONS} from "./catalog.js";
 import {placementProfile} from "./placement.js";
+import {levelSequence} from "./starting-level.js";
 import {lessonEvidence,CHECK_LESSONS,reassessmentDue,practiceWindow} from "./grammar-checks.js";
 export const PATH_GROUPS=[
  {id:"foundations",title:"Basi da verificare",level:"A1–A2",ids:["sentence","present-simple","present-continuous","questions","negatives","past-simple","past-continuous","nouns","articles","pronouns","some-any","quantifiers","adjectives","comparison","prepositions"]},
@@ -9,6 +10,9 @@ export const PATH_GROUPS=[
  {id:"advanced",title:"Precisione e registro",level:"B2–C1",ids:["inversion","clefts","nominalisation","hedging","subjunctive","advanced-comparatives","mixed"]}
 ];
 const requires={
+ "inversion":["questions","past-perfect-simple"],"hedging":["may-might","deduction"],"nominalisation":["sentence","verb-patterns"],"cohesion":["linkers","clauses"],
+ "conditionals-real":["present-simple","future-will"],"mixed-conditionals":["conditionals-unreal"],"deduction":["may-might","obligation"],
+ "reporting-passive":["passive","reported"],"clefts":["relatives"],"participles":["clauses","passive"],
  "present-continuous":["present-simple"],"past-continuous":["past-simple"],"present":["present-simple","present-continuous"],"past":["past-simple","past-continuous"],
  "negatives":["present-simple","past-simple"],"present-perfect-simple":["past-simple"],"perfect-simple":["past-simple","present-perfect-simple"],
  "present-perfect-continuous":["present-perfect-simple","present-continuous"],"perfect-continuous":["present-perfect-simple","present-perfect-continuous"],
@@ -21,12 +25,42 @@ export function lessonMeta(lesson){
  const candidates=requires[lesson.id]||lesson.prerequisites||[];
  return {group:group.id,level:group.level,prerequisites:candidates.filter(id=>id!==lesson.id&&LESSONS.some(l=>l.id===id))};
 }
+
+// Una base pronta consente di studiare la lezione successiva; non certifica l'autonomia.
+export function prerequisiteReady(state,id,profile=undefined){
+ const w=practiceWindow(state,id),saved=state.lesson_levels?.[id];
+ if(w.errors&&w.latestRate<0.6)return false;
+ if(saved)return !!(saved.autonomous||saved.pending_transfer||saved.level>=3);
+ return w.independent||w.can_advance||(profile===undefined?placementProfile(state.placement):profile)?.lessonStatus?.[id]==="skip";
+}
+
+// Ordine stabile dentro ciascuna priorità. Le dipendenze sconosciute vengono inserite
+// prima dell'argomento: un livello dichiarato non inventa prove sui prerequisiti.
+export function courseOrder(state,ranked){
+ const sequence=levelSequence(state)||["present-simple","past-simple","present-perfect-simple",...PATH_GROUPS.flatMap(g=>g.ids)];
+ const order=[...new Set([...sequence,...LESSONS.map(l=>l.id)])],position=id=>order.indexOf(id);
+ const tier=l=>l.course_due?0:l.course_recovery?1:l.status==="maintain"||l.status==="skip"?3:l.status==="review"?1:2;
+ const sorted=[...ranked].sort((a,b)=>tier(a)-tier(b)||position(a.id)-position(b.id));
+ const byId=new Map(LESSONS.map(l=>[l.id,l])),rows=new Map(ranked.map(l=>[l.id,l])),out=[],seen=new Set(),readiness=new Map(),profile=placementProfile(state.placement);
+ const ready=id=>{if(!readiness.has(id))readiness.set(id,prerequisiteReady(state,id,profile));return readiness.get(id);};
+ function visit(id,target=null,trail=new Set()){
+  if(seen.has(id)||trail.has(id)||!byId.has(id))return;
+  const next=new Set(trail).add(id);
+  for(const pre of lessonMeta(byId.get(id)).prerequisites)if(!ready(pre))visit(pre,target||id,next);
+  seen.add(id);
+  const row=rows.get(id)||{...byId.get(id),eligible:true,status:"new",score:0};
+  out.push({...row,course_target:target,course_reason:target?"Prima di «"+byId.get(target).title+"», verifichiamo «"+row.title+"»: è una base necessaria e non è ancora confermata.":"Tappa del percorso: «"+row.title+"»."});
+ }
+ for(const row of sorted)visit(row.id);
+ return out;
+}
 export function lessonProgress(state,id,timestamp=Date.now()){
  const independent=practiceWindow(state,id).independent;
  const ev=lessonEvidence(state,id,timestamp);
  return {read:!!state.lesson_reads?.some(r=>r.lesson_id===id)||!!state.lesson_studies?.some(r=>r.lesson_id===id),practised:state.attempts.some(a=>a.lesson_id===id),independent,delayed:ev.delayed,due:ev.due_now,evidence:ev};
 }
 export function learningReason(state,lesson,timestamp=Date.now()){
+ if(lesson.course_target)return lesson.course_reason;
  const path=state.lesson_levels?.[lesson.id];
  if(path?.confirmed_at&&path.autonomous)return "Uso in testi nuovi confermato anche a distanza. Continua con il ripasso.";
  if(path?.pending_transfer)return path.transfer_due?"Prima prova su testo riuscita: la conferma a distanza sarà disponibile dal "+new Date(path.transfer_due).toLocaleString("it-IT")+".":"Sei pronto per la verifica in testi nuovi nel percorso con il tutor.";

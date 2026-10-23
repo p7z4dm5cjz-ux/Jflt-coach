@@ -111,7 +111,8 @@ test("studente in difficoltà: scende a 1, poi recupero sul prerequisito e ritor
   assert.ok(recovery.blocks.flat().some(s=>s.role==="recovery"));
   assert.match(cycleReason(recovery),/Recupero/);
   const back=planCycle(state,{previous:{...recovery,result:{decision:"stay",level:2}}});
-  assert.equal(back.main,"present-continuous");
+  assert.equal(back.main,"present-simple");
+  assert.equal(back.recovery_for,"present-continuous");
 });
 
 test("tra 60% e 80% resta; meno di 9 risposte non decide", () => {

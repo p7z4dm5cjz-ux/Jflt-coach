@@ -243,9 +243,12 @@ export async function mountApp(repo,root=document.getElementById("view"),tutor=c
   }
   function lesson(id,returnCourse) {
     const l=LESSONS.find(l=>l.id===id);if(!l)return [title("STUDIO","Lezione non trovata."),link("Torna alle lezioni","studio")];
+    const course=recommendation(state),at=course.findIndex(x=>x.id===id),step=course[at],next=course[at+1];
     const selected=dueTerms().slice(0,3),personal=personalPractice(state,id);
     const study=state.lesson_studies?.find(x=>x.lesson_id===id),question=h("textarea",{id:"grammar-question",maxlength:500,rows:2,value:study?.question||"",placeholder:"Es. Perché qui non uso il past simple?"});
-    return [link("← Tutte le lezioni","studio","back"),title("GRAMMATICA",l.title,l.goal),lessonGuide(l),learning.lessonPanel(id,returnCourse),
+    return [link("← Tutte le lezioni","studio","back"),title("GRAMMATICA",l.title,l.goal),
+      step&&card(h("h2",{},"Il tuo percorso"),p(step.course_reason),next&&p("Prossima tappa prevista: «"+next.title+"». Recuperi e ripassi possono precederla.","small muted"),step.course_target&&link("Conosci già queste basi? Verificale con il pretest","placement","text-link")),
+      lessonGuide(l),learning.lessonPanel(id,returnCourse),
       card(h("h2",{},"Quando usarla"),p(l.when),l.forms&&p(l.forms,"formula"),list(l.examples.map(t=>h("span",{lang:"en"},t))),h("h3",{},"La differenza che conta"),p(l.contrast),p(l.pitfall,"warning")),
       l.sections&&card(h("h2",{},"Approfondisci e usa la regola"),l.sections.map(s=>h("details",{},h("summary",{},s.title),p(s.text)))), 
       l.related?.length&&card(h("h2",{},"Collega le strutture"),p("Sono collegamenti di studio, non lezioni dichiarate già acquisite dal pretest.","small muted"),h("div",{class:"actions"},l.related.map(id=>{const item=LESSONS.find(l=>l.id===id);return item&&link(item.title,"lesson/"+id,"text-link");}))),

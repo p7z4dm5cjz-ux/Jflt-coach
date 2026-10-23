@@ -4,8 +4,9 @@ import {placementProfile, validPlacement, newPlacement} from "./placement.js";
 import {PARTICLE_ALTERNATIVES,BASE_MEANING_DISTRACTORS} from "./phrasal-extension.js";
 import {normal,correct} from "./answer-normal.js";
 import {lessonEvidence,practiceWindow} from "./grammar-checks.js";
+import {courseOrder} from "./learning-path.js";
 export {normal,correct} from "./answer-normal.js";
-export const VERSION = "1.17.2";
+export const VERSION = "1.18.0";
 export const API_VERSION = 1;
 export const LEGACY_STORES = ["settings","diag_responses","diag_texts","profile","requests","grammar_sets","grammar_answers","tasks","texts","feedback","error_log","cards","transfer_checks","device_tests","to_verify"];
 export const now = () => new Date().toISOString();
@@ -66,9 +67,9 @@ export function recommendation(state) {
     // Gli errori nei prerequisiti li rendono pertinenti, senza precedere il recupero.
     const bridge=l.extension&&profile?(l.prerequisites||[]).some(id=>profile.lessonStatus[id]==="review")?5:0:0;
     const score=Math.min(errors,6)*6+writingWeight+evidence.errors*12+(evidence.due_now?120:0)+(w.due&&!evidence.due_now?60:0)+(status==="review"?20:0)+(status!=="confirm"&&profile?.priorityIds.includes(l.id)?30-profile.priorityIds.indexOf(l.id):0)+base+bridge-(l.extension?l.stage+1:0)-(["skip","maintain"].includes(status)&&!w.due?100:0)-(evidence.delayed&&!evidence.due_now?35:0);
-    return {...l,eligible:!sequence||sequence.includes(l.id)||errors>0||evidence.errors>0||evidence.due_now||w.due||writingWeight>0||profile?.lessonStatus[l.id]==="review",status,score,index,accuracy:recent,attempts:w.all.length,window:w.window.length};
+    return {...l,course_due:!!(evidence.due_now||w.due),course_recovery:errors>0||evidence.errors>0||writingWeight>0,eligible:!sequence||sequence.includes(l.id)||errors>0||evidence.errors>0||evidence.due_now||w.due||writingWeight>0||profile?.lessonStatus[l.id]==="review",status,score,index,accuracy:recent,attempts:w.all.length,window:w.window.length};
   });
-  return scored.filter(l=>l.eligible).sort((a,b)=>b.score-a.score||a.index-b.index);
+  return courseOrder(state,scored.filter(l=>l.eligible));
 }
 // Il percorso consigliato: le prime tappe della classifica, nello stesso ordine usato dal
 // piano di oggi e dall'allenamento completo, così la proposta è una sola.
