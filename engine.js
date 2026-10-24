@@ -6,7 +6,7 @@ import {normal,correct} from "./answer-normal.js";
 import {lessonEvidence,practiceWindow} from "./grammar-checks.js";
 import {courseOrder} from "./learning-path.js";
 export {normal,correct} from "./answer-normal.js";
-export const VERSION = "1.18.0";
+export const VERSION = "1.18.1";
 export const API_VERSION = 1;
 export const LEGACY_STORES = ["settings","diag_responses","diag_texts","profile","requests","grammar_sets","grammar_answers","tasks","texts","feedback","error_log","cards","transfer_checks","device_tests","to_verify"];
 export const now = () => new Date().toISOString();

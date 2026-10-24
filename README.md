@@ -1,4 +1,11 @@
-# Versione 1.18.0: un corso ordinato con prerequisiti
+# Versione 1.18.1: spiegazioni personali e consegne coerenti
+
+- «Spiegami questa lezione» invia il profilo ricostruito al clic: livello iniziale scelto, prove disponibili sulla lezione, errori e risposte con aiuto. Il tutor parte dalla domanda esplicita e chiarisce al massimo due difficoltà documentate; senza prove offre una spiegazione introduttiva. La spiegazione non modifica livelli o progressi e rimane salvata offline. Per aggiornare una spiegazione già salvata occorre richiederla nuovamente.
+- Il Worker valida il profilo prima di consumare quota; le richieste precedenti senza profilo restano compatibili. Una spiegazione continua a richiedere una sola chiamata Groq. Prompt `groq-personal-explanations-v18`.
+- Nella modalità precedente da sei esercizi per blocco, trasformazioni e correzioni chiedono soltanto il frammento delimitato. Eliminati i riferimenti contraddittori alla riscrittura integrale, anche dagli esempi di formato. Nominare la forma è consentito per la costruzione guidata, non quando si valuta la scelta dal contesto. I tre suggerimenti progressivi restano invariati.
+- Test di integrazione sul profilo trasmesso, rifiuto prima della quota, compatibilità senza profilo, richiesta dalla UI e istruzioni effettive. Le risposte Groq sono simulate: la qualità linguistica reale non è certificata dai test.
+
+## Storico 1.18.0: un corso ordinato con prerequisiti
 
 - Il percorso automatico mantiene un ordine stabile all'interno delle priorità: ripassi in scadenza, recuperi, nuove lezioni, basi già sicure. La sequenza parte dal livello scelto; le dipendenze non verificate vengono inserite prima della lezione che le richiede. Non riproduce l'indice integrale di un singolo manuale.
 - Prima di una nuova lezione automatica, si controllano i prerequisiti. Un livello dichiarato non li rende acquisiti. Sono sufficienti per proseguire un pretest sicuro, prove recenti che consentono l'avanzamento o un livello salvato almeno 3; questa idoneità non certifica l'autonomia. Un recupero insufficiente continua prima del ritorno all'argomento più difficile.

@@ -40,7 +40,7 @@ test("Ogni richiesta manda lo schema del suo compito e conserva i dati dello stu
       return provider(SHAPES[task]);
     });
     assert.equal(response.status,200,task);assert.equal(calls,1);
-    const body=await response.json();assert.deepEqual(body.result,["reading_understand","reading_test"].includes(task)?{...SHAPES[task],omitted:0}:SHAPES[task]);assert.equal(body.prompt_revision,"groq-adaptive-v17");
+    const body=await response.json();assert.deepEqual(body.result,["reading_understand","reading_test"].includes(task)?{...SHAPES[task],omitted:0}:SHAPES[task]);assert.equal(body.prompt_revision,"groq-personal-explanations-v18");
   }
 });
 

@@ -39,8 +39,8 @@ test("1.8.0: il controllo alla cieca conferma, estende o segnala senza cambiare 
     {n:2,best:"gone",all_valid:[],ambiguous:false},
     {n:3,best:"went",all_valid:[],ambiguous:false},
     {n:4,best:"have finished",all_valid:["have completed"],ambiguous:false},
-    {n:5,best:"They didn't check the gate.",all_valid:[],ambiguous:false},
-    {n:6,best:"She doesn't work here.",all_valid:[],ambiguous:true}
+    {n:5,best:"didn't check",all_valid:[],ambiguous:false},
+    {n:6,best:"work",all_valid:[],ambiguous:true}
   ]};
   const res=await handle(request("exercises",exercisesData,{verify:true}),env,async(_u,o)=>{const body=JSON.parse(o.body);sent.push(body);return ok(sent.length===1?SHAPES.exercises:solver);});
   const body=await res.json();

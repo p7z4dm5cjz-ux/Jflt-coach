@@ -23,7 +23,7 @@ export function validateInput(task,d) {
     const okError=e=>object(e)&&str(e.area,60)&&arr(e.lessons,4)&&e.lessons.every(x=>str(x,100))&&str(e.stem,1600)&&typeof e.given==="string"&&e.given.length<=350&&str(e.expected,600);
     if(!arr(d.areas,8)||!d.areas.length||!d.areas.every(okArea)||!arr(d.errors,25)||!d.errors.length||!d.errors.every(okError))throw new Error("Servono le aree e almeno una risposta sbagliata del pretest (massimo 25).");
   }
-  if(task==="exercises"&&d.learner!==undefined)validateLearner(d.learner,d.lesson_id);
+  if(["exercises","grammar_explain"].includes(task)&&d.learner!==undefined)validateLearner(d.learner,d.lesson_id);
   if(task==="path_block")validatePathInput(d);
   return d;
 }
@@ -215,11 +215,11 @@ export const SHAPES={
   writing_coach:{criteria:Object.fromEntries(["content","organisation","grammar","register"].map(k=>[k,{status:"met",reason:"Requisito del passo rispettato."}])),summary:"Lo scopo è comprensibile.",focus:[{form:"Could you + verbo base",meaning_it:"Potrebbe…?",why:"Una richiesta cortese usa il verbo base dopo could.",example_en:"Could you confirm the address?"}],issues:[],next_step:"Controlla che il destinatario trovi tutte le informazioni richieste.",ready:false},
   exercises:{items:[
     {kind:"choice",stem:"Scegli la forma corretta: They ___ on duty.",options:["am","is","are"],answer:"are",accept:["are"],why:"They richiede are."},
-    {kind:"choice",stem:"Scegli il past simple di go.",options:["goed","went","gone"],answer:"went",accept:["went"],why:"Go ha il past simple irregolare went."},
+    {kind:"choice",stem:"Scegli il significato di: They have already left.",options:["They are no longer here.","They are about to leave.","They leave every day."],answer:"They are no longer here.",accept:["They are no longer here."],why:"Have already left presenta un evento già avvenuto con un risultato attuale: ora non sono qui."},
     {kind:"completion",stem:"Scrivi solo la parola mancante: She ___ yesterday. (usa leave al past simple)",options:[],answer:"left",accept:["left"],why:"Il past simple di leave è left."},
     {kind:"completion",stem:"Scrivi solo le parole mancanti: We ___ the report. (usa finish al present perfect simple)",options:[],answer:"have finished",accept:["have finished"],why:"Con we si usa have + participio."},
-    {kind:"transformation",stem:"Rendi negativa con didn't e riscrivi tutta la frase: They checked the gate.",options:[],answer:"They didn't check the gate.",accept:["They didn't check the gate.","They did not check the gate."],why:"Dopo did il verbo è alla forma base."},
-    {kind:"error_correction",stem:"Correggi l'errore e riscrivi tutta la frase: She doesn't works here.",options:[],answer:"She doesn't work here.",accept:["She doesn't work here.","She does not work here."],why:"Dopo doesn't si usa work, senza -s."}
+    {kind:"transformation",stem:"Rendi negativa la parte tra parentesi quadre. Scrivi solo la parte che sostituisce [checked]: They [checked] the gate.",options:[],answer:"didn't check",accept:["didn't check","did not check"],why:"Il passato negativo richiede did not + verbo base: checked diventa did not check."},
+    {kind:"error_correction",stem:"Correggi la parte tra parentesi quadre. Scrivi solo la parte che sostituisce [works]: She doesn't [works] here.",options:[],answer:"work",accept:["work"],why:"Dopo doesn't si usa work, senza -s; doesn't resta nella frase."}
   ]},
   writing_review:{summary:"Valutazione italiana",priorities:["massimo tre priorità"],rubric:{grammar:"valutazione",content:"valutazione",cohesion:"valutazione",register:"valutazione"},issues:[{quote:"citazione esatta presente nel testo",correction:"correzione minima",explanation:"regola e motivo",kind:"error",category:"negatives"}]},
   writing_compare:{summary:"confronto concreto",resolved:["errore realmente risolto"],remaining:["errore ancora presente"],transfer:[1,2,3].map(n=>({stem:"Nuovo esercizio "+n+" con contesto diverso",answer:"risposta",accept:["risposta","variante"],why:"spiegazione"}))},

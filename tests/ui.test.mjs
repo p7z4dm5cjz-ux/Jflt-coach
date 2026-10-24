@@ -110,6 +110,8 @@ test("Riprova Groq riceve l'errore e mantiene la distinzione dalla verifica auto
 });
 test("Studia con Groq: la lezione e il dubbio vengono inviati e la spiegazione resta dopo la navigazione",async()=>{
   await visit("lesson/present-perfect-simple");const before=calls.length;input("#grammar-question","Perché qui non uso il past simple?");click("Spiegami questa lezione");await until(()=>document.getElementById("view").textContent.includes("La spiegazione salvata"));assert.equal(calls.length,before+1);assert.equal(calls.at(-1).task,"grammar_explain");assert.equal(calls.at(-1).data.lesson_id,"present-perfect-simple");assert.ok(document.getElementById("view").textContent.includes("Come costruirla"));await visit("home");await visit("lesson/present-perfect-simple");assert.equal(calls.length,before+1);assert.ok(document.querySelector("#grammar-question").value.includes("past simple"));assert.equal(repo.get().lesson_studies.length,1);
+  assert.equal(calls.at(-1).data.learner.lesson_id,"present-perfect-simple");
+  assert.ok(Array.isArray(calls.at(-1).data.learner.evidence));
 });
 test("Scrittura MISSION dal modello al nuovo saggio autonomo: sei tappe, aiuti distinti e conferma differita",async()=>{
   await visit("writing");click("Inizia · MISSION · costruire un saggio");await until(()=>!!document.querySelector(".prep-question"));const id=repo.get().writing_courses.at(-1).id,before=calls.length;

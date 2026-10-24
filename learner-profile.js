@@ -6,6 +6,10 @@ import {STARTING_LEVELS,startingLevel} from "./starting-level.js";
 import {placementProfile} from './placement.js';
 import {normal} from './answer-normal.js';
 export const SKILLS=['form','meaning','tense_choice','word_order','use'];
+// Il profilo è ricostruito al clic, non dalla vecchia spiegazione salvata.
+export function explanationRequest(state,lessonId,question=''){
+ return {lesson_id:lessonId,question:question.trim(),learner:learnerProfile(state,lessonId)};
+}
 const skillOf=i=>SKILLS.includes(i?.skill)?i.skill:i?.skill==='choose'?'tense_choice':'form';
 // Rebuild from facts; AI assessments never overwrite the evidence.
 export function learnerProfile(state,lessonId){
