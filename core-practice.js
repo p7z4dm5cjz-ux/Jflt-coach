@@ -47,7 +47,7 @@ const meanings={
 };
 const groups=[['present-simple','present-continuous','past-simple'],['present-perfect-simple','present-perfect-continuous','past-simple'],['past-perfect-simple','past-perfect-continuous','past-continuous'],['future-will','future-going-to','future-arrangements'],['future-continuous','future-perfect-simple','future-perfect-continuous'],['ability','obligation','future-will']];
 function contextSentence(id,subject,v,rest){
- const r=rules[id],sentence=subject+" "+r[2](v)+" "+rest+" "+r[1].toLowerCase()+".";
+ const r=rules[id],sentence=subject+" "+r[2](v)+" "+rest+" "+r[1][0].toLowerCase()+r[1].slice(1)+".";
  if(id==="future-will")return "This is only my prediction, not an existing plan: "+sentence;
  if(id==="future-going-to")return "A decision has already been made: "+sentence;
  if(id==="future-arrangements")return "The appointment is confirmed: "+sentence;
