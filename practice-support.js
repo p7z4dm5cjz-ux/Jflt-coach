@@ -2,7 +2,7 @@ import {exerciseHint} from './exercise-hints.js';
 import {normal,gapSentences} from './answer-normal.js';
 import {ruleInfo,tagFor} from './item-tags.js';
 import {lessonItems} from './practice-bank.js';
-export function assistedItem(set,item){return !!set.assisted||!!set.hinted_items?.includes(item.id);}
+export function assistedItem(set,item){return !!set.assisted||!!item.fallback_guided||!!set.hinted_items?.includes(item.id);}
 // Tre aiuti in ordine, uno per tocco: 1) la regola e come usare l'indizio della frase, 2) un esempio
 // svolto sulla stessa regola, 3) la soluzione con la spiegazione. Ogni aiuto rende la risposta guidata.
 export function hintSteps(item,lesson={}){

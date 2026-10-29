@@ -1,3 +1,14 @@
+# Versione 1.18.3: percorso coerente e sorgente comune
+
+- 36 contesti originali per ciascuno di 17 argomenti di base (struttura della frase e 16 tempi/costruzioni principali). Le 3.024 operazioni disponibili condividono 612 identità di contesto: trasformare lo stesso evento non crea una nuova prova. Per ogni argomento sono verificati un ciclo da 15 contesti nuovi al livello 1 e un successivo ciclo da 15 al livello 2.
+- La riserva sceglie prima contesti mai svolti al livello richiesto, poi altre prove guidate o ripassi dichiarati. Le risposte guidate restano escluse anche se manca il flag sul tentativo. Il riepilogo separa prove nuove, aiuti, ripetizioni, controlli mancanti e regole pianificate non coperte.
+- Il prompt `groq-path-feedback-v20` riceve risultati, copertura, errori reali e contesti da evitare. Blocchi che ripetono frasi già proposte vengono rifiutati senza una chiamata automatica aggiuntiva. Un Worker precedente viene segnalato prima della generazione del percorso.
+- Glossario di 25 voci e spiegazioni cliccabili; lessico aggiungibile a mano, chiarimenti conservati e recupero dopo il ciclo. Trasferimento guidato tramite backup dal vecchio indirizzo.
+- Il codice applicativo è comune a GitHub e Sites. Il profilo privato è inserito dal build di Sites e non nel sorgente generico. Le due pubblicazioni conservano archivi browser separati.
+- Il tutor privato supporta secret server `APP_TOKEN` e `GROQ_API_KEY`, oppure una chiave di sessione; il Worker Cloudflare originale usa gli stessi sorgenti generati. Pubblicare il codice su un ramo GitHub non aggiorna da solo il Worker già attivo. Nessuna credenziale è inclusa nel repository.
+
+Vedi [pubblicazione e collaudo](docs/pubblicazione-privata.md) per stato delle verifiche e passaggi che richiedono l'account del proprietario.
+
 # Versione 1.18.1: spiegazioni personali e consegne coerenti
 
 - «Spiegami questa lezione» invia il profilo ricostruito al clic: livello iniziale scelto, prove disponibili sulla lezione, errori e risposte con aiuto. Il tutor parte dalla domanda esplicita e chiarisce al massimo due difficoltà documentate; senza prove offre una spiegazione introduttiva. La spiegazione non modifica livelli o progressi e rimane salvata offline. Per aggiornare una spiegazione già salvata occorre richiederla nuovamente.

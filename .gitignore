@@ -6,3 +6,5 @@ worker-build/
 test-results/
 *.log
 *-backup*.json
+
+node_modules

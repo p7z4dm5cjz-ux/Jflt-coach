@@ -4,14 +4,14 @@ import {now} from "./engine.js";
 import {LEVELS,ruleInfo} from "./item-tags.js";
 import {levelState,freezeLevel} from "./path-levels.js";
 import {planCycle,adaptBlock,closeCycle,newPath,pathCycles,cycleReason,isOpen,isResting,chooseMain,ROLE_LABELS,PATH_LENGTHS,DEFAULT_LENGTH} from "./path-planner.js";
-import {activePath,pathStep,pathBlockRequest,pathItemsFromReply,fallbackBlock,cycleSummary,PATH_BLOCKS} from "./path-flow.js";
+import {activePath,pathStep,pathBlockRequest,pathItemsFromReply,fallbackBlock,cycleSummary,ensureFreshPathReply,PATH_BLOCKS} from "./path-flow.js";
 import {getToken} from "./tutor.js";
 
 const title=id=>LESSONS.find(l=>l.id===id)?.title||id;
 const decisionText={up:"Sali di livello",stay:"Resti allo stesso livello",down:"Torni al livello precedente",insufficient:"Servono altre risposte: la decisione arriva con il prossimo ciclo"};
 
 export function pathUI(api){
-  const {h,p,card,link,button,change,goto,refresh,getState,tutor,sessionRecord}=api;
+  const {h,p,card,link,button,change,goto,refresh,getState,tutor,sessionRecord,vocabularyPractice}=api;
 
   async function start(length=DEFAULT_LENGTH,forced=null){
     const open=activePath(getState());
@@ -52,10 +52,10 @@ export function pathUI(api){
     const data=pathBlockRequest(state,path,cycle,page);
     let items=null,passages=[],source="groq",note=null;
     if(getToken()&&navigator.onLine!==false){
-      try{const result=await tutor(state.settings,"/tutor","path_block",data);items=pathItemsFromReply(result,data.slots);passages=result.passages;}
+      try{const result=await tutor(state.settings,"/tutor","path_block",data);items=ensureFreshPathReply(state,result,data.slots);passages=result.passages;}
       catch(e){note="Il tutor non ha preparato il blocco ("+String(e.message||"errore").slice(0,160)+"). Esercizi dalla banca locale: le frasi mai viste contano, le altre sono ripasso.";}
     }else note=getToken()?"Sei offline: esercizi dalla banca locale. Le frasi mai viste contano, le altre sono ripasso.":"Tutor non collegato: esercizi dalla banca locale. Collega il tutor nelle Impostazioni per i testi del livello 4 e le domande nuove.";
-    if(!items){const local=fallbackBlock(state,data.slots);items=local.items;source="local";if(local.exact<data.slots.length)note+=" Frasi nuove al livello richiesto: "+local.exact+" su "+data.slots.length+"; le altre sono ripasso e non decidono il livello.";}
+    if(!items){const local=fallbackBlock(state,data.slots);items=local.items;source="local";if(local.exact<data.slots.length)note+=" Contesti nuovi al livello richiesto: "+local.exact+" su "+data.slots.length+"; le altre sono ripasso e non decidono il livello.";}
     if(!items.length)throw new Error("Non ci sono esercizi disponibili per questo blocco.");
     const set=sessionRecord(cycle.main,items,source,{path_id:pathId,path_block:{cycle:cycle.n,page},...(passages.length?{passages}:{}),...(note?{fallback_note:note.slice(0,400)}:{})});
     await change(s=>{s.sessions.push(set);s.paths.find(x=>x.id===pathId).cycles.at(-1).block_ids.push(set.id);});
@@ -97,7 +97,7 @@ export function pathUI(api){
     if(set.completed_at||Object.values(set.answers).some(v=>v.trim())||cycle.block_ids.at(-1)!==sessionId)throw new Error("Il blocco è già iniziato: completalo così com'è.");
     const data=pathBlockRequest(state,path,cycle,set.path_block.page);
     const result=await tutor(state.settings,"/tutor","path_block",data);
-    const items=pathItemsFromReply(result,data.slots);
+    const items=ensureFreshPathReply(state,result,data.slots);
     const fresh=sessionRecord(cycle.main,items,"groq",{path_id:path.id,path_block:set.path_block,...(result.passages.length?{passages:result.passages}:{})});
     await change(s=>{s.sessions=s.sessions.filter(x=>x.id!==sessionId);s.sessions.push(fresh);const c=s.paths.find(x=>x.id===path.id).cycles.find(c=>c.n===set.path_block.cycle);c.block_ids[c.block_ids.length-1]=fresh.id;});
     await goto("practice/"+fresh.id);
@@ -135,6 +135,7 @@ export function pathUI(api){
     if(!path)return [p("Percorso non trovato."),link("Torna a Oggi","home")];
     const step=pathStep(s,path);
     return [link("← Oggi","home","back"),h("header",{class:"page-heading"},p("PERCORSO · "+path.length+" MINUTI","eyebrow"),h("h1",{tabindex:"-1"},path.completed_at?"Percorso concluso":"Il tuo percorso"),p("Ogni ciclo: 15 domande, poi la decisione sul livello della lezione principale.","intro")),
+      card(h("h2",{},"Dopo la grammatica: recupera il lessico"),p("Apri Ripasso per recuperare le espressioni che hai selezionato. Gli errori lessicali aggiornano le scadenze senza cambiare il livello della grammatica."),getState().vocabulary.some(v=>Date.parse(v.due)<=Date.now())?button("Recupera il lessico selezionato",vocabularyPractice,"secondary"):p("Nessun termine in scadenza: ritrovi le prossime date nel tuo dizionario.","small muted"),link("Dizionario personale","review","text-link"),link("Consulta il glossario","glossary","text-link")),
       path.cycles.slice().reverse().map(c=>{
         const summary=cycleSummary(s,c),r=c.result;
         return card(h("h2",{},"Ciclo "+c.n+" · "+title(c.main)),p(cycleReason(c),"small muted"),
@@ -146,7 +147,9 @@ export function pathUI(api){
             r.parked&&p("Tre cicli fermi allo stesso livello: la lezione va in pausa e torna più avanti, intanto resta tra ripassi e intrecciate.","small muted"),
             r.secondary?.length>0&&p("Da riprendere: "+r.secondary.map(x=>title(x.lesson_id)+" (livello "+x.level+")").join(", ")+".","warning")]
            :p(c.block_ids.length+" blocchi su "+PATH_BLOCKS+" preparati."),
+          summary.answers>0&&h("section",{class:"course-focus","aria-label":"Prove utili all’avanzamento"},h("h3",{},"Che cosa conta per avanzare"),p(summary.evidence.valid+" prove nuove senza aiuti in questo ciclo · "+summary.evidence.assisted+" guidate · "+summary.evidence.repeated+" ripetizioni · "+summary.evidence.unverified+" non verificabili · "+summary.evidence.other_level+" a un altro livello."),r&&!r.transfer_test&&r.n<9&&p("Nella finestra di valutazione mancano ancora "+(9-r.n)+" prove nuove al livello richiesto. Ripetere le stesse frasi non colma questa distanza.","small muted"),summary.evidence.missing_rules.length>0&&p("Regole pianificate ancora da esercitare: "+summary.evidence.missing_rules.map(id=>ruleInfo(id)?.name||id).join(", ")+". Il tutor può preparare contesti nuovi per questi punti.","small warning")),
           summary.answers>0&&h("details",{},h("summary",{},summary.correct+"/"+summary.answers+" corrette nel ciclo"),h("ul",{},Object.entries(summary.byLesson).map(([id,x])=>h("li",{},title(id)+": "+x.correct+"/"+x.n+(x.assisted?" · "+x.assisted+" con aiuto":""))))),
+          r&&h("details",{},h("summary",{},"Come si adatta il prossimo ciclo"),p("L’app sceglie il livello e i prerequisiti dai risultati verificati. Groq riceve cinque slot, le regole deboli, fino a cinque errori o risposte con aiuto e le frasi da evitare; crea gli esercizi e una seconda chiamata controlla le soluzioni alla cieca."),p("Soglie: almeno 9 risposte nuove e verificabili; 80% per salire, meno del 60% per scendere. Due errori ricorrenti sulla stessa regola possono fermare la salita. Aiuti, contestazioni e ripetizioni sono esclusi. La conferma su testi richiede 15 risposte valide e una nuova prova dopo almeno 24 ore.")),
           summary.fallback&&p("Parte del ciclo usa la banca locale.","small muted"));
       }),
       step.kind==="done"||path.completed_at?h("div",{class:"actions"},button("Nuovo percorso · "+DEFAULT_LENGTH+" minuti",()=>start(DEFAULT_LENGTH)),link("Torna a Oggi","home","secondary"))

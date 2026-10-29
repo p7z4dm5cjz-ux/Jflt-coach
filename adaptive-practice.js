@@ -9,7 +9,7 @@ export function blockAdaptation(state,set){
  const progress=progression(practiceEvidence(state,set.lesson_id));
  if(progress.can_advance)return {mode:'advance',message:'Almeno 5 delle ultime 6 risposte verificate senza aiuti: puoi provare un confronto più impegnativo. Non significa aver concluso la lezione.'};
  const errors=progress.errors+progress.pending_errors;
- return errors>=3?{mode:'consolidate',message:'Riprendi i punti deboli con nuovi contesti e un obiettivo alla volta.'}:{mode:'hold',message:'Mantieni la difficoltà: servono almeno cinque corrette sulle ultime sei risposte verificate, senza aiuti, per aumentarla.'};
+ return errors>=3?{mode:'consolidate',message:'Riprendi i punti deboli con nuovi contesti e un obiettivo alla volta.'}:{mode:'hold',message:'Mantieni la difficoltà: hai '+progress.latest.length+' risposte nuove e verificabili nella finestra recente. Per aumentarla servono almeno cinque corrette sulle ultime sei senza aiuti. Le ripetizioni restano ripasso.'};
 }
 export function localRetry(state,set,focus,count=6){
  const seen=new Set([...state.sessions.flatMap(s=>s.items),...set.items].map(i=>normal(i.stem)));

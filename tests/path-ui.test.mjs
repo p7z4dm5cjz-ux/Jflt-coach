@@ -14,7 +14,7 @@ const tutor=async(settings,path,task,data)=>{
   assert.equal(task,'path_block');requests.push(data);
   let gap=0;const group=data.slots.find(s=>s.group)?.group;
   const items=data.slots.map(s=>{
-    const tag=' [c'+data.cycle+'b'+data.page+'n'+s.n+']';
+    const tag=' ['+data.path_id+' c'+data.cycle+'b'+data.page+'n'+s.n+']';
     if(s.group){gap++;const doubt=doubtFirstGap&&gap===1;return {n:s.n,kind:'completion',stem:'Spazio ('+gap+'): scrivi la forma corretta (work).',options:[],answer:'works',accept:['works'],why:'Abitudine.',group:s.group,check:doubt?'doubt':'confirmed',...(doubt?{doubt:true,check_note:'Dubbio.'}:{})};}
     if(s.level===1)return {n:s.n,kind:'choice',stem:'Scegli la forma corretta: She ___ here.'+tag,options:['works','work','working'],answer:'works',accept:['works'],why:'Terza persona.',group:'',check:'confirmed'};
     return {n:s.n,kind:'completion',stem:'Scrivi solo la parola mancante: He ___ every day. (work)'+tag,options:[],answer:'works',accept:['works'],why:'Abitudine.',group:'',check:'confirmed'};
@@ -59,7 +59,7 @@ test('percorso: avvio da Oggi, tre blocchi da 5, risultato del ciclo e salita di
   assert.equal(cycle.result.decision,'up');assert.equal(cycle.result.n,15);
   assert.equal(state.lesson_levels[cycle.main].level,3);
   assert.equal(requests.length,3);assert.ok(requests.every(r=>r.slots.length===5&&r.main_lesson===cycle.main));
-  assert.ok(requests[1].avoid.some(s=>s.includes('[c1b0')),'le frasi già proposte vanno evitate');
+  assert.ok(requests[1].avoid.some(s=>s.includes('c1b0')),'le frasi già proposte vanno evitate');
   // Il backup con percorso e livelli resta valido.
   assert.ok(parseBackup(await repo.backup()));
 });

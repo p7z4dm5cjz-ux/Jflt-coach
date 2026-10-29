@@ -24,6 +24,7 @@ export async function callTutor(settings,path,task,data,fetcher=fetch) {
     const health=await loadHealth(settings,fetcher,token,address);
     if(!health.groq_configured)throw new Error("Il Worker è collegato, ma manca GROQ_API_KEY nei secret Cloudflare.");
     if(data?.learner&&!health.features?.includes("adaptive_profile"))throw new Error("Il Worker deve essere aggiornato per il percorso adattivo. Gli esercizi offline restano disponibili.");
+    if(task==="path_block"&&!health.features?.includes("path_feedback"))throw new Error("Il tutor collegato usa il prompt precedente. Aggiorna il Worker o usa il tutor del sito con il prompt corrente; intanto puoi continuare con gli esercizi locali.");
     if(task&&!health.capabilities?.includes(task))throw new Error("Questo Worker non supporta la funzione richiesta. Attendi l'aggiornamento Cloudflare.");
   }
   return send(settings,path,task,data,fetcher,token);
