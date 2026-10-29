@@ -37,10 +37,11 @@ export function levelState(state,lessonId){
 export function pathAnswers(state,lessonId){
   const sessions=new Map((state.sessions||[]).map(s=>[s.id,s])),seen=new Set(),rows=[];
   for(const a of state.attempts||[]){
-    const key=normal(a.context_id||a.stem||"");if(seen.has(key))continue;seen.add(key);
+    const itemForKey=sessions.get(a.session_id)?.items.find(i=>i.id===a.item_id);
+    const key=normal(a.context_id||itemForKey?.context_id||a.stem||"");if(seen.has(key))continue;seen.add(key);
     if(a.lesson_id!==lessonId||a.disputed||a.assisted||a.source==="legacy")continue;
     const set=sessions.get(a.session_id),item=set?.items.find(i=>i.id===a.item_id);
-    if(!set?.path_id||set.assisted||set.hinted_items?.includes(a.item_id)||!set.completed_at||!item||item.doubt||!Number.isInteger(item.level)||!Array.isArray(item.rules)||!reliableItem(item,a.source))continue;
+    if(!set?.path_id||set.assisted||set.hinted_items?.includes(a.item_id)||!set.completed_at||!item||item.doubt||item.fallback_guided||!Number.isInteger(item.level)||!Array.isArray(item.rules)||!reliableItem(item,a.source))continue;
     rows.push({stem:a.stem,correct:!!a.correct,level:item.level,rules:item.rules,date:a.date,session_id:a.session_id,role:item.path_role||null});
   }
   return rows;
@@ -58,7 +59,7 @@ export function diagnosticStats(state,lessonId){
   for(const a of state.attempts.filter(a=>a.lesson_id===lessonId).slice(-30)){
     const s=sessions.get(a.session_id),i=s?.items.find(i=>i.id===a.item_id);
     if(!s?.completed_at||!i||a.disputed||!reliableItem(i,a.source)||i.doubt)continue;
-    for(const rule of i.rules||[]){const r=out[rule]??={n:0,correct:0};r.n++;if(a.correct&&!a.assisted&&!s.assisted&&!s.hinted_items?.includes(i.id))r.correct++;}
+    for(const rule of i.rules||[]){const r=out[rule]??={n:0,correct:0};r.n++;if(a.correct&&!a.assisted&&!i.fallback_guided&&!s.assisted&&!s.hinted_items?.includes(i.id))r.correct++;}
   }
   return out;
 }

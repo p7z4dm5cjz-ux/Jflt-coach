@@ -1,3 +1,4 @@
+import {randomId} from "./ids.js";
 import {STARTING_LEVELS,startingLevel,levelSequence} from "./starting-level.js";
 import {LESSONS, VOCABULARY, PHRASALS} from "./catalog.js";
 import {placementProfile, validPlacement, newPlacement} from "./placement.js";
@@ -6,19 +7,20 @@ import {normal,correct} from "./answer-normal.js";
 import {lessonEvidence,practiceWindow} from "./grammar-checks.js";
 import {courseOrder} from "./learning-path.js";
 export {normal,correct} from "./answer-normal.js";
-export const VERSION = "1.18.1";
+export const VERSION = "1.18.3";
 export const API_VERSION = 1;
 export const LEGACY_STORES = ["settings","diag_responses","diag_texts","profile","requests","grammar_sets","grammar_answers","tasks","texts","feedback","error_log","cards","transfer_checks","device_tests","to_verify"];
 export const now = () => new Date().toISOString();
-export const uid = prefix => prefix + "-" + crypto.randomUUID();
+export const uid = prefix => prefix + "-" + randomId();
 export const countWords = text => (String(text).match(/\b[\p{L}\p{N}]+(?:['’-][\p{L}\p{N}]+)*\b/gu)||[]).length;
 export function endpoint(value) {
   const u = new URL(value);
-  if(u.protocol!=="https:" || !u.hostname.endsWith(".workers.dev") || u.username || u.password || u.port || u.search || u.hash || !["","/"].includes(u.pathname)) throw new Error("Inserisci l'indirizzo HTTPS del Worker, senza percorsi aggiuntivi.");
-  return u.origin;
+  const privateApi=globalThis.JFLT_PRIVATE_SITE===true&&globalThis.location&&u.origin===globalThis.location.origin&&u.pathname==="/api"&&!u.username&&!u.password&&!u.search&&!u.hash;
+  if(!privateApi&&(u.protocol!=="https:" || !u.hostname.endsWith(".workers.dev") || u.username || u.password || u.port || u.search || u.hash || !["","/"].includes(u.pathname))) throw new Error("Inserisci l'indirizzo HTTPS del Worker, senza percorsi aggiuntivi.");
+  return privateApi?u.origin+"/api":u.origin;
 }
 export function freshState() {
-  return {id:"main",version:2,release:VERSION,created_at:now(),updated_at:now(),settings:{endpoint:"https://jflt-coach.crl-r90.workers.dev",daily_minutes:20,theme:"auto"},placement:null,attempts:[],sessions:[],writings:[],writing_courses:[],lesson_studies:[],readings:[],vocabulary:[],daily_plans:[],legacy:null};
+  return {id:"main",version:2,release:VERSION,created_at:now(),updated_at:now(),settings:{endpoint:globalThis.JFLT_PRIVATE_SITE===true?new URL("/api",globalThis.location.href).href:"https://jflt-coach.crl-r90.workers.dev",daily_minutes:20,theme:"auto"},placement:null,attempts:[],sessions:[],writings:[],writing_courses:[],lesson_studies:[],readings:[],vocabulary:[],daily_plans:[],legacy:null};
 }
 // Ricominciare da zero: nuovo archivio con le sole preferenze tecniche (Worker, tema, minuti).
 // Il codice del tutor sta fuori dall'archivio e resta sul dispositivo.

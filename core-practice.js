@@ -47,7 +47,7 @@ const meanings={
 };
 const groups=[['present-simple','present-continuous','past-simple'],['present-perfect-simple','present-perfect-continuous','past-simple'],['past-perfect-simple','past-perfect-continuous','past-continuous'],['future-will','future-going-to','future-arrangements'],['future-continuous','future-perfect-simple','future-perfect-continuous'],['ability','obligation','future-will']];
 function contextSentence(id,subject,v,rest){
- const r=rules[id],sentence=subject+" "+r[2](v)+" "+rest+" "+r[1].toLowerCase()+".";
+ const r=rules[id],sentence=subject+" "+r[2](v)+" "+rest+" "+r[1][0].toLowerCase()+r[1].slice(1)+".";
  if(id==="future-will")return "This is only my prediction, not an existing plan: "+sentence;
  if(id==="future-going-to")return "A decision has already been made: "+sentence;
  if(id==="future-arrangements")return "The appointment is confirmed: "+sentence;
@@ -94,4 +94,53 @@ export function coreItems(id,variation=0){
  }
  return items.map((item,i)=>({...item,difficulty:i<5?1:i<12?2:i<24?3:4,difficulty_label:i<5?'Base · costruisci la forma':i<12?'Comprendi forma e significato':i<24?'Applica · negazioni e domande':'Approfondisci · contesto e alternative'}));
 
+}
+
+// Contesti originali per il percorso. Le operazioni sullo stesso evento condividono
+// l'identità: cambiare consegna o forma non crea una nuova prova indipendente.
+const pathScenarios=[
+ ['The porter','open','opened','opened','opening','the main gate','the side entrance'],
+ ['The driver','leave','left','left','leaving','the depot','the service station'],
+ ['The clerk','send','sent','sent','sending','the appointment letters','the updated timetable'],
+ ['The technician','test','tested','tested','testing','the fire alarm','the emergency lights'],
+ ['The plumber','repair','repaired','repaired','repairing','the damaged pipe','the leaking tap'],
+ ['The archivist','file','filed','filed','filing','the signed forms','the delivery notes'],
+ ['The engineer','measure','measured','measured','measuring','the water pressure','the room temperature'],
+ ['The interpreter','translate','translated','translated','translating','the witness statement','the safety instructions'],
+ ['The investigator','interview','interviewed','interviewed','interviewing','the main witness','the bus driver'],
+ ['The pharmacist','order','ordered','ordered','ordering','the essential supplies','the replacement equipment'],
+ ['The coordinator','arrange','arranged','arranged','arranging','the next briefing','the training session'],
+ ['The controller','monitor','monitored','monitored','monitoring','the radio channel','the emergency line'],
+ ['The analyst','compare','compared','compared','comparing','the two maps','the laboratory results'],
+ ['The mechanic','replace','replaced','replaced','replacing','the worn tyre','the damaged battery'],
+ ['The warden','search','searched','searched','searching','the storage room','the empty workshop'],
+ ['The receptionist','record','recorded','recorded','recording','the caller’s details','the visitor’s request'],
+ ['The inspector','read','read','read','reading','the maintenance log','the incident report'],
+ ['The courier','deliver','delivered','delivered','delivering','the sealed parcel','the confidential envelope']
+];
+export const FOUNDATION_LESSONS=['sentence',...CORE_LESSONS];
+export function pathFoundationItems(id){
+ if(!FOUNDATION_LESSONS.includes(id))return [];
+ const out=[],available=lessonRules(id).map(r=>r.key);
+ for(const [index,row] of pathScenarios.entries())for(let variant=0;variant<2;variant++){
+  const [actor,base,past,part,ing]=row,object=row[5+variant],v=[base,past,part,ing],n=index*2+variant;
+  const context_id=id+':foundation-event:'+n,make=(rule,level,stem,answer,kind='completion',options=[],why='')=>({id:context_id+':'+rule+':'+level,context_id,kind,stem,answer,accept:[answer],options,why,origin:'local',focus_lesson:id,rules:[id+'.'+rule],level,skill:level===1?'meaning':'form'});
+  if(id==='sentence'){
+   const verb=third(v),sentence=actor+' '+verb+' '+object+'.';
+   out.push(make('subj',1,'Qual è il soggetto in: '+sentence,actor,'choice',[actor,object,verb],'Il soggetto è '+actor+': è la persona di cui si afferma l’azione.'));
+   out.push(make('role',1,'Chi compie l’azione in: '+sentence,actor,'choice',[actor,object,verb],'La frase attiva presenta '+actor+' come chi compie l’azione.'));
+   out.push(make('svo',1,'Scegli l’ordine corretto: '+object+' / '+actor+' / '+verb+'.',sentence,'choice',[sentence,verb+' '+object+' '+actor+'.',object+' '+actor+' '+verb+'.'],'L’ordine neutro affermativo è soggetto, verbo, oggetto: '+sentence));
+   out.push(make('agr',1,'Scegli la forma corretta: '+actor+' ___ '+object+'.',verb,'choice',[verb,base,ing],'Il soggetto singolare richiede la terza persona singolare del present simple.'));
+   out.push(make('agr',2,'Scrivi solo la parola mancante: '+actor+' ___ '+object+' every week. ('+base+')',verb,'completion',[],'Il soggetto singolare concorda con '+verb+'.'));
+   continue;
+  }
+  const [name,time,affirm,negative,aux,tail,why]=rules[id],group=contrasts(id),sentence=contextSentence(id,actor,v,object);
+  out.push(make('use',1,'Scegli il significato: '+sentence,meanings[id],'choice',group.map(k=>meanings[k]),why+' Il contesto presenta '+meanings[id]+'.'));
+  if(available.includes('contrast'))out.push(make('contrast',1,'Quale interpretazione corrisponde a: '+sentence,meanings[id],'choice',group.map(k=>meanings[k]),'Confronta il riferimento temporale e il significato. '+why));
+  out.push(make('form',2,'Scrivi solo ciò che manca ('+name+'): '+time+', '+actor.toLowerCase()+' ___ '+object+'. ('+base+')',affirm(v),'completion',[],why));
+  const when=time[0].toLowerCase()+time.slice(1),full=actor+' '+affirm(v)+' '+object+' '+when+'.';
+  out.push(make('neg',2,'Riscrivi la frase negativa'+(id==='obligation'?' esprimendo un divieto':'')+': '+full,actor+' '+negative+' '+tail(v)+' '+object+' '+when+'.','transformation',[],why));
+  out.push(make('q',2,'Trasforma in domanda, iniziando con '+cap(aux)+': '+full,cap(aux)+' '+actor.toLowerCase()+' '+tail(v)+' '+object+' '+when+'?','transformation',[],why));
+ }
+ return out;
 }

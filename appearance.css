@@ -155,3 +155,5 @@ nav a[aria-current=page]{background:var(--soft);color:var(--ink);box-shadow:none
 .danger,.danger:hover{color:var(--error-ink);background:transparent}
 @media(max-width:760px){.translate-panes{gap:8px}.pane textarea,.pane-output{font-size:14px;line-height:1.5;padding:10px}.pane label,.pane-label{font-size:14px}}
 .answer-hint{margin:6px 0 6px;font-size:13px}
+
+.glossary-term{display:inline;padding:0;border:0;border-bottom:1px dotted currentColor;border-radius:0;background:transparent;color:var(--accent,#2563eb);font:inherit;cursor:pointer;min-height:0;text-align:inherit}.glossary-note:not([hidden]){display:block;padding:12px;margin:8px 0;border-left:3px solid #3b82f6;background:var(--surface,#edf4ff);font-size:.95em}.glossary-list summary{cursor:pointer;font-weight:600}.glossary-list details{margin-top:12px}

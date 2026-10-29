@@ -1,3 +1,4 @@
+import {randomId} from "./ids.js";
 // Pianificazione del percorso adattivo (fase 3): cicli di 15 domande in 3 blocchi da 5.
 // Funzioni pure: ricevono lo stato e restituiscono il piano, senza scrivere nulla.
 import {LESSONS} from "./catalog.js";
@@ -164,7 +165,7 @@ export function adaptBlock(state,cycle,page){
   return slots;
 }
 
-export function newPath(length=DEFAULT_LENGTH,timestamp=new Date().toISOString(),id="path-"+crypto.randomUUID()){
+export function newPath(length=DEFAULT_LENGTH,timestamp=new Date().toISOString(),id="path-"+randomId()){
   const n=PATH_LENGTHS[length]?length:DEFAULT_LENGTH;
   return {id,length:n,created_at:timestamp,completed_at:null,cycles:[]};
 }

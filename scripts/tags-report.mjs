@@ -3,6 +3,7 @@ import {LESSONS} from "../catalog.js";
 import {grammarItems} from "../practice-bank.js";
 import {bankTrainItems,bankCheckItems} from "../lesson-bank.js";
 import {CHECK_ITEMS} from "../grammar-checks.js";
+import {pathFoundationItems} from "../core-practice.js";
 import {advancedPathItems} from "../advanced-path-bank.js";
 import {lessonRules,tagFor,taggedKeys,stemKey,LEVELS} from "../item-tags.js";
 export function lessonPool(id){
@@ -10,7 +11,7 @@ export function lessonPool(id){
   for(let v=0;v<24;v++)for(const i of grammarItems(id,v))add(i);
   for(const i of [...bankTrainItems(id),...bankCheckItems(id)])add(i);
   for(const i of CHECK_ITEMS.filter(i=>i.lesson_id===id))add(i);
-  for(const i of advancedPathItems(id))add(i);
+  for(const i of [...advancedPathItems(id),...pathFoundationItems(id)])add(i);
   return [...map.values()];
 }
 export function audit(){

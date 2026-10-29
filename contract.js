@@ -41,6 +41,9 @@ export function validatePathInput(d){
   if(d.phase==="transfer"&&groups.length!==5)throw new Error("La verifica richiede un testo con cinque spazi.");
   if(d.avoid_passages!==undefined&&(!arr(d.avoid_passages,6)||d.avoid_passages.some(x=>!str(x,900))))throw new Error("Testi già visti non validi.");
   if(d.avoid!==undefined&&(!arr(d.avoid,40)||d.avoid.some(x=>!str(x,PATH_STEM_MAX))))throw new Error("Elenco delle frasi già viste non valido.");
+  if(d.progress!==undefined&&(!object(d.progress)||!Number.isInteger(d.progress.n)||d.progress.n<0||d.progress.n>30||!Number.isInteger(d.progress.correct)||d.progress.correct<0||d.progress.correct>d.progress.n||d.progress.needed!==Math.max(0,9-d.progress.n)||!['up','stay','down','insufficient'].includes(d.progress.decision)))throw new Error('Progresso del percorso non valido.');
+  if(d.coverage!==undefined&&(!arr(d.coverage,16)||d.coverage.some(r=>!object(r)||!str(r.rule,120)||!Number.isInteger(r.n)||!Number.isInteger(r.correct)||r.n<1||r.correct<0||r.correct>r.n)))throw new Error('Copertura delle regole non valida.');
+  if(d.recent_errors!==undefined&&(!arr(d.recent_errors,5)||d.recent_errors.some(e=>!object(e)||!str(e.lesson_id,100)||!str(e.rule,120)||!e.rule.startsWith(e.lesson_id+".")||!str(e.stem,PATH_STEM_MAX)||typeof e.given!=="string"||e.given.length>600||!str(e.expected,600)||typeof e.assisted!=="boolean")))throw new Error("Errori recenti del percorso non validi.");
   if(d.weak_rules!==undefined&&(!arr(d.weak_rules,8)||d.weak_rules.some(r=>!object(r)||!str(r.rule,120)||!Number.isInteger(r.n)||!Number.isInteger(r.correct)||r.n<1||r.correct<0||r.correct>r.n)))throw new Error("Regole deboli non valide.");
   return d;
 }

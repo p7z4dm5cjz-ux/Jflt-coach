@@ -1,3 +1,4 @@
+import {randomId} from "./ids.js";
 // Pre-test originale: selezione del percorso, non certificazione CEFR/STANAG.
 export const BANK_VERSION = "2026-10-08-v1";
 export const AREAS = {
@@ -60,7 +61,7 @@ export function isCorrect(item,value){return correct(item,value);}
 function hash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;}
 export function orderedQuestions(seed){return QUESTIONS.slice().sort((a,b)=>hash(seed+a.id)-hash(seed+b.id));}
 export function orderedOptions(item,seed){return (item.options||[]).slice().sort((a,b)=>hash(seed+item.id+a)-hash(seed+item.id+b));}
-export function newPlacement(seed=crypto.randomUUID(),now=new Date().toISOString()){
+export function newPlacement(seed=randomId(),now=new Date().toISOString()){
   return {version:1,bank_version:BANK_VERSION,seed,answers:[],position:0,started_at:now,submitted_at:null};
 }
 export function validPlacement(p){
@@ -121,7 +122,7 @@ export const AREA_LIMITS={tenses:[4,10],negatives:[3,7],phrasals:[3,6],basics:[2
 const AREA_OF_LESSON=(()=>{const map={};for(const area of Object.keys(AREAS))for(const q of QUESTIONS.filter(q=>q.area===area))for(const id of q.lessons)map[id]??=area;return map;})();
 export const ADAPTIVE_POOL=[...QUESTIONS.map(q=>({...q,source:"pretest"})),...CHECK_ITEMS.filter(i=>AREA_OF_LESSON[i.lesson_id]).map(i=>({id:i.id,area:AREA_OF_LESSON[i.lesson_id],lessons:[i.lesson_id],skill:"form",stem:i.stem,options:null,answer:i.answer,accept:i.accept,why:null,ref:null,source:"check"}))];
 const poolItem=id=>ADAPTIVE_POOL.find(i=>i.id===id);
-export function newAdaptivePlacement(seed=crypto.randomUUID(),now=new Date().toISOString()){
+export function newAdaptivePlacement(seed=randomId(),now=new Date().toISOString()){
   return {version:2,bank_version:ADAPTIVE_BANK,seed,answers:[],started_at:now,submitted_at:null};
 }
 function adaptiveRows(p){return p.answers.map(answer=>{const item=poolItem(answer.id),ok=isCorrect(item,answer.value);return {item,answer,correct:ok,secure:ok&&answer.confidence==="sure"};});}

@@ -18,7 +18,7 @@ export function practiceEvidence(state,lessonId){
   if(!stem||seen.has(key))continue;seen.add(key);
   const page=set?.training?Math.floor(index/6):0;
   const completed=!!set&&(set.training?set.training.checked.includes(page):!!set.completed_at);
-  rows.push({...a,stem,skill:practiceSkill(item||a),assisted:!!a.assisted||!!set?.assisted||!!set?.hinted_items?.includes(a.item_id),block_id:a.session_id+':'+page,block_complete:completed,expected:item?.answer||''});
+  rows.push({...a,stem,skill:practiceSkill(item||a),assisted:!!a.assisted||!!item?.fallback_guided||!!set?.assisted||!!set?.hinted_items?.includes(a.item_id),block_id:a.session_id+':'+page,block_complete:completed,expected:item?.answer||''});
  }
  return rows;
 }

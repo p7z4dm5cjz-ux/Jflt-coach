@@ -1,3 +1,4 @@
+import {randomId} from "./ids.js";
 import {grammarItems} from "./practice-bank.js";
 import {bankCheckItems} from "./lesson-bank.js";
 import {withTags} from "./item-tags.js";
@@ -81,7 +82,7 @@ export function newCheck(state,priorities,lessonId=null,timestamp=Date.now()){
  const items=topics.flatMap(id=>CHECK_ITEMS.filter(i=>i.lesson_id===id).sort((a,b)=>Number(used.has(a.id))-Number(used.has(b.id))).slice(0,lessonId?4:2));
  if(lessonId?items.length<2:items.length!==10)throw new Error("Questa lezione non ha ancora una verifica locale dedicata.");
  const seenPractice=new Set((state.sessions||[]).flatMap(s=>s.items).map(i=>normal(i.stem)));
- return {practice_reused_ids:items.filter(i=>seenPractice.has(normal(i.stem))).map(i=>i.id),id:"check-"+crypto.randomUUID(),lesson_id:lessonId,item_ids:items.map(i=>i.id),reused_ids:items.filter(i=>used.has(i.id)).map(i=>i.id),answers:{},created_at:new Date(timestamp).toISOString(),completed_at:null};
+ return {practice_reused_ids:items.filter(i=>seenPractice.has(normal(i.stem))).map(i=>i.id),id:"check-"+randomId(),lesson_id:lessonId,item_ids:items.map(i=>i.id),reused_ids:items.filter(i=>used.has(i.id)).map(i=>i.id),answers:{},created_at:new Date(timestamp).toISOString(),completed_at:null};
 }
 // Un'unica regola per «senza aiuti» e «mantenimento», la stessa di profilo e Worker
 // (progressDecision in contract.js): ultime 6 risposte verificate per «da confermare», ultime 12
